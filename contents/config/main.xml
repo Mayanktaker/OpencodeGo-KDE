@@ -19,7 +19,7 @@
         </entry>
         <entry name="apiBaseUrl" type="String">
             <!-- API Base URL for usage endpoint -->
-            <default>https://opencode.ai/api/v1</default>
+            <default>https://opencode.ai/api/workspace</default>
         </entry>
         <entry name="refreshInterval" type="Int">
             <!-- Timer refresh interval in milliseconds (default: 60,000 ms = 1 min) -->

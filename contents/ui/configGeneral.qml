@@ -55,7 +55,7 @@ Item {
         QQC2.TextField {
             id: apiBaseUrlField
             Kirigami.FormData.label: i18n("API Base URL:")
-            placeholderText: i18n("e.g. https://opencode.ai/api/v1")
+            placeholderText: i18n("e.g. https://opencode.ai/api/workspace")
             Layout.fillWidth: true
         }
 

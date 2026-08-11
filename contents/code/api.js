@@ -97,26 +97,26 @@ function fetchUsageData(workspaceId, authCookie, apiBaseUrl, callback) {
                     callback(null, parsedData);
                 } catch (e) {
                     // Handle JSON parse error
-                    callback("Failed to parse server response: " + e.message, getMockData());
+                    callback("Failed to parse server response: " + e.message, null);
                 }
             } else if (xhr.status === 401 || xhr.status === 403) {
                 // Handle unauthorized / invalid cookie
-                callback("Authentication failed (HTTP " + xhr.status + "). Check Auth Cookie.", getMockData());
+                callback("Authentication failed (HTTP " + xhr.status + "). Check Auth Cookie.", null);
             } else {
                 // Handle general server error
-                callback("Server error (HTTP " + xhr.status + "). Showing cached data.", getMockData());
+                callback("Server error (HTTP " + xhr.status + "). Showing cached data.", null);
             }
         }
     };
 
     // Handle network level error
     xhr.onerror = function() {
-        callback("Network request failed. Please check internet connection.", getMockData());
+        callback("Network request failed. Please check internet connection.", null);
     };
 
     // Handle request timeout
     xhr.ontimeout = function() {
-        callback("Request timed out. Server did not respond.", getMockData());
+        callback("Request timed out. Server did not respond.", null);
     };
 
     // Send HTTP request
