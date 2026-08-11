@@ -69,17 +69,16 @@ function fetchUsageData(workspaceId, authCookie, callback) {
 
     var xhr = new XMLHttpRequest();
     xhr.open("GET", targetUrl, true);
+    xhr.withCredentials = true;
 
     // Set request headers for cookie authentication and session tracking
     var cookieVal = authCookie.trim();
-    if (cookieVal.indexOf("=") !== -1) {
-        xhr.setRequestHeader("Cookie", cookieVal);
-    } else {
-        xhr.setRequestHeader("Cookie", "auth=" + cookieVal + "; session=" + cookieVal);
-        xhr.setRequestHeader("Authorization", "Bearer " + cookieVal);
-    }
+    var finalCookie = cookieVal.indexOf("=") !== -1 ? cookieVal : "auth=" + cookieVal;
     
-    xhr.setRequestHeader("Accept", "application/json, text/html, */*");
+    xhr.setRequestHeader("Cookie", finalCookie);
+    xhr.setRequestHeader("Authorization", "Bearer " + (cookieVal.indexOf("=") !== -1 ? cookieVal.split("=")[1] : cookieVal));
+    xhr.setRequestHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
+    xhr.setRequestHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,application/json,*/*;q=0.8");
     xhr.setRequestHeader("X-Workspace-Id", cleanWs);
 
     // Configure timeout (10 seconds)
