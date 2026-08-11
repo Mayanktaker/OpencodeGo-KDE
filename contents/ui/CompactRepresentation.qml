@@ -27,7 +27,7 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        onClicked: Plasmoid.expanded = !Plasmoid.expanded
+        onClicked: root.expanded = !root.expanded
 
         // Row container holding widget icon and usage percentage badge
         RowLayout {
@@ -38,7 +38,7 @@ Item {
             // Plasma system icon component
             Kirigami.Icon {
                 id: widgetIcon
-                source: Plasmoid.icon || "office-chart-bar"
+                source: "office-chart-bar"
                 implicitWidth: Kirigami.Units.iconSizes.smallMedium
                 implicitHeight: Kirigami.Units.iconSizes.smallMedium
             }

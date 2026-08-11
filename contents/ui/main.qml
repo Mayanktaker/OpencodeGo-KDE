@@ -5,14 +5,14 @@ import QtQuick
 import QtQml
 import org.kde.plasma.plasmoid 2.0
 import org.kde.plasma.components 3.0 as PlasmaComponents
-import org.kde.notification 1.0 as KNotification
 import "../code/api.js" as Api
 
 PlasmoidItem {
     id: root
 
-    // Plasmoid identity properties
-    title: i18n("OpenCode Go Usage Tracker")
+    // Tooltip text shown on panel hover (title and icon come from metadata.json)
+    Plasmoid.toolTipMainText: i18n("OpenCode Go Usage Tracker")
+    Plasmoid.toolTipSubText: i18n("Usage: %1%", root.usagePercent)
 
     // State properties storing loaded usage data and UI flags
     property var usageData: null
@@ -26,15 +26,6 @@ PlasmoidItem {
 
     // Full representation component for expanded desktop popup view
     fullRepresentation: FullRepresentation {}
-
-    // Desktop notification object instance for high quota warnings
-    KNotification.Notification {
-        id: quotaAlertNotification
-        componentName: "plasma_workspace"
-        eventId: "notification"
-        title: i18n("OpenCode Go Quota Warning")
-        text: i18n("Your OpenCode Go subscription usage has reached %1%!", root.usagePercent)
-    }
 
     // Function to execute async usage data refresh from OpenCode API
     function refreshData() {
@@ -53,13 +44,13 @@ PlasmoidItem {
                 usageData = data;
                 usagePercent = data.usagePercent || 0;
 
-                // Check quota threshold alert trigger
+                // Check quota threshold alert trigger via console (notification fallback)
                 var notifyEnabled = Plasmoid.configuration.enableNotifications !== false;
                 var threshold = Plasmoid.configuration.notificationThreshold || 80;
                 
                 if (notifyEnabled && usagePercent >= threshold && lastAlertedPercent < threshold) {
                     lastAlertedPercent = usagePercent;
-                    quotaAlertNotification.sendEvent();
+                    console.warn("OpenCode Go Quota Alert: Usage has reached " + usagePercent + "% (threshold: " + threshold + "%)");
                 } else if (usagePercent < threshold) {
                     lastAlertedPercent = 0;
                 }
