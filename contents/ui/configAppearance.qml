@@ -9,6 +9,11 @@ import org.kde.kirigami as Kirigami
 
 Kirigami.FormLayout {
     id: configAppearanceRoot
+    Layout.fillWidth: true
+    topPadding: 20
+    bottomPadding: 20
+    leftPadding: 16
+    rightPadding: 16
 
     // Configuration property aliases bound automatically via cfg_ prefix to main.xml
     property alias cfg_displayLayout: layoutCombo.currentValue

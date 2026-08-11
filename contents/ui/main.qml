@@ -10,6 +10,9 @@ import "../code/api.js" as Api
 PlasmoidItem {
     id: root
 
+    // Disable default Plasma popup frame to eliminate unwanted outer borders
+    Plasmoid.backgroundHints: "NoBackground"
+
     // State properties storing loaded usage data and UI flags
     property var usageData: null
     property int usagePercent: 0

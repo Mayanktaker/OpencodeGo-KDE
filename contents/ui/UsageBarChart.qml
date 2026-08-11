@@ -114,7 +114,8 @@ Item {
 
                             // Tooltip displaying exact usage details on bar hover
                             QQC2.ToolTip.visible: barMouseArea.containsMouse
-                            QQC2.ToolTip.text: modelData.label + "\nUsage: " + modelData.value + " / " + modelData.maxValue + " requests"
+                            QQC2.ToolTip.delay: 100
+                            QQC2.ToolTip.text: modelData.label + ": " + modelData.value + " / " + (modelData.maxValue || 1000) + " requests"
                         }
                     }
                 }

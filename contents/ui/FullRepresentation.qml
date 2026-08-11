@@ -195,37 +195,95 @@ Rectangle {
                 Layout.fillWidth: true
                 text: root.usageData ? i18n("Last updated: %1", root.usageData.lastRefreshed) : i18n("Loading...")
                 font.pixelSize: Kirigami.Units.gridUnit * 0.5
-                opacity: 0.6
+                opacity: 0.7
                 color: textColor
             }
 
-            // Data export button trigger
-            QQC2.Button {
-                icon.name: "document-export"
-                flat: true
-                onClicked: fullRoot.handleExport()
-                QQC2.ToolTip.visible: hovered
+            // Data export icon button
+            Rectangle {
+                implicitWidth: 28
+                implicitHeight: 28
+                radius: 4
+                color: exportMouse.containsMouse ? Qt.alpha(accentColor, 0.2) : "transparent"
+
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    implicitWidth: 18
+                    implicitHeight: 18
+                    source: "document-export"
+                    color: exportMouse.containsMouse ? accentColor : textColor
+                }
+
+                MouseArea {
+                    id: exportMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: fullRoot.handleExport()
+                }
+
+                QQC2.ToolTip.visible: exportMouse.containsMouse
                 QQC2.ToolTip.text: i18n("Export Usage CSV")
             }
 
-            // Manual refresh button trigger
-            QQC2.Button {
-                icon.name: "view-refresh"
-                flat: true
-                onClicked: root.refreshData()
-                QQC2.ToolTip.visible: hovered
+            // Manual refresh icon button
+            Rectangle {
+                implicitWidth: 28
+                implicitHeight: 28
+                radius: 4
+                color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.2) : "transparent"
+
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    implicitWidth: 18
+                    implicitHeight: 18
+                    source: "view-refresh"
+                    color: refreshMouse.containsMouse ? accentColor : textColor
+                }
+
+                MouseArea {
+                    id: refreshMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: root.refreshData()
+                }
+
+                QQC2.ToolTip.visible: refreshMouse.containsMouse
                 QQC2.ToolTip.text: i18n("Refresh Now")
             }
 
-            // Configure widget settings button trigger
-            QQC2.Button {
-                icon.name: "configure"
-                flat: true
-                onClicked: {
-                    var act = Plasmoid.action("configure");
-                    if (act) act.trigger();
+            // Configure widget settings icon button
+            Rectangle {
+                implicitWidth: 28
+                implicitHeight: 28
+                radius: 4
+                color: configMouse.containsMouse ? Qt.alpha(accentColor, 0.2) : "transparent"
+
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    implicitWidth: 18
+                    implicitHeight: 18
+                    source: "configure"
+                    color: configMouse.containsMouse ? accentColor : textColor
                 }
-                QQC2.ToolTip.visible: hovered
+
+                MouseArea {
+                    id: configMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: {
+                        var act = Plasmoid.action("configure");
+                        if (act) {
+                            act.trigger();
+                        } else if (Plasmoid.internalAction("configure")) {
+                            Plasmoid.internalAction("configure").trigger();
+                        }
+                    }
+                }
+
+                QQC2.ToolTip.visible: configMouse.containsMouse
                 QQC2.ToolTip.text: i18n("Configure Widget")
             }
         }
