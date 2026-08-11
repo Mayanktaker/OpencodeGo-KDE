@@ -58,7 +58,7 @@ Item {
             PlasmaComponents.Label {
                 anchors.centerIn: parent
                 visible: activeHoverItem !== null
-                text: activeHoverItem ? (activeHoverItem.label + " — " + activeHoverItem.value + " / " + (activeHoverItem.maxValue || 1000) + " requests (" + Math.round((activeHoverItem.value / (activeHoverItem.maxValue || 1000)) * 100) + "% used)") : ""
+                text: activeHoverItem ? (activeHoverItem.label + " — " + activeHoverItem.value + " / " + (activeHoverItem.maxValue || 1000) + " requests (" + Math.round((activeHoverItem.value / (activeHoverItem.maxValue || 1000)) * 100) + "% used)" + (activeHoverItem.resetLabel ? " — resets in " + activeHoverItem.resetLabel : "")) : ""
                 font.bold: true
                 font.pixelSize: Kirigami.Units.gridUnit * 0.55
                 color: accentColor

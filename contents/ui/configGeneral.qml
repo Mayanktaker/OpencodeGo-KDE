@@ -5,11 +5,38 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "../code/api.js" as Api
 
 Item {
     id: configGeneralRoot
     Layout.fillWidth: true
     implicitHeight: formLayout.implicitHeight + 40
+
+    // Test connection state properties for the Validate button feedback
+    property bool testingConnection: false
+    property string testResultText: ""
+    property bool testSucceeded: false
+
+    // Sends a live request with the current settings to validate workspace ID and cookie
+    function testConnection() {
+        configGeneralRoot.testingConnection = true;
+        configGeneralRoot.testResultText = "";
+        Api.fetchUsageData(workspaceIdField.text, authCookieField.text, function(err, data) {
+            configGeneralRoot.testingConnection = false;
+            if (err) {
+                configGeneralRoot.testSucceeded = false;
+                configGeneralRoot.testResultText = i18n("Failed: %1", err);
+                return;
+            }
+            if (data && data.isMock) {
+                configGeneralRoot.testSucceeded = false;
+                configGeneralRoot.testResultText = i18n("Enter a Workspace ID and Auth Cookie to authenticate.");
+                return;
+            }
+            configGeneralRoot.testSucceeded = true;
+            configGeneralRoot.testResultText = i18n("Connected — %1% used%2", data.usagePercent || 0, data.resetLabel ? i18n(" (resets in %1)", data.resetLabel) : "");
+        });
+    }
 
     // Configuration property aliases bound automatically via cfg_ prefix to main.xml
     property alias cfg_workspaceId: workspaceIdField.text
@@ -48,6 +75,30 @@ Item {
             placeholderText: i18n("Paste session auth cookie from opencode.ai")
             echoMode: QQC2.TextField.Password
             Layout.fillWidth: true
+        }
+
+        // Live credential validation button and status feedback row
+        RowLayout {
+            Kirigami.FormData.label: i18n("Validate:")
+            Layout.fillWidth: true
+            spacing: 8
+
+            QQC2.Button {
+                id: testConnectionButton
+                text: configGeneralRoot.testingConnection ? i18n("Testing...") : i18n("Test Connection")
+                enabled: !configGeneralRoot.testingConnection
+                icon.name: "network-connect"
+                onClicked: configGeneralRoot.testConnection()
+            }
+
+            QQC2.Label {
+                id: testResultLabel
+                Layout.fillWidth: true
+                visible: configGeneralRoot.testResultText !== ""
+                color: configGeneralRoot.testSucceeded ? "#2e7d32" : "#c62828"
+                font.pixelSize: Kirigami.Units.gridUnit * 0.55
+                text: configGeneralRoot.testResultText
+            }
         }
 
 

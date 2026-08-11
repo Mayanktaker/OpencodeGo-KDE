@@ -132,6 +132,15 @@ function isOpenAuthLoginPage(text) {
            text.indexOf("Continue with Google") !== -1;
 }
 
+// Formats a seconds countdown into a compact human-readable reset label
+function formatReset(sec) {
+    if (!sec || sec <= 0) return "";
+    if (sec < 60) return Math.round(sec) + "s";
+    if (sec < 3600) return Math.round(sec / 60) + "m";
+    if (sec < 86400) return Math.round(sec / 3600) + "h";
+    return Math.round(sec / 86400) + "d";
+}
+
 // Extracts usage windows from the authenticated SolidJS Go page's inlined store state
 function parseSolidUsageStore(responseText) {
     // The three rolling usage windows the OpenCode Go page exposes
@@ -146,8 +155,12 @@ function parseSolidUsageStore(responseText) {
         // Read a fixed-size chunk after the marker to tolerate slightly different field ordering
         var chunk = responseText.substr(keyIdx, 300);
         var pctMatch = chunk.match(/usagePercent[^\d]*(\d+)/);
+        var resetMatch = chunk.match(/resetInSec:(\d+)/);
         // Only record the window when its percentage was actually found
-        if (pctMatch) results[key] = parseInt(pctMatch[1], 10);
+        if (pctMatch) {
+            results[key] = parseInt(pctMatch[1], 10);
+            if (resetMatch) results[key + "Reset"] = parseInt(resetMatch[1], 10);
+        }
     }
     if (!found) return null;
 
@@ -155,15 +168,20 @@ function parseSolidUsageStore(responseText) {
     var headline = results.weeklyUsage !== undefined ? results.weeklyUsage
                   : (results.monthlyUsage !== undefined ? results.monthlyUsage
                   : (results.rollingUsage !== undefined ? results.rollingUsage : 0));
+    // Reset countdown of the headline window (weekly first), exposed for the header
+    var headlineResetSec = results.weeklyUsageReset !== undefined ? results.weeklyUsageReset
+                         : (results.monthlyUsageReset !== undefined ? results.monthlyUsageReset
+                         : (results.rollingUsageReset !== undefined ? results.rollingUsageReset : 0));
 
     return {
         isMock: false,
         planName: "OpenCode Go",
         billingPeriod: "Rolling / Weekly / Monthly",
         usagePercent: headline,
-        hourly: results.rollingUsage !== undefined ? [{ label: "Rolling", value: results.rollingUsage, maxValue: 100 }] : [],
-        weekly: results.weeklyUsage !== undefined ? [{ label: "Weekly", value: results.weeklyUsage, maxValue: 100 }] : [],
-        monthly: results.monthlyUsage !== undefined ? [{ label: "Monthly", value: results.monthlyUsage, maxValue: 100 }] : [],
+        resetLabel: formatReset(headlineResetSec),
+        hourly: results.rollingUsage !== undefined ? [{ label: "Rolling", value: results.rollingUsage, maxValue: 100, resetLabel: formatReset(results.rollingUsageReset) }] : [],
+        weekly: results.weeklyUsage !== undefined ? [{ label: "Weekly", value: results.weeklyUsage, maxValue: 100, resetLabel: formatReset(results.weeklyUsageReset) }] : [],
+        monthly: results.monthlyUsage !== undefined ? [{ label: "Monthly", value: results.monthlyUsage, maxValue: 100, resetLabel: formatReset(results.monthlyUsageReset) }] : [],
         lastRefreshed: new Date().toLocaleTimeString()
     };
 }

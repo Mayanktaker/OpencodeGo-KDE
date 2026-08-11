@@ -16,12 +16,22 @@ Item {
     property string billingPeriod: "Current Cycle"
     property int usagePercent: 0
     property bool isMock: false
+    // Raw usage data model used for burn-rate estimate and reset countdown display
+    property var usageData: null
 
     // Color tokens bound from configuration
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
 
     implicitHeight: 46
+
+    // Formulates the reset countdown when real data carries it, otherwise estimates burn-rate velocity
+    function getDurationLabel() {
+        if (usageData && usageData.resetLabel) {
+            return i18n("resets in %1", usageData.resetLabel);
+        }
+        return headerRoot.getEstimatedDaysLeft();
+    }
 
     // Calculates estimated days remaining based on daily consumption velocity
     function getEstimatedDaysLeft() {
@@ -93,9 +103,9 @@ Item {
                 }
             }
 
-            // Billing cycle range and burn-rate velocity estimate text label
+            // Billing cycle range plus reset countdown or burn-rate velocity estimate text label
             PlasmaComponents.Label {
-                text: billingPeriod + " • " + headerRoot.getEstimatedDaysLeft()
+                text: billingPeriod + " • " + headerRoot.getDurationLabel()
                 font.pixelSize: Kirigami.Units.gridUnit * 0.6
                 opacity: 0.75
                 color: textColor

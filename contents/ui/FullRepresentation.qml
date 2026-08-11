@@ -76,6 +76,7 @@ Rectangle {
             billingPeriod: usageData ? usageData.billingPeriod : "Current Cycle"
             usagePercent: usagePercent || 0
             isMock: usageData ? Boolean(usageData.isMock) : false
+            usageData: usageData
         }
 
         // View selector tab bar (visible only in Tabbed layout mode)
