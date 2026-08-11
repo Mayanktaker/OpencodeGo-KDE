@@ -24,7 +24,11 @@ else
     kpackagetool6 -t Plasma/Applet -i "$SCRIPT_DIR"
 fi
 
+# Clear Qt QML bytecode cache so plasmashell reads fresh files
+echo "Clearing Plasma QML bytecode cache..."
+rm -rf "$HOME/.cache/plasmashell/qmlcache/" "$HOME/.cache/plasmawindowed/qmlcache/" 2>/dev/null || true
+
 # Install CLI tool globally
 "$SCRIPT_DIR/install-cli.sh"
 
-echo "Setup Complete! Plasmoid installed to Plasma desktop and 'opencode-usage' CLI tool added to PATH."
+echo "Setup Complete! Plasmoid updated, cache cleared, and 'opencode-usage' CLI tool added to PATH."
