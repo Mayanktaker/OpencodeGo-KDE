@@ -1,0 +1,15 @@
+# © Mayanktaker Computers & Web Development | https://mayanktaker.com
+# Git ignore rules for OpenCode Go KDE Plasmoid
+
+# KDE / Qt build artifacts
+.directory
+*.swp
+*~
+*.bak
+
+# Temporary & cache files
+.cache/
+*.log
+
+# System files
+.DS_Store

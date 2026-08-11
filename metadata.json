@@ -1,0 +1,20 @@
+{
+    "_copyright": "© Mayanktaker Computers & Web Development | https://mayanktaker.com",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "info@mayanktaker.com",
+                "Name": "Mayanktaker"
+            }
+        ],
+        "Category": "System Information",
+        "Description": "Tracks OpenCode Go subscription usage (hourly, weekly, monthly) with customizable presets & themes.",
+        "Icon": "office-chart-bar",
+        "Id": "com.mayanktaker.opencodego-usage",
+        "Name": "OpenCode Go Usage Tracker",
+        "Version": "1.0.0",
+        "Website": "https://mayanktaker.com"
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0"
+}

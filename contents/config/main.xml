@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
+<!-- Configuration schema for OpenCode Go Usage Tracker Plasmoid -->
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+    <kcfgfile name=""/>
+    
+    <!-- General settings group for API authentication and polling -->
+    <group name="General">
+        <entry name="workspaceId" type="String">
+            <!-- Workspace identifier for OpenCode account -->
+            <default></default>
+        </entry>
+        <entry name="authCookie" type="String">
+            <!-- Auth session cookie extracted from opencode.ai -->
+            <default></default>
+        </entry>
+        <entry name="refreshInterval" type="Int">
+            <!-- Timer refresh interval in milliseconds (default: 60,000 ms = 1 min) -->
+            <default>60000</default>
+        </entry>
+    </group>
+
+    <!-- Appearance settings group for themes and custom color palettes -->
+    <group name="Appearance">
+        <entry name="activePreset" type="String">
+            <!-- Active theme preset name -->
+            <default>catppuccin_mocha</default>
+        </entry>
+        <entry name="backgroundColor" type="String">
+            <!-- Widget card background color -->
+            <default>#1e1e2e</default>
+        </entry>
+        <entry name="textColor" type="String">
+            <!-- Primary text color -->
+            <default>#cdd6f4</default>
+        </entry>
+        <entry name="barColor" type="String">
+            <!-- Primary bar chart fill color -->
+            <default>#89b4fa</default>
+        </entry>
+        <entry name="barSecondaryColor" type="String">
+            <!-- Secondary bar chart gradient color -->
+            <default>#74c7ec</default>
+        </entry>
+        <entry name="accentColor" type="String">
+            <!-- Accent highlight and badge color -->
+            <default>#f38ba8</default>
+        </entry>
+    </group>
+</kcfg>
