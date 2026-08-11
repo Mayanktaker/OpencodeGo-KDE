@@ -44,13 +44,20 @@ PlasmoidItem {
                 usageData = data;
                 usagePercent = data.usagePercent || 0;
 
-                // Check quota threshold alert trigger via console (notification fallback)
+                // Send native desktop notification when usage threshold is exceeded
                 var notifyEnabled = Plasmoid.configuration.enableNotifications !== false;
                 var threshold = Plasmoid.configuration.notificationThreshold || 80;
                 
                 if (notifyEnabled && usagePercent >= threshold && lastAlertedPercent < threshold) {
                     lastAlertedPercent = usagePercent;
-                    console.warn("OpenCode Go Quota Alert: Usage has reached " + usagePercent + "% (threshold: " + threshold + "%)");
+                    var title = "OpenCode Go Quota Warning";
+                    var msg = "Subscription usage has reached " + usagePercent + "% (threshold: " + threshold + "%).";
+                    if (typeof Plasmoid.showNotification === "function") {
+                        Plasmoid.showNotification(title, msg, "dialog-warning");
+                    } else if (typeof root.showPassiveNotification === "function") {
+                        root.showPassiveNotification(msg, "short", "dialog-warning");
+                    }
+                    console.warn(title + ": " + msg);
                 } else if (usagePercent < threshold) {
                     lastAlertedPercent = 0;
                 }
