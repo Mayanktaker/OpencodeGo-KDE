@@ -10,10 +10,6 @@ import "../code/api.js" as Api
 PlasmoidItem {
     id: root
 
-    // Tooltip text shown on panel hover (title and icon come from metadata.json)
-    Plasmoid.toolTipMainText: i18n("OpenCode Go Usage Tracker")
-    Plasmoid.toolTipSubText: i18n("Usage: %1%", root.usagePercent)
-
     // State properties storing loaded usage data and UI flags
     property var usageData: null
     property int usagePercent: 0

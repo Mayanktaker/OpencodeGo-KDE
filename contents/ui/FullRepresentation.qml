@@ -141,7 +141,10 @@ Rectangle {
             QQC2.Button {
                 icon.name: "configure"
                 flat: true
-                onClicked: Plasmoid.action("configure").trigger()
+                onClicked: {
+                    var act = Plasmoid.action("configure");
+                    if (act) act.trigger();
+                }
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.text: i18n("Configure Widget")
             }
