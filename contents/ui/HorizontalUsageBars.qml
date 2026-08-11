@@ -70,7 +70,7 @@ Item {
                     PlasmaComponents.Label {
                         text: modelData.title
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.5
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.55
                         color: textColor
                     }
 
@@ -78,7 +78,7 @@ Item {
 
                     PlasmaComponents.Label {
                         text: metrics.used + "/" + metrics.max
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.45
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.5
                         opacity: 0.75
                         color: textColor
                     }
@@ -94,7 +94,7 @@ Item {
                             anchors.centerIn: parent
                             text: metrics.pct + "%"
                             font.bold: true
-                            font.pixelSize: Kirigami.Units.gridUnit * 0.4
+                            font.pixelSize: Kirigami.Units.gridUnit * 0.45
                             color: "#11111b"
                         }
                     }

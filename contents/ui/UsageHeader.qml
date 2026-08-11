@@ -80,7 +80,7 @@ Item {
                 PlasmaComponents.Label {
                     text: planName
                     font.bold: true
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.7
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.75
                     color: textColor
                 }
 
@@ -106,14 +106,15 @@ Item {
             // Billing cycle range plus reset countdown or burn-rate velocity estimate text label
             PlasmaComponents.Label {
                 text: billingPeriod + " • " + headerRoot.getDurationLabel()
-                font.pixelSize: Kirigami.Units.gridUnit * 0.5
+                font.pixelSize: Kirigami.Units.gridUnit * 0.55
                 opacity: 0.75
                 color: textColor
             }
         }
 
-        // Quick 1-click Layout Mode Switcher Icon Button
+        // Quick 1-click Layout Mode Switcher Icon Button (hidden — horizontal-only mode)
         Rectangle {
+            visible: false
             implicitWidth: 22
             implicitHeight: 22
             radius: 11
@@ -162,7 +163,7 @@ Item {
                 anchors.centerIn: parent
                 text: usagePercent + "% Used"
                 font.bold: true
-                font.pixelSize: Kirigami.Units.gridUnit * 0.5
+                font.pixelSize: Kirigami.Units.gridUnit * 0.55
                 color: "#11111b"
             }
         }

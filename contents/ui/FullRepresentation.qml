@@ -12,11 +12,11 @@ import "../code/api.js" as Api
 Rectangle {
     id: fullRoot
 
-    // Dynamic layout mode property bound live to Plasmoid configuration ("tabbed", "all_in_one", "horizontal")
-    property string layoutMode: Plasmoid.configuration.displayLayout ? Plasmoid.configuration.displayLayout : "tabbed"
-    property bool isTabbed: (layoutMode === "tabbed" || layoutMode === "")
-    property bool isAllInOne: (layoutMode === "all_in_one")
-    property bool isHorizontal: (layoutMode === "horizontal")
+    // Layout mode is fixed to horizontal (tabbed/all-in-one views disabled)
+    property string layoutMode: "horizontal"
+    property bool isTabbed: false
+    property bool isAllInOne: false
+    property bool isHorizontal: true
 
     // State properties populated from main.qml
     property var usageData: null
@@ -203,7 +203,7 @@ Rectangle {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: fullRoot.usageData ? i18n("Last updated: %1", fullRoot.usageData.lastRefreshed) : i18n("Loading...")
-                font.pixelSize: Kirigami.Units.gridUnit * 0.45
+                font.pixelSize: Kirigami.Units.gridUnit * 0.5
                 opacity: 0.7
                 color: fullRoot.textColor
             }
