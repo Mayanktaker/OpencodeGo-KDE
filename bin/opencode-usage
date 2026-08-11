@@ -4,13 +4,26 @@
 
 import os
 import sys
+import re
 import json
 import argparse
 import configparser
-import urllib.request
+import subprocess
 import urllib.parse
-import urllib.error
 from datetime import datetime
+
+# Regexes used to lift the three usage windows out of the inlined SolidJS store
+_WINDOW_RE = {
+    "rolling": re.compile(r'rollingUsage:\$R\[\d+\]=\{[^}]*?usagePercent:(\d+)'),
+    "weekly": re.compile(r'weeklyUsage:\$R\[\d+\]=\{[^}]*?usagePercent:(\d+)'),
+    "monthly": re.compile(r'monthlyUsage:\$R\[\d+\]=\{[^}]*?usagePercent:(\d+)'),
+}
+_RESET_RE = {
+    "rolling": re.compile(r'rollingUsage:\$R\[\d+\]=\{[^}]*?resetInSec:(\d+)'),
+    "weekly": re.compile(r'weeklyUsage:\$R\[\d+\]=\{[^}]*?resetInSec:(\d+)'),
+    "monthly": re.compile(r'monthlyUsage:\$R\[\d+\]=\{[^}]*?resetInSec:(\d+)'),
+}
+_OPENAUTH_MARKERS = ("<title>OpenAuth</title>", "openauth.js.org", "/github/authorize", "/google/authorize")
 
 # Parses command line flags and arguments
 def parse_args():
@@ -62,26 +75,95 @@ def get_mock_data():
         ]
     }
 
-# Fetches usage stats from OpenCode API
+# Normalizes a pasted auth credential into a valid Cookie header value
+def normalize_cookie(raw):
+    val = (raw or "").strip()
+    if not val:
+        return ""
+    # Bare iron-session seal (no cookie name) -> prefix with auth=
+    if val.startswith("Fe26"):
+        return "auth=" + val
+    return val
+
+# Formats a seconds countdown into a compact human-readable reset label
+def format_reset(sec):
+    try:
+        sec = int(sec)
+    except (TypeError, ValueError):
+        return ""
+    if sec <= 0:
+        return ""
+    if sec < 60:
+        return f"{sec}s"
+    if sec < 3600:
+        return f"{round(sec / 60)}m"
+    if sec < 86400:
+        return f"{round(sec / 3600)}h"
+    return f"{round(sec / 86400)}d"
+
+# Extracts the rolling/weekly/monthly usage windows from the Go page HTML
+def parse_go_page(html):
+    windows = {}
+    resets = {}
+    for key, rx in _WINDOW_RE.items():
+        m = rx.search(html)
+        if m:
+            windows[key] = int(m.group(1))
+    for key, rx in _RESET_RE.items():
+        m = rx.search(html)
+        if m:
+            resets[key] = int(m.group(1))
+    if not windows:
+        return None
+    headline = windows.get("weekly", windows.get("monthly", windows.get("rolling", 0)))
+    reset_sec = resets.get("weekly", resets.get("monthly", resets.get("rolling", 0)))
+    bars = []
+    for label, key in (("Rolling", "rolling"), ("Weekly", "weekly"), ("Monthly", "monthly")):
+        if key in windows:
+            bars.append({"label": label, "value": windows[key], "maxValue": 100, "resetLabel": format_reset(resets.get(key))})
+    return {
+        "isMock": False,
+        "planName": "OpenCode Go",
+        "billingPeriod": "Rolling / Weekly / Monthly",
+        "usagePercent": headline,
+        "resetLabel": format_reset(reset_sec),
+        "hourly": [b for b in bars if b["label"] == "Rolling"],
+        "weekly": [b for b in bars if b["label"] == "Weekly"],
+        "monthly": [b for b in bars if b["label"] == "Monthly"],
+    }
+
+# Fetches the Go page via curl (Qt's QML XHR strips the Cookie header, so the plasmoid uses curl too)
 def fetch_usage(workspace_id, auth_cookie):
     if not workspace_id or not auth_cookie:
         return get_mock_data()
 
-    url = f"https://opencode.ai/api/workspace/{urllib.parse.quote(workspace_id)}/usage"
-    req = urllib.request.Request(url)
-    req.add_header("Accept", "application/json")
-    req.add_header("Cookie", f"auth={auth_cookie}")
-    req.add_header("X-Workspace-Id", workspace_id)
+    cookie = normalize_cookie(auth_cookie)
+    if "..." in cookie or len(cookie) < 150:
+        return {"isMock": True, "planName": "OpenCode Go (auth cookie looks truncated)", "usagePercent": 0, "weekly": []}
 
+    url = f"https://opencode.ai/workspace/{urllib.parse.quote(workspace_id)}/go"
     try:
-        with urllib.request.urlopen(req, timeout=10) as response:
-            if response.status == 200:
-                data = json.loads(response.read().decode("utf-8"))
-                data["isMock"] = False
-                return data
-    except Exception:
-        pass
-    return get_mock_data()
+        result = subprocess.run(
+            ["curl", "-sSL", "--max-time", "15",
+             "-H", f"Cookie: {cookie}",
+             "-H", "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+             "-H", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,application/json,*/*;q=0.8",
+             "-H", f"X-Workspace-Id: {workspace_id}",
+             url],
+            capture_output=True, text=True, timeout=20,
+        )
+    except FileNotFoundError:
+        return {"isMock": True, "planName": "OpenCode Go (curl not installed)", "usagePercent": 0, "weekly": []}
+    except subprocess.TimeoutExpired:
+        return {"isMock": True, "planName": "OpenCode Go (request timed out)", "usagePercent": 0, "weekly": []}
+
+    html = result.stdout or ""
+    if any(marker in html for marker in _OPENAUTH_MARKERS):
+        return {"isMock": True, "planName": "OpenCode Go (auth cookie invalid or expired)", "usagePercent": 0, "weekly": []}
+    parsed = parse_go_page(html)
+    if parsed:
+        return parsed
+    return {"isMock": True, "planName": "OpenCode Go (could not parse server response)", "usagePercent": 0, "weekly": []}
 
 # Renders progress bar visualization for terminal output
 def render_progress_bar(percent, width=30):
@@ -92,13 +174,14 @@ def render_progress_bar(percent, width=30):
 # Exports usage dataset to formatted CSV file
 def export_csv(data, file_path):
     target_path = os.path.expanduser(file_path)
-    lines = ["Category,Label,Value,Max_Quota,Percentage_Used"]
-    for item in data.get("weekly", []):
-        label = item.get("label", "N/A")
-        val = item.get("value", 0)
-        max_v = item.get("maxValue", 1000)
-        pct = round((val / max_v) * 100, 1) if max_v > 0 else 0
-        lines.append(f"Weekly,{label},{val},{max_v},{pct}%")
+    lines = ["Category,Label,Value,Max_Quota,Percentage_Used,Resets_In"]
+    for category in ("hourly", "weekly", "monthly"):
+        for item in data.get(category, []):
+            label = item.get("label", "N/A")
+            val = item.get("value", 0)
+            max_v = item.get("maxValue", 100)
+            pct = round((val / max_v) * 100, 1) if max_v > 0 else 0
+            lines.append(f"{category.capitalize()},{label},{val},{max_v},{pct}%,{item.get('resetLabel', '')}")
 
     with open(target_path, "w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")
@@ -134,15 +217,22 @@ def main():
     print("\033[1;36m===========================================\033[0m")
     print(f"Cycle   : {data.get('billingPeriod', 'N/A')}")
     print(f"Status  : {'Demo Mode' if data.get('isMock') else 'Live API Connected'}")
-    print(f"Quota   : {render_progress_bar(data.get('usagePercent', 0))}")
+    headline = data.get('usagePercent', 0)
+    reset = data.get('resetLabel', '')
+    print(f"Quota   : {render_progress_bar(headline)}" + (f"  (resets in {reset})" if reset else ""))
     print("-------------------------------------------")
-    print("Weekly Breakdown:")
-    for item in data.get("weekly", []):
-        val = item.get("value", 0)
-        max_v = item.get("maxValue", 1000)
-        p = int(val / max_v * 100) if max_v > 0 else 0
-        mini_bar = "■" * int(p / 10) + " " * (10 - int(p / 10))
-        print(f"  {item.get('label', 'N/A'):<5} [{mini_bar}] {val:>4} / {max_v}")
+    for category, title in (("hourly", "Rolling Window"), ("weekly", "Weekly Window"), ("monthly", "Monthly Window")):
+        items = data.get(category, [])
+        if not items:
+            continue
+        print(f"{title}:")
+        for item in items:
+            val = item.get("value", 0)
+            max_v = item.get("maxValue", 100)
+            p = int(val / max_v * 100) if max_v > 0 else 0
+            mini_bar = "■" * int(p / 10) + " " * (10 - int(p / 10))
+            reset_lbl = item.get("resetLabel", "")
+            print(f"  {item.get('label', 'N/A'):<8} [{mini_bar}] {p:>3}% / {max_v}" + (f"   resets in {reset_lbl}" if reset_lbl else ""))
     print("\033[1;36m===========================================\033[0m")
 
 if __name__ == "__main__":
