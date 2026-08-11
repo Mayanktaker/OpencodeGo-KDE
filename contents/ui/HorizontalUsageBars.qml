@@ -63,6 +63,7 @@ Item {
                         source: modelData.icon
                         implicitWidth: 16
                         implicitHeight: 16
+                        color: textColor
                     }
 
                     PlasmaComponents.Label {
@@ -77,7 +78,7 @@ Item {
                     PlasmaComponents.Label {
                         text: metrics.used + " / " + metrics.max
                         font.pixelSize: Kirigami.Units.gridUnit * 0.55
-                        opacity: 0.7
+                        opacity: 0.75
                         color: textColor
                     }
 
@@ -110,7 +111,7 @@ Item {
                         anchors.fill: parent
                         radius: 11
                         color: Qt.darker(backgroundColor, 1.4)
-                        border.color: Qt.alpha(textColor, 0.1)
+                        border.color: barMouseArea.containsMouse ? accentColor : Qt.alpha(textColor, 0.15)
                         border.width: 1
 
                         // Animated horizontal progress fill bar rectangle
@@ -139,6 +140,7 @@ Item {
 
                     // Tooltip displaying detailed statistics on bar hover
                     QQC2.ToolTip.visible: barMouseArea.containsMouse
+                    QQC2.ToolTip.delay: 100
                     QQC2.ToolTip.text: modelData.title + ": " + metrics.used + " of " + metrics.max + " (" + metrics.pct + "% used)"
                 }
             }
