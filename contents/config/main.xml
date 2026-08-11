@@ -17,6 +17,10 @@
             <!-- Auth session cookie extracted from opencode.ai -->
             <default></default>
         </entry>
+        <entry name="apiBaseUrl" type="String">
+            <!-- API Base URL for usage endpoint -->
+            <default>https://opencode.ai/api/v1</default>
+        </entry>
         <entry name="refreshInterval" type="Int">
             <!-- Timer refresh interval in milliseconds (default: 60,000 ms = 1 min) -->
             <default>60000</default>

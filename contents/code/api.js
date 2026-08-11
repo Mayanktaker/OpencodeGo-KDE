@@ -56,15 +56,21 @@ function getMockData() {
 }
 
 // Primary API function to fetch usage data asynchronously using XMLHttpRequest
-function fetchUsageData(workspaceId, authCookie, callback) {
+function fetchUsageData(workspaceId, authCookie, apiBaseUrl, callback) {
     // Fallback to mock data if auth cookie or workspace ID is missing
     if (!authCookie || authCookie.trim() === "" || !workspaceId || workspaceId.trim() === "") {
         callback(null, getMockData());
         return;
     }
 
+    var baseUrl = apiBaseUrl && apiBaseUrl.trim() !== "" ? apiBaseUrl.trim() : "https://opencode.ai/api/workspace";
+    // Strip trailing slash if present
+    if (baseUrl.endsWith("/")) {
+        baseUrl = baseUrl.slice(0, -1);
+    }
+
     // Prepare target endpoint URL
-    var targetUrl = "https://opencode.ai/api/workspace/" + encodeURIComponent(workspaceId.trim()) + "/usage";
+    var targetUrl = baseUrl + "/" + encodeURIComponent(workspaceId.trim()) + "/usage";
     
     // Create XMLHttpRequest instance
     var xhr = new XMLHttpRequest();

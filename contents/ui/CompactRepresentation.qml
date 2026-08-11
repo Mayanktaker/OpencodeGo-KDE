@@ -12,6 +12,8 @@ Item {
     id: compactRoot
 
     // Preferred width and height for panel layout integration
+    implicitWidth: panelRow.implicitWidth
+    implicitHeight: panelRow.implicitHeight
     Layout.minimumWidth: panelRow.implicitWidth
     Layout.minimumHeight: panelRow.implicitHeight
 
@@ -42,6 +44,7 @@ Item {
             Kirigami.Icon {
                 id: widgetIcon
                 source: "com.mayanktaker.opencodego-usage"
+                fallback: "office-chart-bar"
                 implicitWidth: Kirigami.Units.iconSizes.smallMedium
                 implicitHeight: Kirigami.Units.iconSizes.smallMedium
             }
