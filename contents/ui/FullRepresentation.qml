@@ -72,11 +72,11 @@ Rectangle {
             id: usageHeader
             visible: Plasmoid.configuration.showTitle !== false
             Layout.fillWidth: true
-            planName: usageData ? usageData.planName : "OpenCode Go"
-            billingPeriod: usageData ? usageData.billingPeriod : "Current Cycle"
-            usagePercent: usagePercent || 0
-            isMock: usageData ? Boolean(usageData.isMock) : false
-            usageData: usageData
+            planName: fullRoot.usageData ? fullRoot.usageData.planName : "OpenCode Go"
+            billingPeriod: fullRoot.usageData ? fullRoot.usageData.billingPeriod : "Current Cycle"
+            usagePercent: fullRoot.usagePercent || 0
+            isMock: fullRoot.usageData ? Boolean(fullRoot.usageData.isMock) : false
+            usageData: fullRoot.usageData
         }
 
         // View selector tab bar (visible only in Tabbed layout mode)
@@ -118,10 +118,10 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             chartData: {
-                if (!usageData) return [];
-                if (fullRoot.activeView === "hourly") return usageData.hourly || [];
-                if (fullRoot.activeView === "monthly") return usageData.monthly || [];
-                return usageData.weekly || [];
+                if (!fullRoot.usageData) return [];
+                if (fullRoot.activeView === "hourly") return fullRoot.usageData.hourly || [];
+                if (fullRoot.activeView === "monthly") return fullRoot.usageData.monthly || [];
+                return fullRoot.usageData.weekly || [];
             }
         }
 
@@ -142,12 +142,12 @@ Rectangle {
                     text: i18n("📊 Hourly Usage (24 Hours)")
                     font.bold: true
                     font.pixelSize: Kirigami.Units.gridUnit * 0.65
-                    color: accentColor
+                    color: fullRoot.accentColor
                 }
                 UsageBarChart {
                     Layout.fillWidth: true
                     implicitHeight: 120
-                    chartData: usageData ? usageData.hourly || [] : []
+                    chartData: fullRoot.usageData ? fullRoot.usageData.hourly || [] : []
                 }
 
                 // Weekly Usage Section
@@ -155,12 +155,12 @@ Rectangle {
                     text: i18n("📅 Weekly Usage (7 Days)")
                     font.bold: true
                     font.pixelSize: Kirigami.Units.gridUnit * 0.65
-                    color: accentColor
+                    color: fullRoot.accentColor
                 }
                 UsageBarChart {
                     Layout.fillWidth: true
                     implicitHeight: 120
-                    chartData: usageData ? usageData.weekly || [] : []
+                    chartData: fullRoot.usageData ? fullRoot.usageData.weekly || [] : []
                 }
 
                 // Monthly Usage Section
@@ -168,12 +168,12 @@ Rectangle {
                     text: i18n("🗓️ Monthly Usage (4 Weeks)")
                     font.bold: true
                     font.pixelSize: Kirigami.Units.gridUnit * 0.65
-                    color: accentColor
+                    color: fullRoot.accentColor
                 }
                 UsageBarChart {
                     Layout.fillWidth: true
                     implicitHeight: 120
-                    chartData: usageData ? usageData.monthly || [] : []
+                    chartData: fullRoot.usageData ? fullRoot.usageData.monthly || [] : []
                 }
             }
         }
@@ -183,7 +183,7 @@ Rectangle {
             visible: isHorizontal
             Layout.fillWidth: true
             Layout.fillHeight: true
-            usageData: usageData
+            usageData: fullRoot.usageData
         }
 
         // Footer status bar row containing refresh details, export, and manual triggers
@@ -202,10 +202,10 @@ Rectangle {
             // Text label displaying last refreshed timestamp
             PlasmaComponents.Label {
                 Layout.fillWidth: true
-                text: usageData ? i18n("Last updated: %1", usageData.lastRefreshed) : i18n("Loading...")
+                text: fullRoot.usageData ? i18n("Last updated: %1", fullRoot.usageData.lastRefreshed) : i18n("Loading...")
                 font.pixelSize: Kirigami.Units.gridUnit * 0.5
                 opacity: 0.7
-                color: textColor
+                color: fullRoot.textColor
             }
 
             // Data export compact icon button
@@ -310,8 +310,8 @@ Rectangle {
     QQC2.Dialog {
         id: exportDialog
         anchors.centerIn: parent
-        width: Math.min(parent.width - 24, 400)
-        height: Math.min(parent.height - 24, 300)
+        width: 400
+        height: 300
         title: i18n("Export CSV Data")
         modal: true
         standardButtons: QQC2.Dialog.Close
