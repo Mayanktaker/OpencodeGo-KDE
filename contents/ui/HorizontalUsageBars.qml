@@ -55,7 +55,7 @@ Item {
                 // Extract metrics object for current interval row
                 property var metrics: getIntervalMetrics(modelData.data)
 
-                // Row header containing category icon, title, used count, and percentage
+                // Row header containing category icon, title, and percentage
                 RowLayout {
                     Layout.fillWidth: true
                     spacing: 4
@@ -75,13 +75,6 @@ Item {
                     }
 
                     Item { Layout.fillWidth: true }
-
-                    PlasmaComponents.Label {
-                        text: metrics.used + "/" + metrics.max
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.5
-                        opacity: 0.75
-                        color: textColor
-                    }
 
                     Rectangle {
                         implicitWidth: pctText.implicitWidth + 6
@@ -110,7 +103,7 @@ Item {
                     // Bar background Track rectangle
                     Rectangle {
                         anchors.fill: parent
-                        radius: 6
+                        radius: 3
                         color: Qt.darker(backgroundColor, 1.4)
                         border.color: barMouseArea.containsMouse ? accentColor : Qt.alpha(textColor, 0.15)
                         border.width: 1
@@ -122,7 +115,7 @@ Item {
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
                             anchors.margins: 1
-                            radius: 5
+                            radius: 2
                             width: Math.max(4, (parent.width - 2) * (metrics.pct / 100))
 
                             // Gradient fill using primary and secondary theme bar colors

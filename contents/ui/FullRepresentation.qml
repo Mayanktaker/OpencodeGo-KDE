@@ -77,6 +77,7 @@ Rectangle {
             usagePercent: fullRoot.usagePercent || 0
             isMock: fullRoot.usageData ? Boolean(fullRoot.usageData.isMock) : false
             usageData: fullRoot.usageData
+            onRequestRefresh: fullRoot.requestRefresh()
         }
 
         // View selector tab bar (visible only in Tabbed layout mode)
@@ -186,7 +187,7 @@ Rectangle {
             usageData: fullRoot.usageData
         }
 
-        // Footer status bar row containing refresh details, export, and manual triggers
+        // Footer — timestamp only
         RowLayout {
             Layout.fillWidth: true
             spacing: Kirigami.Units.smallSpacing / 2
@@ -203,93 +204,9 @@ Rectangle {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: fullRoot.usageData ? i18n("Last updated: %1", fullRoot.usageData.lastRefreshed) : i18n("Loading...")
-                font.pixelSize: Kirigami.Units.gridUnit * 0.5
-                opacity: 0.7
+                font.pixelSize: Kirigami.Units.gridUnit * 0.45
+                opacity: 0.6
                 color: fullRoot.textColor
-            }
-
-            // Data export compact icon button
-            MouseArea {
-                id: exportMouse
-                implicitWidth: 14
-                implicitHeight: 14
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: fullRoot.handleExport()
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 3
-                    color: exportMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
-
-                    Kirigami.Icon {
-                        anchors.centerIn: parent
-                        implicitWidth: 10
-                        implicitHeight: 10
-                        source: "document-export"
-                        color: exportMouse.containsMouse ? accentColor : textColor
-                    }
-                }
-
-                QQC2.ToolTip.visible: exportMouse.containsMouse
-                QQC2.ToolTip.delay: 100
-                QQC2.ToolTip.text: i18n("Export Usage CSV")
-            }
-
-            // Manual refresh compact icon button
-            MouseArea {
-                id: refreshMouse
-                implicitWidth: 14
-                implicitHeight: 14
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: requestRefresh()
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 3
-                    color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
-
-                    Kirigami.Icon {
-                        anchors.centerIn: parent
-                        implicitWidth: 10
-                        implicitHeight: 10
-                        source: "view-refresh"
-                        color: refreshMouse.containsMouse ? accentColor : textColor
-                    }
-                }
-
-                QQC2.ToolTip.visible: refreshMouse.containsMouse
-                QQC2.ToolTip.delay: 100
-                QQC2.ToolTip.text: i18n("Refresh Now")
-            }
-
-            // Configure widget settings compact icon button
-            MouseArea {
-                id: configMouse
-                implicitWidth: 14
-                implicitHeight: 14
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: Plasmoid.configure()
-
-                Rectangle {
-                    anchors.fill: parent
-                    radius: 3
-                    color: configMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
-
-                    Kirigami.Icon {
-                        anchors.centerIn: parent
-                        implicitWidth: 10
-                        implicitHeight: 10
-                        source: "configure"
-                        color: configMouse.containsMouse ? accentColor : textColor
-                    }
-                }
-
-                QQC2.ToolTip.visible: configMouse.containsMouse
-                QQC2.ToolTip.delay: 100
-                QQC2.ToolTip.text: i18n("Configure Widget")
             }
         }
     }
