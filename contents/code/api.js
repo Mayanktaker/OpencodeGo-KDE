@@ -7,6 +7,18 @@ function calculatePercentage(used, total) {
     return Math.min(100, Math.max(0, Math.round((used / total) * 100)));
 }
 
+// Normalizes a user-pasted auth credential into a valid HTTP Cookie header value
+function buildCookieHeader(authCookie) {
+    var val = (authCookie || "").trim();
+    if (!val) return "";
+    // Bare iron-session seal pasted without its cookie name (all opencode seals start with Fe26.2**)
+    if (val.indexOf("Fe26") === 0) {
+        return "auth=" + val;
+    }
+    // Already a name=value pair or a full Cookie header string (e.g. auth=...; __cf_bm=...)
+    return val;
+}
+
 // Generates realistic mock usage data when no workspace credentials are provided
 function getMockData() {
     var hourlyData = [];
@@ -56,10 +68,10 @@ function fetchUsageData(workspaceId, authCookie, callback) {
         return;
     }
 
-    var cookieVal = authCookie.trim();
+    var finalCookie = buildCookieHeader(authCookie);
     // Detect truncated cookie values copied from browser DevTools table
-    if (cookieVal.indexOf("...") !== -1 || (cookieVal.indexOf("=") === -1 && cookieVal.length < 150)) {
-        callback("Auth Cookie is truncated (...). Double-click the cell in DevTools to copy all 500+ characters, or copy from Network tab.", null);
+    if (finalCookie.indexOf("...") !== -1 || finalCookie.length < 150) {
+        callback("Auth Cookie is truncated or incomplete. Double-click the cell in DevTools to copy the entire value (500+ characters), or paste the full Cookie header string.", null);
         return;
     }
 
@@ -69,14 +81,9 @@ function fetchUsageData(workspaceId, authCookie, callback) {
 
     var xhr = new XMLHttpRequest();
     xhr.open("GET", targetUrl, true);
-    xhr.withCredentials = true;
 
-    // Set request headers for cookie authentication and session tracking
-    var cookieVal = authCookie.trim();
-    var finalCookie = cookieVal.indexOf("=") !== -1 ? cookieVal : "auth=" + cookieVal;
-    
+    // Set request headers for cookie authentication; opencode.ai authenticates via the auth cookie only
     xhr.setRequestHeader("Cookie", finalCookie);
-    xhr.setRequestHeader("Authorization", "Bearer " + (cookieVal.indexOf("=") !== -1 ? cookieVal.split("=")[1] : cookieVal));
     xhr.setRequestHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
     xhr.setRequestHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,application/json,*/*;q=0.8");
     xhr.setRequestHeader("X-Workspace-Id", cleanWs);
@@ -114,6 +121,53 @@ function fetchUsageData(workspaceId, authCookie, callback) {
     xhr.send();
 }
 
+// Detects the OpenAuth login page returned when auth credentials are rejected
+function isOpenAuthLoginPage(text) {
+    // Anchor on markers unique to the OpenAuth login page instead of a loose substring match
+    return text.indexOf("<title>OpenAuth</title>") !== -1 ||
+           text.indexOf("openauth.js.org") !== -1 ||
+           text.indexOf("/github/authorize") !== -1 ||
+           text.indexOf("/google/authorize") !== -1 ||
+           text.indexOf("Continue with GitHub") !== -1 ||
+           text.indexOf("Continue with Google") !== -1;
+}
+
+// Extracts usage windows from the authenticated SolidJS Go page's inlined store state
+function parseSolidUsageStore(responseText) {
+    // The three rolling usage windows the OpenCode Go page exposes
+    var windows = ["rollingUsage", "weeklyUsage", "monthlyUsage"];
+    var results = {};
+    var found = false;
+    for (var i = 0; i < windows.length; i++) {
+        var key = windows[i];
+        var keyIdx = responseText.indexOf(key + ":$R");
+        if (keyIdx === -1) continue;
+        found = true;
+        // Read a fixed-size chunk after the marker to tolerate slightly different field ordering
+        var chunk = responseText.substr(keyIdx, 300);
+        var pctMatch = chunk.match(/usagePercent[^\d]*(\d+)/);
+        // Only record the window when its percentage was actually found
+        if (pctMatch) results[key] = parseInt(pctMatch[1], 10);
+    }
+    if (!found) return null;
+
+    // Headline badge follows the same weekly-quota convention the widget's mock data uses
+    var headline = results.weeklyUsage !== undefined ? results.weeklyUsage
+                  : (results.monthlyUsage !== undefined ? results.monthlyUsage
+                  : (results.rollingUsage !== undefined ? results.rollingUsage : 0));
+
+    return {
+        isMock: false,
+        planName: "OpenCode Go",
+        billingPeriod: "Rolling / Weekly / Monthly",
+        usagePercent: headline,
+        hourly: results.rollingUsage !== undefined ? [{ label: "Rolling", value: results.rollingUsage, maxValue: 100 }] : [],
+        weekly: results.weeklyUsage !== undefined ? [{ label: "Weekly", value: results.weeklyUsage, maxValue: 100 }] : [],
+        monthly: results.monthlyUsage !== undefined ? [{ label: "Monthly", value: results.monthlyUsage, maxValue: 100 }] : [],
+        lastRefreshed: new Date().toLocaleTimeString()
+    };
+}
+
 // Smart parser capable of extracting usage data from JSON responses, Next.js HTML payloads, or page text
 function parseAnyResponse(responseText) {
     var trimmed = responseText.trim();
@@ -127,7 +181,7 @@ function parseAnyResponse(responseText) {
     }
 
     // Case 2: OpenAuth login page returned (auth cookie invalid/expired)
-    if (trimmed.indexOf("openauth") !== -1 || trimmed.indexOf("/github/authorize") !== -1 || trimmed.indexOf("/google/authorize") !== -1) {
+    if (isOpenAuthLoginPage(trimmed)) {
         throw new Error("Auth Cookie is invalid or expired. Please update Auth Cookie in settings.");
     }
 
@@ -143,19 +197,23 @@ function parseAnyResponse(responseText) {
         } catch (e) {}
     }
 
-    // Case 4: Regex pattern extraction for metrics embedded in text
-    var hourlyMatch = responseText.match(/hourly[^\d]*(\d+)[^\d]+(\d+)/i);
-    var weeklyMatch = responseText.match(/weekly[^\d]*(\d+)[^\d]+(\d+)/i);
-    var monthlyMatch = responseText.match(/monthly[^\d]*(\d+)[^\d]+(\d+)/i);
+    // Case 4: SolidJS store state inlined on the authenticated Go page (rollingUsage/weeklyUsage/monthlyUsage)
+    var solidModel = parseSolidUsageStore(responseText);
+    if (solidModel) {
+        return solidModel;
+    }
 
-    if (hourlyMatch || weeklyMatch || monthlyMatch) {
+    // Case 5: Regex pattern extraction for usagePercent values embedded in the page text
+    var usagePercentMatch = responseText.match(/usagePercent[^\d]*(\d+)/i);
+    if (usagePercentMatch) {
+        var windowPct = parseInt(usagePercentMatch[1], 10);
         return {
             isMock: false,
             planName: "OpenCode Go",
             billingPeriod: "Current Cycle",
-            usagePercent: weeklyMatch ? calculatePercentage(parseInt(weeklyMatch[1], 10), parseInt(weeklyMatch[2], 10)) : 0,
+            usagePercent: windowPct,
             hourly: [],
-            weekly: [],
+            weekly: [{ label: "Usage", value: windowPct, maxValue: 100 }],
             monthly: [],
             lastRefreshed: new Date().toLocaleTimeString()
         };
