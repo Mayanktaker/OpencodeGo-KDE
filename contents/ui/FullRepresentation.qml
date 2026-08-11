@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Full expanded representation component displaying complete metrics, interactive charts, export, and settings shortcut
+// Full expanded representation component displaying complete metrics, interactive charts, layout toggles, export, and settings shortcut
 
 import QtQuick
 import QtQuick.Layouts
@@ -13,13 +13,16 @@ Rectangle {
     id: fullRoot
 
     // Preferred layout dimensions for Plasma expanded popup representation
-    Layout.minimumWidth: 360
-    Layout.minimumHeight: 380
-    Layout.preferredWidth: 380
-    Layout.preferredHeight: 400
+    Layout.minimumWidth: 380
+    Layout.minimumHeight: isAllInOne ? 540 : 380
+    Layout.preferredWidth: 420
+    Layout.preferredHeight: isAllInOne ? 580 : 400
 
     // Currently selected chart view mode ("hourly", "weekly", "monthly")
     property string activeView: "weekly"
+
+    // Layout style property bound from Plasmoid configuration ("tabbed" vs "all_in_one")
+    property bool isAllInOne: (Plasmoid.configuration.displayLayout === "all_in_one")
 
     // Custom theme colors bound from Plasmoid configuration
     property color backgroundColor: Plasmoid.configuration.backgroundColor || "#1e1e2e"
@@ -53,9 +56,10 @@ Rectangle {
             isMock: root.usageData ? root.usageData.isMock : true
         }
 
-        // View selector tab bar for toggling chart intervals
+        // View selector tab bar (visible only in tabbed layout mode)
         ViewSelector {
             id: viewSelector
+            visible: !isAllInOne
             Layout.fillWidth: true
             activeView: fullRoot.activeView
             onViewSelected: function(viewName) {
@@ -84,9 +88,10 @@ Rectangle {
             }
         }
 
-        // Main bar chart visualization component
+        // Single chart representation for Tabbed layout mode
         UsageBarChart {
-            id: barChart
+            id: singleBarChart
+            visible: !isAllInOne
             Layout.fillWidth: true
             Layout.fillHeight: true
             chartData: {
@@ -94,6 +99,59 @@ Rectangle {
                 if (fullRoot.activeView === "hourly") return root.usageData.hourly || [];
                 if (fullRoot.activeView === "monthly") return root.usageData.monthly || [];
                 return root.usageData.weekly || [];
+            }
+        }
+
+        // Scrollable All-in-One Dashboard container showing all 3 charts together
+        QQC2.ScrollView {
+            visible: isAllInOne
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+
+            // Vertical column layout organizing all 3 usage section charts
+            ColumnLayout {
+                width: parent.width
+                spacing: 12
+
+                // Hourly Usage Section
+                PlasmaComponents.Label {
+                    text: i18n("📊 Hourly Usage (24 Hours)")
+                    font.bold: true
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.65
+                    color: accentColor
+                }
+                UsageBarChart {
+                    Layout.fillWidth: true
+                    implicitHeight: 120
+                    chartData: root.usageData ? root.usageData.hourly || [] : []
+                }
+
+                // Weekly Usage Section
+                PlasmaComponents.Label {
+                    text: i18n("📅 Weekly Usage (7 Days)")
+                    font.bold: true
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.65
+                    color: accentColor
+                }
+                UsageBarChart {
+                    Layout.fillWidth: true
+                    implicitHeight: 120
+                    chartData: root.usageData ? root.usageData.weekly || [] : []
+                }
+
+                // Monthly Usage Section
+                PlasmaComponents.Label {
+                    text: i18n("🗓️ Monthly Usage (4 Weeks)")
+                    font.bold: true
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.65
+                    color: accentColor
+                }
+                UsageBarChart {
+                    Layout.fillWidth: true
+                    implicitHeight: 120
+                    chartData: root.usageData ? root.usageData.monthly || [] : []
+                }
             }
         }
 

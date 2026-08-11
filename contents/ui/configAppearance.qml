@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Appearance configuration page with theme presets and custom color pickers
+// Appearance configuration page with layout mode selector, theme presets, and custom color pickers
 
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -11,6 +11,7 @@ Kirigami.FormLayout {
     id: configAppearanceRoot
 
     // Configuration property aliases bound automatically via cfg_ prefix to main.xml
+    property alias cfg_displayLayout: layoutCombo.currentValue
     property alias cfg_activePreset: presetCombo.currentValue
     property alias cfg_backgroundColor: bgColorField.text
     property alias cfg_textColor: textColorField.text
@@ -45,6 +46,18 @@ Kirigami.FormLayout {
             cfg_barSecondaryColor = "#8be9fd";
             cfg_accentColor = "#ff5555";
         }
+    }
+
+    // Layout style mode combo box selector
+    QQC2.ComboBox {
+        id: layoutCombo
+        Kirigami.FormData.label: i18n("Display Layout:")
+        textRole: "text"
+        valueRole: "value"
+        model: [
+            { text: i18n("Tabbed View (Hourly / Weekly / Monthly Tabs)"), value: "tabbed" },
+            { text: i18n("All-in-One Dashboard (All 3 Charts Together)"), value: "all_in_one" }
+        ]
     }
 
     // Theme preset combo box selector

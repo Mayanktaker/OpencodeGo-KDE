@@ -33,6 +33,10 @@
 
     <!-- Appearance settings group for themes and custom color palettes -->
     <group name="Appearance">
+        <entry name="displayLayout" type="String">
+            <!-- Layout mode: "tabbed" (Tab switcher) or "all_in_one" (All 3 charts on one screen) -->
+            <default>tabbed</default>
+        </entry>
         <entry name="activePreset" type="String">
             <!-- Active theme preset name -->
             <default>catppuccin_mocha</default>
