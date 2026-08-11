@@ -15,6 +15,9 @@ Item {
     Layout.minimumWidth: panelRow.implicitWidth
     Layout.minimumHeight: panelRow.implicitHeight
 
+    // State properties populated from main.qml
+    property int usagePercent: 0
+
     // Computes dynamic status color based on percentage threshold
     function getBadgeColor(pct) {
         if (pct >= 90) return "#ff5555";
@@ -27,7 +30,7 @@ Item {
         id: mouseArea
         anchors.fill: parent
         hoverEnabled: true
-        onClicked: root.expanded = !root.expanded
+        onClicked: Plasmoid.expanded = !Plasmoid.expanded
 
         // Row container holding widget icon and usage percentage badge
         RowLayout {
@@ -49,7 +52,7 @@ Item {
                 implicitWidth: badgeLabel.implicitWidth + 8
                 implicitHeight: badgeLabel.implicitHeight + 4
                 radius: Kirigami.Units.smallSpacing
-                color: compactRoot.getBadgeColor(root.usagePercent || 0)
+                color: compactRoot.getBadgeColor(usagePercent || 0)
 
                 // Behavior animation for smooth badge color transitions
                 Behavior on color {
@@ -60,7 +63,7 @@ Item {
                 PlasmaComponents.Label {
                     id: badgeLabel
                     anchors.centerIn: parent
-                    text: root.usagePercent !== undefined ? root.usagePercent + "%" : "--%"
+                    text: usagePercent !== undefined ? usagePercent + "%" : "--%"
                     font.pixelSize: Kirigami.Units.gridUnit * 0.55
                     font.bold: true
                     color: "#11111b"
@@ -70,6 +73,6 @@ Item {
 
         // Tooltip displaying hover overview details
         QQC2.ToolTip.visible: mouseArea.containsMouse
-        QQC2.ToolTip.text: i18n("OpenCode Go Usage: %1%\nClick to open usage chart", root.usagePercent || 0)
+        QQC2.ToolTip.text: i18n("OpenCode Go Usage: %1%\nClick to open usage chart", usagePercent || 0)
     }
 }

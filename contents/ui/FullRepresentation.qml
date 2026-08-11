@@ -18,6 +18,13 @@ Rectangle {
     property bool isAllInOne: (layoutMode === "all_in_one")
     property bool isHorizontal: (layoutMode === "horizontal")
 
+    // State properties populated from main.qml
+    property var usageData: null
+    property int usagePercent: 0
+    property string errorMessage: ""
+    property bool isLoading: false
+    signal requestRefresh()
+
     // Preferred layout dimensions for Plasma expanded popup representation
     Layout.minimumWidth: 380
     Layout.minimumHeight: isAllInOne ? 540 : (isHorizontal ? 340 : 380)
@@ -47,8 +54,8 @@ Rectangle {
 
     // Exports usage statistics to CSV file
     function handleExport() {
-        if (!root.usageData) return;
-        var csvContent = Api.generateCSV(root.usageData);
+        if (!usageData) return;
+        var csvContent = Api.generateCSV(usageData);
         // Print CSV data overview to log output
         console.log("Exported CSV Usage Data:\n" + csvContent);
     }
@@ -64,10 +71,10 @@ Rectangle {
             id: usageHeader
             visible: Plasmoid.configuration.showTitle !== false
             Layout.fillWidth: true
-            planName: root.usageData ? root.usageData.planName : "OpenCode Go"
-            billingPeriod: root.usageData ? root.usageData.billingPeriod : "Current Cycle"
-            usagePercent: root.usagePercent || 0
-            isMock: root.usageData ? root.usageData.isMock : true
+            planName: usageData ? usageData.planName : "OpenCode Go"
+            billingPeriod: usageData ? usageData.billingPeriod : "Current Cycle"
+            usagePercent: usagePercent || 0
+            isMock: usageData ? usageData.isMock : true
         }
 
         // View selector tab bar (visible only in Tabbed layout mode)
@@ -83,7 +90,7 @@ Rectangle {
 
         // Error message banner displayed when network or auth fails
         Rectangle {
-            visible: root.errorMessage !== ""
+            visible: errorMessage !== ""
             Layout.fillWidth: true
             implicitHeight: errorText.implicitHeight + 8
             radius: 4
@@ -96,7 +103,7 @@ Rectangle {
                 anchors.centerIn: parent
                 width: parent.width - 16
                 wrapMode: Text.WordWrap
-                text: root.errorMessage
+                text: errorMessage
                 font.pixelSize: Kirigami.Units.gridUnit * 0.5
                 color: "#ff5555"
             }
@@ -109,10 +116,10 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             chartData: {
-                if (!root.usageData) return [];
-                if (fullRoot.activeView === "hourly") return root.usageData.hourly || [];
-                if (fullRoot.activeView === "monthly") return root.usageData.monthly || [];
-                return root.usageData.weekly || [];
+                if (!usageData) return [];
+                if (fullRoot.activeView === "hourly") return usageData.hourly || [];
+                if (fullRoot.activeView === "monthly") return usageData.monthly || [];
+                return usageData.weekly || [];
             }
         }
 
@@ -138,7 +145,7 @@ Rectangle {
                 UsageBarChart {
                     Layout.fillWidth: true
                     implicitHeight: 120
-                    chartData: root.usageData ? root.usageData.hourly || [] : []
+                    chartData: usageData ? usageData.hourly || [] : []
                 }
 
                 // Weekly Usage Section
@@ -151,7 +158,7 @@ Rectangle {
                 UsageBarChart {
                     Layout.fillWidth: true
                     implicitHeight: 120
-                    chartData: root.usageData ? root.usageData.weekly || [] : []
+                    chartData: usageData ? usageData.weekly || [] : []
                 }
 
                 // Monthly Usage Section
@@ -164,7 +171,7 @@ Rectangle {
                 UsageBarChart {
                     Layout.fillWidth: true
                     implicitHeight: 120
-                    chartData: root.usageData ? root.usageData.monthly || [] : []
+                    chartData: usageData ? usageData.monthly || [] : []
                 }
             }
         }
@@ -174,7 +181,7 @@ Rectangle {
             visible: isHorizontal
             Layout.fillWidth: true
             Layout.fillHeight: true
-            usageData: root.usageData
+            usageData: usageData
         }
 
         // Footer status bar row containing refresh details, export, and manual triggers
@@ -184,16 +191,16 @@ Rectangle {
 
             // Busy indicator spinner when fetching data
             QQC2.BusyIndicator {
-                implicitWidth: 14
-                implicitHeight: 14
-                running: root.isLoading
-                visible: root.isLoading
+                implicitWidth: 12
+                implicitHeight: 12
+                running: isLoading
+                visible: isLoading
             }
 
             // Text label displaying last refreshed timestamp
             PlasmaComponents.Label {
                 Layout.fillWidth: true
-                text: root.usageData ? i18n("Last updated: %1", root.usageData.lastRefreshed) : i18n("Loading...")
+                text: usageData ? i18n("Last updated: %1", usageData.lastRefreshed) : i18n("Loading...")
                 font.pixelSize: Kirigami.Units.gridUnit * 0.5
                 opacity: 0.7
                 color: textColor
@@ -202,8 +209,8 @@ Rectangle {
             // Data export compact icon button
             MouseArea {
                 id: exportMouse
-                implicitWidth: 22
-                implicitHeight: 22
+                implicitWidth: 18
+                implicitHeight: 18
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: fullRoot.handleExport()
@@ -215,8 +222,8 @@ Rectangle {
 
                     Kirigami.Icon {
                         anchors.centerIn: parent
-                        implicitWidth: 14
-                        implicitHeight: 14
+                        implicitWidth: 12
+                        implicitHeight: 12
                         source: "document-export"
                         color: exportMouse.containsMouse ? accentColor : textColor
                     }
@@ -230,11 +237,11 @@ Rectangle {
             // Manual refresh compact icon button
             MouseArea {
                 id: refreshMouse
-                implicitWidth: 22
-                implicitHeight: 22
+                implicitWidth: 18
+                implicitHeight: 18
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: root.refreshData()
+                onClicked: requestRefresh()
 
                 Rectangle {
                     anchors.fill: parent
@@ -243,8 +250,8 @@ Rectangle {
 
                     Kirigami.Icon {
                         anchors.centerIn: parent
-                        implicitWidth: 14
-                        implicitHeight: 14
+                        implicitWidth: 12
+                        implicitHeight: 12
                         source: "view-refresh"
                         color: refreshMouse.containsMouse ? accentColor : textColor
                     }
@@ -258,8 +265,8 @@ Rectangle {
             // Configure widget settings compact icon button
             MouseArea {
                 id: configMouse
-                implicitWidth: 22
-                implicitHeight: 22
+                implicitWidth: 18
+                implicitHeight: 18
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
@@ -278,8 +285,8 @@ Rectangle {
 
                     Kirigami.Icon {
                         anchors.centerIn: parent
-                        implicitWidth: 14
-                        implicitHeight: 14
+                        implicitWidth: 12
+                        implicitHeight: 12
                         source: "configure"
                         color: configMouse.containsMouse ? accentColor : textColor
                     }

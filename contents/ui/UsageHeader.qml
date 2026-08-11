@@ -25,15 +25,15 @@ Item {
 
     // Calculates estimated days remaining based on daily consumption velocity
     function getEstimatedDaysLeft() {
-        if (!root.usageData || !root.usageData.weekly) return i18n("Est. ~14 days left");
-        var weekly = root.usageData.weekly;
+        if (!usageData || !usageData.weekly) return i18n("Est. ~14 days left");
+        var weekly = usageData.weekly;
         var total = 0;
         for (var i = 0; i < weekly.length; i++) {
             total += (weekly[i].value || 0);
         }
         var avgDaily = total / Math.max(1, weekly.length);
-        var currentUsed = root.usageData.currentUsed || 3650;
-        var currentLimit = root.usageData.currentLimit || 5000;
+        var currentUsed = usageData.currentUsed || 3650;
+        var currentLimit = usageData.currentLimit || 5000;
         var remaining = Math.max(0, currentLimit - currentUsed);
         if (avgDaily <= 0) return i18n("Est. ~14 days left");
         var days = Math.round(remaining / avgDaily);

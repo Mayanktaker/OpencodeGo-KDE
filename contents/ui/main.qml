@@ -22,10 +22,22 @@ PlasmoidItem {
     property int lastAlertedPercent: 0
 
     // Compact representation component for panel tray placement
-    compactRepresentation: CompactRepresentation {}
+    compactRepresentation: Component {
+        CompactRepresentation {
+            usagePercent: root.usagePercent
+        }
+    }
 
     // Full representation component for expanded desktop popup view
-    fullRepresentation: FullRepresentation {}
+    fullRepresentation: Component {
+        FullRepresentation {
+            usageData: root.usageData
+            usagePercent: root.usagePercent
+            errorMessage: root.errorMessage
+            isLoading: root.isLoading
+            onRequestRefresh: root.refreshData()
+        }
+    }
 
     // Function to execute async usage data refresh from OpenCode API
     function refreshData() {
