@@ -109,7 +109,7 @@ Item {
             Layout.fillWidth: true
             type: Kirigami.Information
             visible: true
-            text: i18n("To obtain your Auth Cookie:\n1. Open opencode.ai in your browser and log in.\n2. Open DevTools (F12) -> Application -> Cookies -> https://opencode.ai.\n3. Copy the full 'Value' of the 'auth' cookie (or copy the full Cookie header string from any Network request).\n4. Paste it into the Auth Cookie field above.\n5. Leave empty to return to Demo Mode.")
+            text: i18n("To obtain your full Auth Cookie:\n1. Open opencode.ai in browser and log in.\n2. Press F12 -> Storage / Application -> Cookies -> opencode.ai.\n3. DOUBLE-CLICK the 'auth' Value cell (it is ~565 characters long!), select all, and copy it.\n4. Alternatively, open DevTools -> Network tab -> click any request -> copy the 'Cookie' request header.\n5. Paste it into the Auth Cookie field above.")
         }
     }
 }

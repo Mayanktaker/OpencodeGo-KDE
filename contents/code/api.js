@@ -56,6 +56,13 @@ function fetchUsageData(workspaceId, authCookie, callback) {
         return;
     }
 
+    var cookieVal = authCookie.trim();
+    // Detect truncated cookie values copied from browser DevTools table
+    if (cookieVal.indexOf("...") !== -1 || (cookieVal.indexOf("=") === -1 && cookieVal.length < 150)) {
+        callback("Auth Cookie is truncated (...). Double-click the cell in DevTools to copy all 500+ characters, or copy from Network tab.", null);
+        return;
+    }
+
     var cleanWs = workspaceId.trim();
     // Default internal URL structure as requested
     var targetUrl = "https://opencode.ai/workspace/" + encodeURIComponent(cleanWs) + "/go";
