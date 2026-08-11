@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Appearance configuration page with layout mode selector, border toggle, dark & white theme presets, and custom color pickers
+// Appearance configuration page with layout mode selector, title toggle, border toggle, dark & white theme presets, and custom color pickers
 
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -12,6 +12,7 @@ Kirigami.FormLayout {
 
     // Configuration property aliases bound automatically via cfg_ prefix to main.xml
     property alias cfg_displayLayout: layoutCombo.currentValue
+    property alias cfg_showTitle: showTitleCheckBox.checked
     property alias cfg_showBorder: showBorderCheckBox.checked
     property alias cfg_activePreset: presetCombo.currentValue
     property alias cfg_backgroundColor: bgColorField.text
@@ -108,6 +109,13 @@ Kirigami.FormLayout {
             { text: i18n("All-in-One Dashboard (All 3 Charts Together)"), value: "all_in_one" },
             { text: i18n("Horizontal Progress Bars (Compact Progress Rows)"), value: "horizontal" }
         ]
+    }
+
+    // Header title visibility toggle checkbox
+    QQC2.CheckBox {
+        id: showTitleCheckBox
+        Kirigami.FormData.label: i18n("Header Title:")
+        text: i18n("Show widget header plan title section")
     }
 
     // Outer card border toggle checkbox

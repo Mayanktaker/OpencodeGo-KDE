@@ -31,11 +31,15 @@
         </entry>
     </group>
 
-    <!-- Appearance settings group for themes, layouts, and custom color palettes -->
+    <!-- Appearance settings group for themes, layouts, borders, and headers -->
     <group name="Appearance">
         <entry name="displayLayout" type="String">
             <!-- Layout mode: "tabbed" (Tab switcher), "all_in_one" (All 3 charts), or "horizontal" (Progress rows) -->
             <default>tabbed</default>
+        </entry>
+        <entry name="showTitle" type="Bool">
+            <!-- Toggle widget header title section display -->
+            <default>true</default>
         </entry>
         <entry name="showBorder" type="Bool">
             <!-- Toggle outer card border display -->

@@ -54,6 +54,7 @@ Rectangle {
         // Usage header component displaying plan metadata and total percentage
         UsageHeader {
             id: usageHeader
+            visible: Plasmoid.configuration.showTitle !== false
             Layout.fillWidth: true
             planName: root.usageData ? root.usageData.planName : "OpenCode Go"
             billingPeriod: root.usageData ? root.usageData.billingPeriod : "Current Cycle"
