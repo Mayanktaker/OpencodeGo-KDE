@@ -117,7 +117,11 @@ kbuildsycoca6 --noincremental 2>/dev/null || true
 echo "Clearing all Plasma QML bytecode caches..."
 rm -rf "$HOME/.cache/plasmashell/" "$HOME/.cache/plasmawindowed/" "$HOME/.cache/qmlcache/" "$HOME/.cache/kcmshell6/" "$HOME/.cache/systemsettings/" "$HOME/.cache/kwin/" 2>/dev/null || true
 
+# Restart live plasmashell process so desktop widgets reload fresh code immediately
+echo "Restarting live Plasma Shell..."
+systemctl --user restart plasma-plasmashell.service 2>/dev/null || (kquitapp6 plasmashell 2>/dev/null && kstart plasmashell 2>/dev/null &) || true
+
 # Install CLI tool globally
 "$SCRIPT_DIR/install-cli.sh"
 
-echo "Setup Complete! Plasmoid updated, custom MT icon installed across all sizes to system theme, all QML caches cleared, and 'opencode-usage' CLI tool added to PATH."
+echo "Setup Complete! Plasmoid updated, custom MT icon installed across all sizes to system theme, all QML caches cleared, Plasma Shell restarted, and 'opencode-usage' CLI tool added to PATH."
