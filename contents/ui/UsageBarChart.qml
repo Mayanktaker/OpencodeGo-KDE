@@ -1,17 +1,22 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Pure QML bar chart component with gradient fill, smooth animations, and hover tooltips
+// Pure QML bar chart component with dynamic responsive X-axis labels, gradient fill, smooth animations, and in-chart hover feedback
 
 import QtQuick
 import QtQuick.Layouts
 import QtQuick.Controls as QQC2
 import org.kde.plasma.plasmoid 2.0
+import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.kirigami as Kirigami
 
 Item {
     id: chartRoot
+    clip: true
 
-    // Input data array containing objects with {label, value, maxValue}
+    // Input data array [{label: "Mon", value: 45, maxValue: 100}]
     property var chartData: []
+
+    // Currently hovered data point item for in-chart feedback display
+    property var activeHoverItem: null
 
     // Custom theme colors bound from Plasmoid configuration
     property color barColor: Plasmoid.configuration.barColor || "#89b4fa"
@@ -21,29 +26,52 @@ Item {
 
     implicitHeight: 180
 
-    // Calculates maximum upper bound across dataset for proportional scaling
+    // Calculates peak maximum value across all items in dataset safely
     function getPeakMax() {
         if (!chartData || chartData.length === 0) return 100;
-        var max = 1;
+        var peak = 0;
         for (var i = 0; i < chartData.length; i++) {
-            if (chartData[i].maxValue > max) max = chartData[i].maxValue;
-            if (chartData[i].value > max) max = chartData[i].value;
+            if (chartData[i].value > peak) peak = chartData[i].value;
+            if (chartData[i].maxValue > peak) peak = chartData[i].maxValue;
         }
-        return max;
+        return peak > 0 ? peak : 100;
     }
 
-    // Main column layout organizing graph drawing area and horizontal axis labels
+    // Calculates visible label text interval step to prevent X-axis text overlap
+    function getLabelStep() {
+        if (!chartData || chartData.length <= 8) return 1;
+        return Math.ceil(chartData.length / 8);
+    }
+
+    // Main column layout holding hover details banner, bar chart canvas, gridlines, and X-axis labels
     ColumnLayout {
         anchors.fill: parent
-        spacing: 6
+        spacing: 4
 
-        // Graph drawing area container
+        // In-chart hover details feedback banner
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: 20
+            radius: 3
+            color: activeHoverItem ? Qt.alpha(accentColor, 0.15) : "transparent"
+
+            PlasmaComponents.Label {
+                anchors.centerIn: parent
+                visible: activeHoverItem !== null
+                text: activeHoverItem ? (activeHoverItem.label + " — " + activeHoverItem.value + " / " + (activeHoverItem.maxValue || 1000) + " requests (" + Math.round((activeHoverItem.value / (activeHoverItem.maxValue || 1000)) * 100) + "% used)") : ""
+                font.bold: true
+                font.pixelSize: Kirigami.Units.gridUnit * 0.55
+                color: accentColor
+            }
+        }
+
+        // Main bar chart canvas container area
         Item {
             id: graphArea
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            // Reference grid dashed baseline at 50% capacity mark
+            // Horizontal reference gridline at 50% peak capacity
             Rectangle {
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -51,50 +79,51 @@ Item {
                 anchors.topMargin: parent.height * 0.5
                 height: 1
                 color: Qt.alpha(textColor, 0.15)
-            }
 
-            // Reference text label showing peak max scale value
-            Text {
-                anchors.right: parent.right
-                anchors.top: parent.top
-                text: getPeakMax()
-                font.pixelSize: Kirigami.Units.gridUnit * 0.45
-                color: textColor
-                opacity: 0.5
-            }
-
-            // Row layout arranging bar elements horizontally across width
-            Row {
-                anchors.fill: parent
-                spacing: Math.max(2, (width - (chartData.length * barWidthCalculated())) / Math.max(1, chartData.length - 1))
-
-                // Helper function calculating dynamic bar width based on dataset count
-                function barWidthCalculated() {
-                    if (!chartData || chartData.length === 0) return 10;
-                    return Math.max(6, Math.min(32, (graphArea.width / chartData.length) - 4));
+                Text {
+                    anchors.right: parent.right
+                    anchors.bottom: parent.top
+                    anchors.bottomMargin: 2
+                    text: Math.round(getPeakMax() * 0.5)
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.4
+                    color: textColor
+                    opacity: 0.4
                 }
+            }
 
-                // Repeater instantiating individual bar items from chartData model
+            // Bars container row layout distributing vertical bars across available width
+            RowLayout {
+                anchors.fill: parent
+                spacing: 2
+
                 Repeater {
                     model: chartData
 
                     // Single bar item column containing interactive bar rectangle
                     Item {
                         id: barItem
-                        width: parent.barWidthCalculated()
-                        height: graphArea.height
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
 
-                        // Interactive MouseArea for hover detection and tooltip display
+                        // Interactive MouseArea for hover detection and details banner update
                         MouseArea {
                             id: barMouseArea
                             anchors.fill: parent
                             hoverEnabled: true
 
+                            onEntered: chartRoot.activeHoverItem = modelData
+                            onExited: {
+                                if (chartRoot.activeHoverItem === modelData) {
+                                    chartRoot.activeHoverItem = null;
+                                }
+                            }
+
                             // Bar fill rectangle anchored to bottom of graph area
                             Rectangle {
                                 id: barRect
-                                width: parent.width
+                                anchors.horizontalCenter: parent.horizontalCenter
                                 anchors.bottom: parent.bottom
+                                width: Math.max(3, Math.min(22, parent.width * 0.75))
                                 radius: Math.min(width / 2, 4)
 
                                 // Dynamic height calculation based on dataset value ratio
@@ -111,39 +140,35 @@ Item {
                                     NumberAnimation { duration: 350; easing.type: Easing.OutCubic }
                                 }
                             }
-
-                            // Tooltip displaying exact usage details on bar hover
-                            QQC2.ToolTip.visible: barMouseArea.containsMouse
-                            QQC2.ToolTip.delay: 100
-                            QQC2.ToolTip.text: modelData.label + ": " + modelData.value + " / " + (modelData.maxValue || 1000) + " requests"
                         }
                     }
                 }
             }
         }
 
-        // Horizontal axis labels row
-        Row {
+        // Responsive X-axis labels row layout with smart step filtering
+        RowLayout {
             Layout.fillWidth: true
-            height: 18
-            spacing: Math.max(2, (width - (chartData.length * 24)) / Math.max(1, chartData.length - 1))
+            implicitHeight: 18
+            spacing: 2
 
-            // Repeater instantiating category labels under bars
             Repeater {
                 model: chartData
 
-                // Axis label text container
                 Item {
-                    width: 24
-                    height: 18
+                    Layout.fillWidth: true
+                    implicitHeight: 18
 
                     Text {
                         anchors.centerIn: parent
-                        text: modelData.label
+                        width: parent.width
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                        // Display label text only at interval steps or end items to prevent overlap
+                        text: (index % getLabelStep() === 0 || index === chartData.length - 1) ? modelData.label : ""
                         font.pixelSize: chartData.length > 12 ? Kirigami.Units.gridUnit * 0.4 : Kirigami.Units.gridUnit * 0.5
                         color: textColor
-                        opacity: 0.7
-                        elide: Text.ElideRight
+                        opacity: (index % getLabelStep() === 0 || index === chartData.length - 1) ? 0.75 : 0
                     }
                 }
             }

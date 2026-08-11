@@ -4,6 +4,7 @@
 import QtQuick
 import QtQml
 import org.kde.plasma.plasmoid 2.0
+import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents
 import "../code/api.js" as Api
 
@@ -11,7 +12,7 @@ PlasmoidItem {
     id: root
 
     // Disable default Plasma popup frame to eliminate unwanted outer borders
-    Plasmoid.backgroundHints: "NoBackground"
+    Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
 
     // State properties storing loaded usage data and UI flags
     property var usageData: null
