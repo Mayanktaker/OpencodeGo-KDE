@@ -46,9 +46,8 @@ PlasmoidItem {
         
         var wsId = Plasmoid.configuration.workspaceId || "";
         var cookie = Plasmoid.configuration.authCookie || "";
-        var apiBaseUrl = Plasmoid.configuration.apiBaseUrl || "https://opencode.ai/api/workspace";
 
-        Api.fetchUsageData(wsId, cookie, apiBaseUrl, function(err, data) {
+        Api.fetchUsageData(wsId, cookie, function(err, data) {
             isLoading = false;
             if (err) {
                 errorMessage = err;

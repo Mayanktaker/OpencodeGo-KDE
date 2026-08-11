@@ -14,7 +14,6 @@ Item {
     // Configuration property aliases bound automatically via cfg_ prefix to main.xml
     property alias cfg_workspaceId: workspaceIdField.text
     property alias cfg_authCookie: authCookieField.text
-    property alias cfg_apiBaseUrl: apiBaseUrlField.text
     property alias cfg_refreshInterval: refreshIntervalField.value
     property alias cfg_enableNotifications: enableNotifyCheckBox.checked
     property alias cfg_notificationThreshold: thresholdSpinBox.value
@@ -51,13 +50,7 @@ Item {
             Layout.fillWidth: true
         }
 
-        // API Base URL input field
-        QQC2.TextField {
-            id: apiBaseUrlField
-            Kirigami.FormData.label: i18n("API Base URL:")
-            placeholderText: i18n("e.g. https://opencode.ai/workspace/{workspaceId}/go or https://opencode.ai/api/workspace")
-            Layout.fillWidth: true
-        }
+
 
         // Auto-refresh interval selection combo box
         QQC2.ComboBox {

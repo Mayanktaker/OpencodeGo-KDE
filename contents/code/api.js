@@ -3,15 +3,12 @@
 
 // Calculates integer percentage from used and total values safely
 function calculatePercentage(used, total) {
-    // Prevent division by zero
     if (!total || total <= 0) return 0;
-    // Return clamped percentage
     return Math.min(100, Math.max(0, Math.round((used / total) * 100)));
 }
 
 // Generates realistic mock usage data when no workspace credentials are provided
 function getMockData() {
-    // Generate 24 hourly data points (00:00 to 23:00)
     var hourlyData = [];
     var currentHour = new Date().getHours();
     for (var i = 0; i < 24; i++) {
@@ -20,7 +17,6 @@ function getMockData() {
         hourlyData.push({ label: hourLabel, value: val, maxValue: 50 });
     }
 
-    // Generate 7 daily data points for current week (Mon-Sun)
     var days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
     var weeklyData = [];
     var currentDay = (new Date().getDay() + 6) % 7;
@@ -29,7 +25,6 @@ function getMockData() {
         weeklyData.push({ label: days[d], value: dayVal, maxValue: 1000 });
     }
 
-    // Generate 4 weekly data points for current month (W1-W4)
     var monthlyData = [
         { label: "Week 1", value: 3450, maxValue: 5000 },
         { label: "Week 2", value: 4120, maxValue: 5000 },
@@ -37,12 +32,10 @@ function getMockData() {
         { label: "Week 4", value: 2950, maxValue: 5000 }
     ];
 
-    // Calculate total usage percentage for current active period
     var activeWeeklyUsed = weeklyData[currentDay].value;
     var activeWeeklyMax = weeklyData[currentDay].maxValue;
     var usagePercent = calculatePercentage(activeWeeklyUsed, activeWeeklyMax);
 
-    // Return complete mock response payload
     return {
         isMock: true,
         planName: "OpenCode Go (Demo Mode)",
@@ -56,89 +49,123 @@ function getMockData() {
 }
 
 // Primary API function to fetch usage data asynchronously using XMLHttpRequest
-function fetchUsageData(workspaceId, authCookie, apiBaseUrl, callback) {
+function fetchUsageData(workspaceId, authCookie, callback) {
     // Fallback to mock data if auth cookie or workspace ID is missing
     if (!authCookie || authCookie.trim() === "" || !workspaceId || workspaceId.trim() === "") {
         callback(null, getMockData());
         return;
     }
 
-    var baseUrl = apiBaseUrl && apiBaseUrl.trim() !== "" ? apiBaseUrl.trim() : "https://opencode.ai/api/workspace";
-    var cleanWs = encodeURIComponent(workspaceId.trim());
+    var cleanWs = workspaceId.trim();
+    // Default internal URL structure as requested
+    var targetUrl = "https://opencode.ai/workspace/" + encodeURIComponent(cleanWs) + "/go";
 
-    var targetUrl = "";
-    if (baseUrl.indexOf("{workspaceId}") !== -1 || baseUrl.indexOf("{id}") !== -1) {
-        targetUrl = baseUrl.replace("{workspaceId}", cleanWs).replace("{id}", cleanWs);
-    } else if (baseUrl.indexOf(workspaceId.trim()) !== -1) {
-        targetUrl = baseUrl;
-    } else if (baseUrl.endsWith("/go") || baseUrl.endsWith("/usage") || baseUrl.endsWith(".json")) {
-        targetUrl = baseUrl;
-    } else {
-        if (baseUrl.endsWith("/")) {
-            baseUrl = baseUrl.slice(0, -1);
-        }
-        targetUrl = baseUrl + "/" + cleanWs + "/usage";
-    }
-    
-    // Create XMLHttpRequest instance
     var xhr = new XMLHttpRequest();
     xhr.open("GET", targetUrl, true);
 
     // Set request headers for cookie authentication and session tracking
-    xhr.setRequestHeader("Accept", "application/json");
-    xhr.setRequestHeader("Cookie", "auth=" + authCookie.trim());
-    xhr.setRequestHeader("X-Workspace-Id", workspaceId.trim());
+    var cookieVal = authCookie.trim();
+    if (cookieVal.indexOf("=") !== -1) {
+        xhr.setRequestHeader("Cookie", cookieVal);
+    } else {
+        xhr.setRequestHeader("Cookie", "auth=" + cookieVal + "; session=" + cookieVal);
+        xhr.setRequestHeader("Authorization", "Bearer " + cookieVal);
+    }
+    
+    xhr.setRequestHeader("Accept", "application/json, text/html, */*");
+    xhr.setRequestHeader("X-Workspace-Id", cleanWs);
 
     // Configure timeout (10 seconds)
     xhr.timeout = 10000;
 
     // Handle ready state changes
     xhr.onreadystatechange = function() {
-        // Wait for request completion
         if (xhr.readyState === XMLHttpRequest.DONE) {
-            // Check HTTP status code 200 OK
             if (xhr.status === 200) {
                 try {
-                    // Parse raw response text as JSON
-                    var jsonResponse = JSON.parse(xhr.responseText);
-                    var parsedData = parseUsageResponse(jsonResponse);
+                    var responseText = xhr.responseText || "";
+                    var parsedData = parseAnyResponse(responseText);
                     callback(null, parsedData);
                 } catch (e) {
-                    // Handle JSON parse error
-                    callback("Failed to parse server response: " + e.message, null);
+                    callback(e.message, null);
                 }
             } else if (xhr.status === 401 || xhr.status === 403) {
-                // Handle unauthorized / invalid cookie
                 callback("Authentication failed (HTTP " + xhr.status + "). Check Auth Cookie.", null);
             } else {
-                // Handle general server error
-                callback("Server error (HTTP " + xhr.status + "). Showing cached data.", null);
+                callback("Server error (HTTP " + xhr.status + ").", null);
             }
         }
     };
 
-    // Handle network level error
     xhr.onerror = function() {
         callback("Network request failed. Please check internet connection.", null);
     };
 
-    // Handle request timeout
     xhr.ontimeout = function() {
         callback("Request timed out. Server did not respond.", null);
     };
 
-    // Send HTTP request
     xhr.send();
+}
+
+// Smart parser capable of extracting usage data from JSON responses, Next.js HTML payloads, or page text
+function parseAnyResponse(responseText) {
+    var trimmed = responseText.trim();
+    
+    // Case 1: Direct JSON payload
+    if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        try {
+            var json = JSON.parse(trimmed);
+            return parseUsageResponse(json);
+        } catch (e) {}
+    }
+
+    // Case 2: OpenAuth login page returned (auth cookie invalid/expired)
+    if (trimmed.indexOf("openauth") !== -1 || trimmed.indexOf("/github/authorize") !== -1 || trimmed.indexOf("/google/authorize") !== -1) {
+        throw new Error("Auth Cookie is invalid or expired. Please update Auth Cookie in settings.");
+    }
+
+    // Case 3: Embedded __NEXT_DATA__ JSON in HTML
+    var nextDataMatch = responseText.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
+    if (nextDataMatch && nextDataMatch[1]) {
+        try {
+            var nextObj = JSON.parse(nextDataMatch[1]);
+            var props = nextObj.props || {};
+            var pageProps = props.pageProps || {};
+            var usageObj = pageProps.usage || pageProps.data || pageProps;
+            return parseUsageResponse(usageObj);
+        } catch (e) {}
+    }
+
+    // Case 4: Regex pattern extraction for metrics embedded in text
+    var hourlyMatch = responseText.match(/hourly[^\d]*(\d+)[^\d]+(\d+)/i);
+    var weeklyMatch = responseText.match(/weekly[^\d]*(\d+)[^\d]+(\d+)/i);
+    var monthlyMatch = responseText.match(/monthly[^\d]*(\d+)[^\d]+(\d+)/i);
+
+    if (hourlyMatch || weeklyMatch || monthlyMatch) {
+        return {
+            isMock: false,
+            planName: "OpenCode Go",
+            billingPeriod: "Current Cycle",
+            usagePercent: weeklyMatch ? calculatePercentage(parseInt(weeklyMatch[1], 10), parseInt(weeklyMatch[2], 10)) : 0,
+            hourly: [],
+            weekly: [],
+            monthly: [],
+            lastRefreshed: new Date().toLocaleTimeString()
+        };
+    }
+
+    throw new Error("Could not parse usage metrics. Server returned HTML instead of JSON.");
 }
 
 // Parses raw JSON response from OpenCode API into widget consumption model
 function parseUsageResponse(data) {
-    // Return structured payload with fallbacks
+    if (!data) data = {};
     return {
         isMock: false,
-        planName: data.planName || "OpenCode Go Plan",
-        billingPeriod: data.billingPeriod || "Current Billing Cycle",
-        usagePercent: data.usagePercent || calculatePercentage(data.currentUsed || 0, data.currentLimit || 100),
+        planName: data.planName || data.name || "OpenCode Go Plan",
+        billingPeriod: data.billingPeriod || data.period || "Current Billing Cycle",
+        usagePercent: data.usagePercent || calculatePercentage(data.currentUsed || data.used || 0, data.currentLimit || data.limit || 100),
         hourly: data.hourly || [],
         weekly: data.weekly || [],
         monthly: data.monthly || [],
@@ -152,7 +179,6 @@ function generateCSV(data) {
     var lines = [];
     lines.push("Category,Label,Used,MaxLimit,Percentage");
     
-    // Process weekly records
     var weekly = data.weekly || [];
     for (var i = 0; i < weekly.length; i++) {
         var w = weekly[i];
@@ -160,7 +186,6 @@ function generateCSV(data) {
         lines.push("Weekly," + w.label + "," + w.value + "," + w.maxValue + "," + pct + "%");
     }
 
-    // Process monthly records
     var monthly = data.monthly || [];
     for (var m = 0; m < monthly.length; m++) {
         var mo = monthly[m];
