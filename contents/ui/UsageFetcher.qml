@@ -6,8 +6,11 @@ import QtQuick
 import org.kde.plasma.plasma5support as P5S
 import "../code/api.js" as Api
 
-QtObject {
+Item {
     id: fetcher
+    visible: false
+    width: 0
+    height: 0
 
     // In-flight callbacks keyed by their curl command string (one at a time in practice)
     property var pending: ({})
@@ -40,8 +43,8 @@ QtObject {
         engine: "executable"
         connectedSources: []
         interval: 0
-        // Emitted once per source after the command finishes
-        onNewData: {
+        // Qt6: signal handlers are functions with explicit parameters (deprecated implicit injection)
+        onNewData: function(sourceName, data) {
             var cb = fetcher.pending[sourceName];
             // Always release the source so repeated refreshes re-run curl cleanly
             dataSource.disconnectSource(sourceName);
