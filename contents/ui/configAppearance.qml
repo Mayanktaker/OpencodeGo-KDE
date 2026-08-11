@@ -15,11 +15,15 @@ Kirigami.FormLayout {
     leftPadding: 16
     rightPadding: 16
 
+    // Mutable properties for ComboBox bindings mapped to Plasmoid settings via cfg_ aliases
+    property string displayLayoutVal: "tabbed"
+    property string activePresetVal: "catppuccin_mocha"
+
     // Configuration property aliases bound automatically via cfg_ prefix to main.xml
-    property alias cfg_displayLayout: layoutCombo.currentValue
+    property alias cfg_displayLayout: configAppearanceRoot.displayLayoutVal
     property alias cfg_showTitle: showTitleCheckBox.checked
     property alias cfg_showBorder: showBorderCheckBox.checked
-    property alias cfg_activePreset: presetCombo.currentValue
+    property alias cfg_activePreset: configAppearanceRoot.activePresetVal
     property alias cfg_backgroundColor: bgColorField.text
     property alias cfg_textColor: textColorField.text
     property alias cfg_barColor: barColorField.text
@@ -114,6 +118,14 @@ Kirigami.FormLayout {
             { text: i18n("All-in-One Dashboard (All 3 Charts Together)"), value: "all_in_one" },
             { text: i18n("Horizontal Progress Bars (Compact Progress Rows)"), value: "horizontal" }
         ]
+        currentIndex: {
+            if (configAppearanceRoot.displayLayoutVal === "all_in_one") return 1;
+            if (configAppearanceRoot.displayLayoutVal === "horizontal") return 2;
+            return 0;
+        }
+        onActivated: {
+            configAppearanceRoot.displayLayoutVal = currentValue;
+        }
     }
 
     // Header title visibility toggle checkbox
@@ -152,7 +164,16 @@ Kirigami.FormLayout {
             { text: i18n("Custom Palette"), value: "custom" }
         ]
 
+        currentIndex: {
+            var val = configAppearanceRoot.activePresetVal;
+            for (var i = 0; i < model.length; i++) {
+                if (model[i].value === val) return i;
+            }
+            return 0;
+        }
+
         onActivated: {
+            configAppearanceRoot.activePresetVal = currentValue;
             if (currentValue !== "custom") {
                 applyPreset(currentValue);
             }
@@ -176,7 +197,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: bgColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 12
+            onTextChanged: configAppearanceRoot.activePresetVal = "custom"
         }
 
         QQC2.Button {
@@ -209,7 +230,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: textColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 12
+            onTextChanged: configAppearanceRoot.activePresetVal = "custom"
         }
 
         QQC2.Button {
@@ -242,7 +263,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: barColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 12
+            onTextChanged: configAppearanceRoot.activePresetVal = "custom"
         }
 
         QQC2.Button {
@@ -275,7 +296,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: bar2ColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 12
+            onTextChanged: configAppearanceRoot.activePresetVal = "custom"
         }
 
         QQC2.Button {
@@ -308,7 +329,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: accentColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 12
+            onTextChanged: configAppearanceRoot.activePresetVal = "custom"
         }
 
         QQC2.Button {

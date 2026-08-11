@@ -45,13 +45,13 @@ except Exception as e:
 " 2>/dev/null || true
 
 # Rebuild system icon cache
-kbuildsycoca6 &>/dev/null || true
+kbuildsycoca6 --noincremental &>/dev/null || true
 
-# Clear Qt QML bytecode cache so plasmashell reads fresh files
-echo "Clearing Plasma QML bytecode cache..."
-rm -rf "$HOME/.cache/plasmashell/qmlcache/" "$HOME/.cache/plasmawindowed/qmlcache/" 2>/dev/null || true
+# Purge ALL Plasma QML bytecode cache locations so plasmashell and settings read fresh files
+echo "Clearing all Plasma QML bytecode caches..."
+rm -rf "$HOME/.cache/plasmashell/" "$HOME/.cache/plasmawindowed/" "$HOME/.cache/qmlcache/" "$HOME/.cache/kcmshell6/" "$HOME/.cache/systemsettings/" "$HOME/.cache/kwin/" 2>/dev/null || true
 
 # Install CLI tool globally
 "$SCRIPT_DIR/install-cli.sh"
 
-echo "Setup Complete! Plasmoid updated, custom MT icon installed to system theme, cache cleared, and 'opencode-usage' CLI tool added to PATH."
+echo "Setup Complete! Plasmoid updated, custom MT icon installed to system theme, all QML caches cleared, and 'opencode-usage' CLI tool added to PATH."
