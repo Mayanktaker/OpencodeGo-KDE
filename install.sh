@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 # © Mayanktaker Computers & Web Development | https://mayanktaker.com
-# Installation and upgrade script for OpenCode Go KDE Plasmoid
+# Installation and upgrade script for OpenCode Go KDE Plasmoid & CLI Utility
 
-# Exit on error
 set -e
 
 PLASMOID_ID="com.mayanktaker.opencodego-usage"
@@ -25,4 +24,7 @@ else
     kpackagetool6 -t Plasma/Applet -i "$SCRIPT_DIR"
 fi
 
-echo "Successfully installed! Restart plasmashell or add 'OpenCode Go Usage Tracker' widget to panel/desktop."
+# Install CLI tool globally
+"$SCRIPT_DIR/install-cli.sh"
+
+echo "Setup Complete! Plasmoid installed to Plasma desktop and 'opencode-usage' CLI tool added to PATH."

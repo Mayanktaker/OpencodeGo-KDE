@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Compact panel representation displaying icon with usage percentage badge overlay
+// Compact panel representation displaying icon with dynamic color-coded usage percentage badge overlay
 
 import QtQuick
 import QtQuick.Layouts
@@ -14,6 +14,13 @@ Item {
     // Preferred width and height for panel layout integration
     Layout.minimumWidth: panelRow.implicitWidth
     Layout.minimumHeight: panelRow.implicitHeight
+
+    // Computes dynamic status color based on percentage threshold
+    function getBadgeColor(pct) {
+        if (pct >= 90) return "#ff5555";
+        if (pct >= 75) return "#ffb86c";
+        return Plasmoid.configuration.accentColor || "#f38ba8";
+    }
 
     // MouseArea handling click to expand full widget popup representation
     MouseArea {
@@ -42,7 +49,12 @@ Item {
                 implicitWidth: badgeLabel.implicitWidth + 8
                 implicitHeight: badgeLabel.implicitHeight + 4
                 radius: Kirigami.Units.smallSpacing
-                color: Plasmoid.configuration.accentColor || "#f38ba8"
+                color: compactRoot.getBadgeColor(root.usagePercent || 0)
+
+                // Behavior animation for smooth badge color transitions
+                Behavior on color {
+                    ColorAnimation { duration: 200 }
+                }
 
                 // Label displaying usage percentage value
                 PlasmaComponents.Label {
