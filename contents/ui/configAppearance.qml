@@ -140,10 +140,10 @@ Kirigami.FormLayout {
             { text: i18n("Gruvbox Dark"), value: "gruvbox_dark" },
             { text: i18n("Tokyo Night"), value: "tokyo_night" },
             { text: i18n("One Dark (VS Code)"), value: "one_dark" },
-            { text: i18n("☀️ Breeze Light (White)"), value: "breeze_light" },
-            { text: i18n("☀️ Catppuccin Latte (White)"), value: "catppuccin_latte" },
-            { text: i18n("☀️ Solarized Light (White)"), value: "solarized_light" },
-            { text: i18n("☀️ Paper White"), value: "paper_white" },
+            { text: i18n("Breeze Light (White)"), value: "breeze_light" },
+            { text: i18n("Catppuccin Latte (White)"), value: "catppuccin_latte" },
+            { text: i18n("Solarized Light (White)"), value: "solarized_light" },
+            { text: i18n("Paper White"), value: "paper_white" },
             { text: i18n("Custom Palette"), value: "custom" }
         ]
 
