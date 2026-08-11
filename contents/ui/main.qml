@@ -52,6 +52,11 @@ PlasmoidItem {
             isLoading = false;
             if (err) {
                 errorMessage = err;
+                // If a real error occurred, clear mock data so the UI doesn't say "Demo Mode"
+                if (usageData && usageData.isMock) {
+                    usageData = null;
+                    usagePercent = 0;
+                }
             } else {
                 errorMessage = "";
             }
