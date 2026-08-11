@@ -9,7 +9,7 @@
         ],
         "Category": "System Information",
         "Description": "Tracks OpenCode Go subscription usage (hourly, weekly, monthly) with customizable presets & themes.",
-        "Icon": "office-chart-bar",
+        "Icon": "com.mayanktaker.opencodego-usage",
         "Id": "com.mayanktaker.opencodego-usage",
         "Name": "OpenCode Go Usage Tracker",
         "Version": "1.0.0",

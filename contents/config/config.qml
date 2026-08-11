@@ -19,10 +19,10 @@ ConfigModel {
         source: "configAppearance.qml"
     }
 
-    // About tab displaying app information and developer credits
+    // Credits & Support tab displaying developer info, website, and PayPal donation link
     ConfigCategory {
-        name: i18n("About")
-        icon: "help-about"
+        name: i18n("Credits & Support")
+        icon: "dialog-information"
         source: "configAbout.qml"
     }
 }

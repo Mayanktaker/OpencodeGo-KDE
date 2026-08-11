@@ -38,7 +38,7 @@ Item {
             // Plasma system icon component
             Kirigami.Icon {
                 id: widgetIcon
-                source: "office-chart-bar"
+                source: "com.mayanktaker.opencodego-usage"
                 implicitWidth: Kirigami.Units.iconSizes.smallMedium
                 implicitHeight: Kirigami.Units.iconSizes.smallMedium
             }

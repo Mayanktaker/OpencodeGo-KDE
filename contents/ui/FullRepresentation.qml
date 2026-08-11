@@ -12,17 +12,17 @@ import "../code/api.js" as Api
 Rectangle {
     id: fullRoot
 
-    // Layout mode flags bound from Plasmoid configuration ("tabbed", "all_in_one", "horizontal")
-    property string layoutMode: Plasmoid.configuration.displayLayout || "tabbed"
-    property bool isTabbed: layoutMode === "tabbed"
-    property bool isAllInOne: layoutMode === "all_in_one"
-    property bool isHorizontal: layoutMode === "horizontal"
+    // Dynamic layout mode property bound live to Plasmoid configuration ("tabbed", "all_in_one", "horizontal")
+    property string layoutMode: Plasmoid.configuration.displayLayout ? Plasmoid.configuration.displayLayout : "tabbed"
+    property bool isTabbed: (layoutMode === "tabbed" || layoutMode === "")
+    property bool isAllInOne: (layoutMode === "all_in_one")
+    property bool isHorizontal: (layoutMode === "horizontal")
 
     // Preferred layout dimensions for Plasma expanded popup representation
     Layout.minimumWidth: 380
-    Layout.minimumHeight: isAllInOne ? 540 : (isHorizontal ? 350 : 380)
+    Layout.minimumHeight: isAllInOne ? 540 : (isHorizontal ? 340 : 380)
     Layout.preferredWidth: 420
-    Layout.preferredHeight: isAllInOne ? 580 : (isHorizontal ? 360 : 400)
+    Layout.preferredHeight: isAllInOne ? 580 : (isHorizontal ? 350 : 400)
 
     // Currently selected chart view mode ("hourly", "weekly", "monthly")
     property string activeView: "weekly"
@@ -34,8 +34,16 @@ Rectangle {
 
     color: backgroundColor
     radius: 8
-    border.width: Plasmoid.configuration.showBorder ? 1 : 0
-    border.color: Qt.alpha(textColor, 0.25)
+    border.width: (Plasmoid.configuration.showBorder === true) ? 1 : 0
+    border.color: (Plasmoid.configuration.showBorder === true) ? Qt.alpha(textColor, 0.3) : "transparent"
+
+    // Connections listening for live configuration property updates
+    Connections {
+        target: Plasmoid.configuration
+        function onDisplayLayoutChanged() {
+            fullRoot.layoutMode = Plasmoid.configuration.displayLayout || "tabbed";
+        }
+    }
 
     // Exports usage statistics to CSV file
     function handleExport() {
