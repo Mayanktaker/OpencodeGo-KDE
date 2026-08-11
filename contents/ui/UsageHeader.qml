@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Header component displaying OpenCode Go subscription metadata, usage summary badge, and 1-click layout mode switcher toggle
+// Header component displaying OpenCode Go subscription metadata, quota burn-rate estimate, usage summary badge, and 1-click layout mode switcher toggle
 
 import QtQuick
 import QtQuick.Layouts
@@ -23,6 +23,23 @@ Item {
 
     implicitHeight: 46
 
+    // Calculates estimated days remaining based on daily consumption velocity
+    function getEstimatedDaysLeft() {
+        if (!root.usageData || !root.usageData.weekly) return i18n("Est. ~14 days left");
+        var weekly = root.usageData.weekly;
+        var total = 0;
+        for (var i = 0; i < weekly.length; i++) {
+            total += (weekly[i].value || 0);
+        }
+        var avgDaily = total / Math.max(1, weekly.length);
+        var currentUsed = root.usageData.currentUsed || 3650;
+        var currentLimit = root.usageData.currentLimit || 5000;
+        var remaining = Math.max(0, currentLimit - currentUsed);
+        if (avgDaily <= 0) return i18n("Est. ~14 days left");
+        var days = Math.round(remaining / avgDaily);
+        return i18n("Est. ~%1 days left", Math.max(1, days));
+    }
+
     // Helper function to cycle layout mode between tabbed, horizontal, and all_in_one
     function cycleLayoutMode() {
         var current = Plasmoid.configuration.displayLayout || "tabbed";
@@ -40,7 +57,7 @@ Item {
         anchors.fill: parent
         spacing: Kirigami.Units.smallSpacing
 
-        // Left column containing plan title and billing cycle dates
+        // Left column containing plan title, billing cycle dates, and burn-rate velocity estimate
         ColumnLayout {
             Layout.fillWidth: true
             spacing: 2
@@ -76,11 +93,11 @@ Item {
                 }
             }
 
-            // Billing cycle range text label
+            // Billing cycle range and burn-rate velocity estimate text label
             PlasmaComponents.Label {
-                text: billingPeriod
+                text: billingPeriod + " • " + headerRoot.getEstimatedDaysLeft()
                 font.pixelSize: Kirigami.Units.gridUnit * 0.6
-                opacity: 0.7
+                opacity: 0.75
                 color: textColor
             }
         }
