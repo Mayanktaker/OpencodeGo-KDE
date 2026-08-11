@@ -27,6 +27,7 @@ Item {
         id: formLayout
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.top: parent.top
         anchors.margins: 16
 
         // Hidden text fields backing String property aliases for KQuickConfigModule

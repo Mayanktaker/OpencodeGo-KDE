@@ -22,6 +22,7 @@ Item {
         id: formLayout
         anchors.left: parent.left
         anchors.right: parent.right
+        anchors.top: parent.top
         anchors.margins: 16
 
         // Hidden spinbox backing refreshInterval alias for KQuickConfigModule

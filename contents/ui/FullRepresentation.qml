@@ -56,8 +56,9 @@ Rectangle {
     function handleExport() {
         if (!usageData) return;
         var csvContent = Api.generateCSV(usageData);
-        // Print CSV data overview to log output
-        console.log("Exported CSV Usage Data:\n" + csvContent);
+        // Display CSV data in export dialog
+        csvTextArea.text = csvContent;
+        exportDialog.open();
     }
 
     // Main column layout holding header, view selector, bar chart / horizontal bars, and footer
@@ -270,11 +271,16 @@ Rectangle {
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
-                    var act = Plasmoid.action("configure");
-                    if (act) {
-                        act.trigger();
-                    } else if (Plasmoid.internalAction && Plasmoid.internalAction("configure")) {
-                        Plasmoid.internalAction("configure").trigger();
+                    if (typeof plasmoid !== "undefined") {
+                        var act = plasmoid.action("configure");
+                        if (act) {
+                            act.trigger();
+                            return;
+                        }
+                        var intAct = plasmoid.internalAction("configure");
+                        if (intAct) {
+                            intAct.trigger();
+                        }
                     }
                 }
 
@@ -295,6 +301,43 @@ Rectangle {
                 QQC2.ToolTip.visible: configMouse.containsMouse
                 QQC2.ToolTip.delay: 100
                 QQC2.ToolTip.text: i18n("Configure Widget")
+            }
+        }
+    }
+
+    // Export CSV Dialog overlay
+    QQC2.Dialog {
+        id: exportDialog
+        anchors.centerIn: parent
+        width: Math.min(parent.width - 24, 400)
+        height: Math.min(parent.height - 24, 300)
+        title: i18n("Export CSV Data")
+        modal: true
+        standardButtons: QQC2.Dialog.Close
+
+        ColumnLayout {
+            anchors.fill: parent
+            spacing: Kirigami.Units.smallSpacing
+
+            QQC2.TextArea {
+                id: csvTextArea
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                text: ""
+                readOnly: true
+                wrapMode: Text.NoWrap
+                font.family: "monospace"
+            }
+
+            QQC2.Button {
+                Layout.fillWidth: true
+                text: i18n("Copy to Clipboard")
+                icon.name: "edit-copy"
+                onClicked: {
+                    csvTextArea.selectAll();
+                    csvTextArea.copy();
+                    exportDialog.close();
+                }
             }
         }
     }
