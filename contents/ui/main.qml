@@ -38,6 +38,10 @@ PlasmoidItem {
             errorMessage: root.errorMessage
             isLoading: root.isLoading
             onRequestRefresh: root.refreshData()
+            onRequestConfigure: {
+                var act = plasmoid.action("configure");
+                if (act) act.trigger();
+            }
         }
     }
 

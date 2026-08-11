@@ -24,6 +24,7 @@ Rectangle {
     property string errorMessage: ""
     property bool isLoading: false
     signal requestRefresh()
+    signal requestConfigure()
 
     // Preferred layout dimensions for Plasma expanded popup representation
     Layout.minimumWidth: 280
@@ -271,19 +272,7 @@ Rectangle {
                 implicitHeight: 14
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    if (typeof plasmoid !== "undefined") {
-                        var act = plasmoid.action("configure");
-                        if (act) {
-                            act.trigger();
-                            return;
-                        }
-                        var intAct = plasmoid.internalAction("configure");
-                        if (intAct) {
-                            intAct.trigger();
-                        }
-                    }
-                }
+                onClicked: fullRoot.requestConfigure()
 
                 Rectangle {
                     anchors.fill: parent
