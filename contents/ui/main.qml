@@ -13,7 +13,6 @@ PlasmoidItem {
 
     // Plasmoid identity properties
     title: i18n("OpenCode Go Usage Tracker")
-    icon: "office-chart-bar"
 
     // State properties storing loaded usage data and UI flags
     property var usageData: null
