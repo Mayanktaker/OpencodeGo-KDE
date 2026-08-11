@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Appearance configuration page with layout mode selector, popular developer theme presets, and custom color pickers
+// Appearance configuration page with layout mode selector, border toggle, dark & white theme presets, and custom color pickers
 
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -12,6 +12,7 @@ Kirigami.FormLayout {
 
     // Configuration property aliases bound automatically via cfg_ prefix to main.xml
     property alias cfg_displayLayout: layoutCombo.currentValue
+    property alias cfg_showBorder: showBorderCheckBox.checked
     property alias cfg_activePreset: presetCombo.currentValue
     property alias cfg_backgroundColor: bgColorField.text
     property alias cfg_textColor: textColorField.text
@@ -19,7 +20,7 @@ Kirigami.FormLayout {
     property alias cfg_barSecondaryColor: bar2ColorField.text
     property alias cfg_accentColor: accentColorField.text
 
-    // Apply color preset helper function with popular developer theme palettes
+    // Apply color preset helper function with dark & white developer theme palettes
     function applyPreset(presetId) {
         if (presetId === "catppuccin_mocha") {
             cfg_backgroundColor = "#1e1e2e";
@@ -69,6 +70,30 @@ Kirigami.FormLayout {
             cfg_barColor = "#61afef";
             cfg_barSecondaryColor = "#56b6c2";
             cfg_accentColor = "#e06c75";
+        } else if (presetId === "breeze_light") {
+            cfg_backgroundColor = "#ffffff";
+            cfg_textColor = "#232629";
+            cfg_barColor = "#3daee9";
+            cfg_barSecondaryColor = "#2980b9";
+            cfg_accentColor = "#da4453";
+        } else if (presetId === "catppuccin_latte") {
+            cfg_backgroundColor = "#eff1f5";
+            cfg_textColor = "#4c4f69";
+            cfg_barColor = "#1e66f5";
+            cfg_barSecondaryColor = "#209fb5";
+            cfg_accentColor = "#8839ef";
+        } else if (presetId === "solarized_light") {
+            cfg_backgroundColor = "#fdf6e3";
+            cfg_textColor = "#657b83";
+            cfg_barColor = "#268bd2";
+            cfg_barSecondaryColor = "#2aa198";
+            cfg_accentColor = "#b58900";
+        } else if (presetId === "paper_white") {
+            cfg_backgroundColor = "#f8f9fa";
+            cfg_textColor = "#212529";
+            cfg_barColor = "#0d6efd";
+            cfg_barSecondaryColor = "#0dcaf0";
+            cfg_accentColor = "#d63384";
         }
     }
 
@@ -85,7 +110,14 @@ Kirigami.FormLayout {
         ]
     }
 
-    // Theme preset combo box selector with popular developer palettes
+    // Outer card border toggle checkbox
+    QQC2.CheckBox {
+        id: showBorderCheckBox
+        Kirigami.FormData.label: i18n("Outer Border:")
+        text: i18n("Enable outer border outline on widget card")
+    }
+
+    // Theme preset combo box selector with 12 dark & light developer palettes
     QQC2.ComboBox {
         id: presetCombo
         Kirigami.FormData.label: i18n("Theme Preset:")
@@ -100,6 +132,10 @@ Kirigami.FormLayout {
             { text: i18n("Gruvbox Dark"), value: "gruvbox_dark" },
             { text: i18n("Tokyo Night"), value: "tokyo_night" },
             { text: i18n("One Dark (VS Code)"), value: "one_dark" },
+            { text: i18n("☀️ Breeze Light (White)"), value: "breeze_light" },
+            { text: i18n("☀️ Catppuccin Latte (White)"), value: "catppuccin_latte" },
+            { text: i18n("☀️ Solarized Light (White)"), value: "solarized_light" },
+            { text: i18n("☀️ Paper White"), value: "paper_white" },
             { text: i18n("Custom Palette"), value: "custom" }
         ]
 
@@ -127,7 +163,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: bgColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 8
+            onTextChanged: presetCombo.currentIndex = 12
         }
 
         QQC2.Button {
@@ -160,7 +196,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: textColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 8
+            onTextChanged: presetCombo.currentIndex = 12
         }
 
         QQC2.Button {
@@ -193,7 +229,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: barColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 8
+            onTextChanged: presetCombo.currentIndex = 12
         }
 
         QQC2.Button {
@@ -226,7 +262,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: bar2ColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 8
+            onTextChanged: presetCombo.currentIndex = 12
         }
 
         QQC2.Button {
@@ -259,7 +295,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: accentColorField
             Layout.fillWidth: true
-            onTextChanged: presetCombo.currentIndex = 8
+            onTextChanged: presetCombo.currentIndex = 12
         }
 
         QQC2.Button {

@@ -31,11 +31,15 @@
         </entry>
     </group>
 
-    <!-- Appearance settings group for themes and custom color palettes -->
+    <!-- Appearance settings group for themes, layouts, and custom color palettes -->
     <group name="Appearance">
         <entry name="displayLayout" type="String">
-            <!-- Layout mode: "tabbed" (Tab switcher) or "all_in_one" (All 3 charts on one screen) -->
+            <!-- Layout mode: "tabbed" (Tab switcher), "all_in_one" (All 3 charts), or "horizontal" (Progress rows) -->
             <default>tabbed</default>
+        </entry>
+        <entry name="showBorder" type="Bool">
+            <!-- Toggle outer card border display -->
+            <default>false</default>
         </entry>
         <entry name="activePreset" type="String">
             <!-- Active theme preset name -->

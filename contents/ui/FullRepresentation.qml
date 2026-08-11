@@ -34,6 +34,8 @@ Rectangle {
 
     color: backgroundColor
     radius: 8
+    border.width: Plasmoid.configuration.showBorder ? 1 : 0
+    border.color: Qt.alpha(textColor, 0.25)
 
     // Exports usage statistics to CSV file
     function handleExport() {
