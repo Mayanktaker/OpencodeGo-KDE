@@ -271,11 +271,7 @@ Rectangle {
                 implicitHeight: 14
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
-                onClicked: {
-                    fullRoot.visible = false;
-                    Plasmoid.expanded = false;
-                    Plasmoid.configure();
-                }
+                onClicked: Plasmoid.configure()
 
                 Rectangle {
                     anchors.fill: parent
