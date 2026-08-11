@@ -5,12 +5,14 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
-import "../code/api.js" as Api
 
 Item {
     id: configGeneralRoot
     Layout.fillWidth: true
     implicitHeight: formLayout.implicitHeight + 40
+
+    // Shared curl-based network transport (QML XHR cannot send the Cookie header)
+    UsageFetcher { id: usageFetcher }
 
     // Test connection state properties for the Validate button feedback
     property bool testingConnection: false
@@ -21,7 +23,7 @@ Item {
     function testConnection() {
         configGeneralRoot.testingConnection = true;
         configGeneralRoot.testResultText = "";
-        Api.fetchUsageData(workspaceIdField.text, authCookieField.text, function(err, data) {
+        usageFetcher.fetch(workspaceIdField.text, authCookieField.text, function(err, data) {
             configGeneralRoot.testingConnection = false;
             if (err) {
                 configGeneralRoot.testSucceeded = false;

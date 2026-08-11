@@ -6,10 +6,12 @@ import QtQml
 import org.kde.plasma.plasmoid 2.0
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents
-import "../code/api.js" as Api
 
 PlasmoidItem {
     id: root
+
+    // Shared curl-based network transport (QML XHR cannot send the Cookie header)
+    UsageFetcher { id: usageFetcher }
 
     // Disable default Plasma popup frame to eliminate unwanted outer borders
     Plasmoid.backgroundHints: PlasmaCore.Types.NoBackground
@@ -47,7 +49,7 @@ PlasmoidItem {
         var wsId = Plasmoid.configuration.workspaceId || "";
         var cookie = Plasmoid.configuration.authCookie || "";
 
-        Api.fetchUsageData(wsId, cookie, function(err, data) {
+        usageFetcher.fetch(wsId, cookie, function(err, data) {
             isLoading = false;
             if (err) {
                 errorMessage = err;

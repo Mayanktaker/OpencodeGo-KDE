@@ -60,65 +60,65 @@ function getMockData() {
     };
 }
 
-// Primary API function to fetch usage data asynchronously using XMLHttpRequest
-function fetchUsageData(workspaceId, authCookie, callback) {
-    // Fallback to mock data if auth cookie or workspace ID is missing
-    if (!authCookie || authCookie.trim() === "" || !workspaceId || workspaceId.trim() === "") {
-        callback(null, getMockData());
-        return;
-    }
+// Wraps a string in POSIX single quotes so it is safe to inline in a shell command
+function shellQuote(s) {
+    // Single-quote the value, escaping any embedded single quotes via '"'"'
+    return "'" + String(s).replace(/'/g, "'\\''") + "'";
+}
 
+// Validates the pasted auth credential and returns a user-facing error message, or "" when usable
+function checkCookieError(authCookie) {
     var finalCookie = buildCookieHeader(authCookie);
+    if (!finalCookie) return "";
     // Detect truncated cookie values copied from browser DevTools table
-    if (finalCookie.indexOf("...") !== -1 || finalCookie.length < 150) {
-        callback("Auth Cookie is truncated or incomplete. Double-click the cell in DevTools to copy the entire value (500+ characters), or paste the full Cookie header string.", null);
-        return;
+    if (finalCookie.indexOf("...") !== -1) {
+        return "Auth Cookie is truncated (...). Double-click the cell in DevTools to copy the entire value, or copy the full Cookie header from the Network tab.";
     }
+    // Real iron-session seals are several hundred characters long; shorter values are incomplete or bogus
+    if (finalCookie.length < 150) {
+        return "Auth Cookie looks incomplete or invalid. Paste the full 'auth' cookie for opencode.ai (starts with Fe26..., 500+ characters).";
+    }
+    return "";
+}
 
-    var cleanWs = workspaceId.trim();
-    // Default internal URL structure as requested
-    var targetUrl = "https://opencode.ai/workspace/" + encodeURIComponent(cleanWs) + "/go";
+// Builds the curl shell command used to fetch the Go page (Qt's QML XHR strips the Cookie header,
+// so we shell out to curl which honors it; the executable Plasma dataengine runs the command)
+function buildCurlCommand(workspaceId, authCookie) {
+    var ws = String(workspaceId || "").trim();
+    var cookie = buildCookieHeader(authCookie);
+    var url = "https://opencode.ai/workspace/" + encodeURIComponent(ws) + "/go";
+    // -sSL: silent + show errors + follow redirects (so an invalid cookie lands on the OpenAuth login page)
+    // --max-time: bound the request so the widget never hangs
+    var parts = [
+        "curl", "-sSL", "--max-time", "15",
+        "-H", shellQuote("Cookie: " + cookie),
+        "-H", shellQuote("User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
+        "-H", shellQuote("Accept: text/html,application/xhtml+xml,application/xml;q=0.9,application/json,*/*;q=0.8"),
+        "-H", shellQuote("X-Workspace-Id: " + ws),
+        shellQuote(url)
+    ];
+    return parts.join(" ");
+}
 
-    var xhr = new XMLHttpRequest();
-    xhr.open("GET", targetUrl, true);
-
-    // Set request headers for cookie authentication; opencode.ai authenticates via the auth cookie only
-    xhr.setRequestHeader("Cookie", finalCookie);
-    xhr.setRequestHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36");
-    xhr.setRequestHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,application/json,*/*;q=0.8");
-    xhr.setRequestHeader("X-Workspace-Id", cleanWs);
-
-    // Configure timeout (10 seconds)
-    xhr.timeout = 10000;
-
-    // Handle ready state changes
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-            if (xhr.status === 200) {
-                try {
-                    var responseText = xhr.responseText || "";
-                    var parsedData = parseAnyResponse(responseText);
-                    callback(null, parsedData);
-                } catch (e) {
-                    callback(e.message, null);
-                }
-            } else if (xhr.status === 401 || xhr.status === 403) {
-                callback("Authentication failed (HTTP " + xhr.status + "). Check Auth Cookie.", null);
-            } else {
-                callback("Server error (HTTP " + xhr.status + ").", null);
-            }
-        }
-    };
-
-    xhr.onerror = function() {
-        callback("Network request failed. Please check internet connection.", null);
-    };
-
-    xhr.ontimeout = function() {
-        callback("Request timed out. Server did not respond.", null);
-    };
-
-    xhr.send();
+// Parses the captured curl output (stdout HTML, stderr text, exit code) into the widget model
+function parseCurlOutput(stdout, stderr, exitCode) {
+    // curl exit 28 = timeout, 6 = DNS, 7 = connection refused, etc.
+    if (exitCode && parseInt(exitCode, 10) !== 0) {
+        // Non-zero exit: surface a helpful network/auth message
+        var code = parseInt(exitCode, 10);
+        if (code === 28) return { error: "Request timed out. Server did not respond within 15s.", data: null };
+        if (code === 6 || code === 7) return { error: "Network unreachable. Please check your internet connection.", data: null };
+        // Other codes still may have produced useful HTML on stdout (e.g. 200 body followed by a redirect chain error) — try parsing it
+    }
+    var body = stdout || "";
+    if (!body && stderr) {
+        return { error: "curl failed: " + String(stderr).slice(0, 200), data: null };
+    }
+    try {
+        return { error: null, data: parseAnyResponse(body) };
+    } catch (e) {
+        return { error: e.message, data: null };
+    }
 }
 
 // Detects the OpenAuth login page returned when auth credentials are rejected
