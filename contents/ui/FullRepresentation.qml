@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Full expanded representation component displaying complete metrics, interactive charts, layout toggles, export, and settings shortcut
+// Full expanded representation component displaying metrics, vertical charts, horizontal bars, export, and settings shortcut
 
 import QtQuick
 import QtQuick.Layouts
@@ -12,17 +12,20 @@ import "../code/api.js" as Api
 Rectangle {
     id: fullRoot
 
+    // Layout mode flags bound from Plasmoid configuration ("tabbed", "all_in_one", "horizontal")
+    property string layoutMode: Plasmoid.configuration.displayLayout || "tabbed"
+    property bool isTabbed: layoutMode === "tabbed"
+    property bool isAllInOne: layoutMode === "all_in_one"
+    property bool isHorizontal: layoutMode === "horizontal"
+
     // Preferred layout dimensions for Plasma expanded popup representation
     Layout.minimumWidth: 380
-    Layout.minimumHeight: isAllInOne ? 540 : 380
+    Layout.minimumHeight: isAllInOne ? 540 : (isHorizontal ? 350 : 380)
     Layout.preferredWidth: 420
-    Layout.preferredHeight: isAllInOne ? 580 : 400
+    Layout.preferredHeight: isAllInOne ? 580 : (isHorizontal ? 360 : 400)
 
     // Currently selected chart view mode ("hourly", "weekly", "monthly")
     property string activeView: "weekly"
-
-    // Layout style property bound from Plasmoid configuration ("tabbed" vs "all_in_one")
-    property bool isAllInOne: (Plasmoid.configuration.displayLayout === "all_in_one")
 
     // Custom theme colors bound from Plasmoid configuration
     property color backgroundColor: Plasmoid.configuration.backgroundColor || "#1e1e2e"
@@ -40,7 +43,7 @@ Rectangle {
         console.log("Exported CSV Usage Data:\n" + csvContent);
     }
 
-    // Main column layout holding header, view selector, bar chart, and footer
+    // Main column layout holding header, view selector, bar chart / horizontal bars, and footer
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: Kirigami.Units.gridUnit
@@ -56,10 +59,10 @@ Rectangle {
             isMock: root.usageData ? root.usageData.isMock : true
         }
 
-        // View selector tab bar (visible only in tabbed layout mode)
+        // View selector tab bar (visible only in Tabbed layout mode)
         ViewSelector {
             id: viewSelector
-            visible: !isAllInOne
+            visible: isTabbed
             Layout.fillWidth: true
             activeView: fullRoot.activeView
             onViewSelected: function(viewName) {
@@ -88,10 +91,10 @@ Rectangle {
             }
         }
 
-        // Single chart representation for Tabbed layout mode
+        // Single vertical bar chart representation for Tabbed layout mode
         UsageBarChart {
             id: singleBarChart
-            visible: !isAllInOne
+            visible: isTabbed
             Layout.fillWidth: true
             Layout.fillHeight: true
             chartData: {
@@ -102,7 +105,7 @@ Rectangle {
             }
         }
 
-        // Scrollable All-in-One Dashboard container showing all 3 charts together
+        // Scrollable All-in-One Dashboard container showing all 3 vertical charts together
         QQC2.ScrollView {
             visible: isAllInOne
             Layout.fillWidth: true
@@ -153,6 +156,14 @@ Rectangle {
                     chartData: root.usageData ? root.usageData.monthly || [] : []
                 }
             }
+        }
+
+        // Horizontal Usage Bars Layout mode
+        HorizontalUsageBars {
+            visible: isHorizontal
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            usageData: root.usageData
         }
 
         // Footer status bar row containing refresh details, export, and manual triggers
