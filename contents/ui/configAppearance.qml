@@ -15,16 +15,27 @@ Kirigami.FormLayout {
     leftPadding: 16
     rightPadding: 16
 
-    // Configuration properties bound automatically via cfg_ prefix to main.xml
-    property string cfg_displayLayout: "tabbed"
-    property string cfg_activePreset: "catppuccin_mocha"
+    // Configuration property aliases bound automatically via cfg_ prefix to main.xml
+    property alias cfg_displayLayout: displayLayoutField.text
     property alias cfg_showTitle: showTitleCheckBox.checked
     property alias cfg_showBorder: showBorderCheckBox.checked
+    property alias cfg_activePreset: activePresetField.text
     property alias cfg_backgroundColor: bgColorField.text
     property alias cfg_textColor: textColorField.text
     property alias cfg_barColor: barColorField.text
     property alias cfg_barSecondaryColor: bar2ColorField.text
     property alias cfg_accentColor: accentColorField.text
+
+    // Hidden text fields backing String property aliases for KQuickConfigModule
+    QQC2.TextField {
+        id: displayLayoutField
+        visible: false
+    }
+
+    QQC2.TextField {
+        id: activePresetField
+        visible: false
+    }
 
     // Apply color preset helper function with dark & white developer theme palettes
     function applyPreset(presetId) {
@@ -115,12 +126,12 @@ Kirigami.FormLayout {
             { text: i18n("Horizontal Progress Bars (Compact Progress Rows)"), value: "horizontal" }
         ]
         currentIndex: {
-            if (configAppearanceRoot.cfg_displayLayout === "all_in_one") return 1;
-            if (configAppearanceRoot.cfg_displayLayout === "horizontal") return 2;
+            if (displayLayoutField.text === "all_in_one") return 1;
+            if (displayLayoutField.text === "horizontal") return 2;
             return 0;
         }
         onActivated: {
-            configAppearanceRoot.cfg_displayLayout = currentValue;
+            displayLayoutField.text = currentValue;
         }
     }
 
@@ -161,7 +172,7 @@ Kirigami.FormLayout {
         ]
 
         currentIndex: {
-            var val = configAppearanceRoot.cfg_activePreset;
+            var val = activePresetField.text || "catppuccin_mocha";
             for (var i = 0; i < model.length; i++) {
                 if (model[i].value === val) return i;
             }
@@ -169,7 +180,7 @@ Kirigami.FormLayout {
         }
 
         onActivated: {
-            configAppearanceRoot.cfg_activePreset = currentValue;
+            activePresetField.text = currentValue;
             if (currentValue !== "custom") {
                 applyPreset(currentValue);
             }
@@ -193,7 +204,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: bgColorField
             Layout.fillWidth: true
-            onTextChanged: configAppearanceRoot.cfg_activePreset = "custom"
+            onTextChanged: activePresetField.text = "custom"
         }
 
         QQC2.Button {
@@ -226,7 +237,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: textColorField
             Layout.fillWidth: true
-            onTextChanged: configAppearanceRoot.cfg_activePreset = "custom"
+            onTextChanged: activePresetField.text = "custom"
         }
 
         QQC2.Button {
@@ -259,7 +270,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: barColorField
             Layout.fillWidth: true
-            onTextChanged: configAppearanceRoot.cfg_activePreset = "custom"
+            onTextChanged: activePresetField.text = "custom"
         }
 
         QQC2.Button {
@@ -292,7 +303,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: bar2ColorField
             Layout.fillWidth: true
-            onTextChanged: configAppearanceRoot.cfg_activePreset = "custom"
+            onTextChanged: activePresetField.text = "custom"
         }
 
         QQC2.Button {
@@ -325,7 +336,7 @@ Kirigami.FormLayout {
         QQC2.TextField {
             id: accentColorField
             Layout.fillWidth: true
-            onTextChanged: configAppearanceRoot.cfg_activePreset = "custom"
+            onTextChanged: activePresetField.text = "custom"
         }
 
         QQC2.Button {
