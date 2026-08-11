@@ -1,10 +1,11 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Root PlasmoidItem entry point managing state, data fetching timer, and representations
+// Root PlasmoidItem entry point managing state, data fetching timer, notifications, and representations
 
 import QtQuick
 import QtQml
 import org.kde.plasma.plasmoid 2.0
 import org.kde.plasma.components 3.0 as PlasmaComponents
+import org.kde.notification 1.0 as KNotification
 import "../code/api.js" as Api
 
 PlasmoidItem {
@@ -19,12 +20,22 @@ PlasmoidItem {
     property int usagePercent: 0
     property bool isLoading: false
     property string errorMessage: ""
+    property int lastAlertedPercent: 0
 
     // Compact representation component for panel tray placement
     compactRepresentation: CompactRepresentation {}
 
     // Full representation component for expanded desktop popup view
     fullRepresentation: FullRepresentation {}
+
+    // Desktop notification object instance for high quota warnings
+    KNotification.Notification {
+        id: quotaAlertNotification
+        componentName: "plasma_workspace"
+        eventId: "notification"
+        title: i18n("OpenCode Go Quota Warning")
+        text: i18n("Your OpenCode Go subscription usage has reached %1%!", root.usagePercent)
+    }
 
     // Function to execute async usage data refresh from OpenCode API
     function refreshData() {
@@ -42,6 +53,17 @@ PlasmoidItem {
             if (data) {
                 usageData = data;
                 usagePercent = data.usagePercent || 0;
+
+                // Check quota threshold alert trigger
+                var notifyEnabled = Plasmoid.configuration.enableNotifications !== false;
+                var threshold = Plasmoid.configuration.notificationThreshold || 80;
+                
+                if (notifyEnabled && usagePercent >= threshold && lastAlertedPercent < threshold) {
+                    lastAlertedPercent = usagePercent;
+                    quotaAlertNotification.sendEvent();
+                } else if (usagePercent < threshold) {
+                    lastAlertedPercent = 0;
+                }
             }
         });
     }

@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// General settings tab QML layout for Workspace ID, Auth Cookie, and Refresh interval configuration
+// General settings tab QML layout for Workspace ID, Auth Cookie, Refresh interval, and Notifications
 
 import QtQuick
 import QtQuick.Controls as QQC2
@@ -13,6 +13,8 @@ Kirigami.FormLayout {
     property alias cfg_workspaceId: workspaceIdField.text
     property alias cfg_authCookie: authCookieField.text
     property int cfg_refreshInterval: 60000
+    property alias cfg_enableNotifications: enableNotifyCheckBox.checked
+    property alias cfg_notificationThreshold: thresholdSpinBox.value
 
     // Workspace ID input field
     QQC2.TextField {
@@ -55,6 +57,32 @@ Kirigami.FormLayout {
 
         onActivated: {
             cfg_refreshInterval = currentValue;
+        }
+    }
+
+    // Enable desktop quota alerts checkbox
+    QQC2.CheckBox {
+        id: enableNotifyCheckBox
+        Kirigami.FormData.label: i18n("Quota Alerts:")
+        text: i18n("Send desktop notification when usage threshold is exceeded")
+    }
+
+    // Quota alert percentage threshold spinbox
+    RowLayout {
+        Kirigami.FormData.label: i18n("Alert Threshold:")
+        visible: enableNotifyCheckBox.checked
+        spacing: 6
+
+        QQC2.SpinBox {
+            id: thresholdSpinBox
+            from: 10
+            to: 100
+            stepSize: 5
+            editable: true
+        }
+
+        QQC2.Label {
+            text: i18n("% of plan quota")
         }
     }
 

@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// API logic module for fetching and parsing OpenCode Go subscription usage data
+// API logic module for fetching, parsing, and exporting OpenCode Go subscription usage data
 
 // Calculates integer percentage from used and total values safely
 function calculatePercentage(used, total) {
@@ -130,4 +130,29 @@ function parseUsageResponse(data) {
         monthly: data.monthly || [],
         lastRefreshed: new Date().toLocaleTimeString()
     };
+}
+
+// Generates formatted CSV content from usage data model
+function generateCSV(data) {
+    if (!data) return "";
+    var lines = [];
+    lines.push("Category,Label,Used,MaxLimit,Percentage");
+    
+    // Process weekly records
+    var weekly = data.weekly || [];
+    for (var i = 0; i < weekly.length; i++) {
+        var w = weekly[i];
+        var pct = calculatePercentage(w.value, w.maxValue);
+        lines.push("Weekly," + w.label + "," + w.value + "," + w.maxValue + "," + pct + "%");
+    }
+
+    // Process monthly records
+    var monthly = data.monthly || [];
+    for (var m = 0; m < monthly.length; m++) {
+        var mo = monthly[m];
+        var pctMo = calculatePercentage(mo.value, mo.maxValue);
+        lines.push("Monthly," + mo.label + "," + mo.value + "," + mo.maxValue + "," + pctMo + "%");
+    }
+
+    return lines.join("\n");
 }

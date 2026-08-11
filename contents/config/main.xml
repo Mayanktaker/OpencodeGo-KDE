@@ -21,6 +21,14 @@
             <!-- Timer refresh interval in milliseconds (default: 60,000 ms = 1 min) -->
             <default>60000</default>
         </entry>
+        <entry name="enableNotifications" type="Bool">
+            <!-- Toggle desktop notification alerts when usage threshold is exceeded -->
+            <default>true</default>
+        </entry>
+        <entry name="notificationThreshold" type="Int">
+            <!-- Quota usage percentage threshold that triggers notification (e.g. 80%) -->
+            <default>80</default>
+        </entry>
     </group>
 
     <!-- Appearance settings group for themes and custom color palettes -->

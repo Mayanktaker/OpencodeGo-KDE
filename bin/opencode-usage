@@ -1,0 +1,126 @@
+#!/usr/bin/env python3
+# © Mayanktaker Computers & Web Development | https://mayanktaker.com
+# CLI utility for checking OpenCode Go subscription usage from terminal
+
+import os
+import sys
+import json
+import argparse
+import configparser
+import urllib.request
+import urllib.error
+
+# Parses command line flags and arguments
+def parse_args():
+    parser = argparse.ArgumentParser(description="OpenCode Go CLI Usage Tracker")
+    parser.add_argument("--workspace-id", "-w", help="OpenCode Workspace ID")
+    parser.add_argument("--cookie", "-c", help="OpenCode Auth Cookie")
+    parser.add_argument("--json", "-j", action="store_true", help="Output raw JSON format")
+    parser.add_argument("--demo", "-d", action="store_true", help="Force demo mock data")
+    return parser.parse_args()
+
+# Reads plasmoid settings from KDE config file if available
+def load_kde_config():
+    config_path = os.path.expanduser("~/.config/plasma-org.kde.plasma.desktop-appletsrc")
+    if not os.path.exists(config_path):
+        return "", ""
+
+    ws_id, cookie = "", ""
+    try:
+        config = configparser.ConfigParser(strict=False)
+        config.read(config_path)
+        for section in config.sections():
+            if "com.mayanktaker.opencodego-usage" in section or "Applets" in section:
+                if config.has_option(section, "workspaceId"):
+                    ws_id = config.get(section, "workspaceId")
+                if config.has_option(section, "authCookie"):
+                    cookie = config.get(section, "authCookie")
+    except Exception:
+        pass
+    return ws_id, cookie
+
+# Generates mock data for demo mode
+def get_mock_data():
+    return {
+        "isMock": True,
+        "planName": "OpenCode Go (Demo Mode)",
+        "billingPeriod": "Current Month",
+        "usagePercent": 73,
+        "currentUsed": 3650,
+        "currentLimit": 5000,
+        "weekly": [
+            {"label": "Mon", "value": 420, "maxValue": 1000},
+            {"label": "Tue", "value": 550, "maxValue": 1000},
+            {"label": "Wed", "value": 710, "maxValue": 1000},
+            {"label": "Thu", "value": 640, "maxValue": 1000},
+            {"label": "Fri", "value": 890, "maxValue": 1000},
+            {"label": "Sat", "value": 310, "maxValue": 1000},
+            {"label": "Sun", "value": 250, "maxValue": 1000}
+        ]
+    }
+
+# Fetches usage stats from OpenCode API
+def fetch_usage(workspace_id, auth_cookie):
+    if not workspace_id or not auth_cookie:
+        return get_mock_data()
+
+    url = f"https://opencode.ai/api/workspace/{urllib.parse.quote(workspace_id)}/usage"
+    req = urllib.request.Request(url)
+    req.add_header("Accept", "application/json")
+    req.add_header("Cookie", f"auth={auth_cookie}")
+    req.add_header("X-Workspace-Id", workspace_id)
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as response:
+            if response.status == 200:
+                data = json.loads(response.read().decode("utf-8"))
+                data["isMock"] = False
+                return data
+    except Exception:
+        pass
+    return get_mock_data()
+
+# Renders progress bar visualization for terminal output
+def render_progress_bar(percent, width=30):
+    filled = int(round(width * percent / 100))
+    bar = "█" * filled + "░" * (width - filled)
+    return f"[{bar}] {percent}%"
+
+# Main entry point function
+def main():
+    args = parse_args()
+    ws_id, cookie = load_kde_config()
+
+    if args.workspace_id:
+        ws_id = args.workspace_id
+    if args.cookie:
+        cookie = args.cookie
+
+    if args.demo:
+        data = get_mock_data()
+    else:
+        data = fetch_usage(ws_id, cookie)
+
+    if args.json:
+        print(json.dumps(data, indent=2))
+        return
+
+    # Print formatted CLI summary
+    print("\033[1;36m===========================================\033[0m")
+    print(f"\033[1m📊 {data.get('planName', 'OpenCode Go')} Usage Tracker\033[0m")
+    print("\033[1;36m===========================================\033[0m")
+    print(f"Cycle   : {data.get('billingPeriod', 'N/A')}")
+    print(f"Status  : {'Demo Mode' if data.get('isMock') else 'Live API Connected'}")
+    print(f"Quota   : {render_progress_bar(data.get('usagePercent', 0))}")
+    print("-------------------------------------------")
+    print("Weekly Breakdown:")
+    for item in data.get("weekly", []):
+        val = item.get("value", 0)
+        max_v = item.get("maxValue", 1000)
+        p = int(val / max_v * 100) if max_v > 0 else 0
+        mini_bar = "■" * int(p / 10) + " " * (10 - int(p / 10))
+        print(f"  {item.get('label', 'N/A'):<5} [{mini_bar}] {val:>4} / {max_v}")
+    print("\033[1;36m===========================================\033[0m")
+
+if __name__ == "__main__":
+    main()

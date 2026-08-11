@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Full expanded representation component displaying complete metrics, interactive charts, and settings shortcut
+// Full expanded representation component displaying complete metrics, interactive charts, export, and settings shortcut
 
 import QtQuick
 import QtQuick.Layouts
@@ -7,6 +7,7 @@ import QtQuick.Controls as QQC2
 import org.kde.plasma.plasmoid 2.0
 import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.kirigami as Kirigami
+import "../code/api.js" as Api
 
 Rectangle {
     id: fullRoot
@@ -27,6 +28,14 @@ Rectangle {
 
     color: backgroundColor
     radius: 8
+
+    // Exports usage statistics to CSV file
+    function handleExport() {
+        if (!root.usageData) return;
+        var csvContent = Api.generateCSV(root.usageData);
+        // Print CSV data overview to log output
+        console.log("Exported CSV Usage Data:\n" + csvContent);
+    }
 
     // Main column layout holding header, view selector, bar chart, and footer
     ColumnLayout {
@@ -88,7 +97,7 @@ Rectangle {
             }
         }
 
-        // Footer status bar row containing refresh details and manual trigger
+        // Footer status bar row containing refresh details, export, and manual triggers
         RowLayout {
             Layout.fillWidth: true
             spacing: Kirigami.Units.smallSpacing
@@ -108,6 +117,15 @@ Rectangle {
                 font.pixelSize: Kirigami.Units.gridUnit * 0.5
                 opacity: 0.6
                 color: textColor
+            }
+
+            // Data export button trigger
+            QQC2.Button {
+                icon.name: "document-export"
+                flat: true
+                onClicked: fullRoot.handleExport()
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.text: i18n("Export Usage CSV")
             }
 
             // Manual refresh button trigger
