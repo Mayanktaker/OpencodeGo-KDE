@@ -15,7 +15,7 @@ Item {
     property string planName: "OpenCode Go"
     property string billingPeriod: "Current Cycle"
     property int usagePercent: 0
-    property bool isMock: true
+    property bool isMock: false
 
     // Color tokens bound from configuration
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"

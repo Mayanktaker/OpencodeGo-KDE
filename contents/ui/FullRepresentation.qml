@@ -75,7 +75,7 @@ Rectangle {
             planName: usageData ? usageData.planName : "OpenCode Go"
             billingPeriod: usageData ? usageData.billingPeriod : "Current Cycle"
             usagePercent: usagePercent || 0
-            isMock: usageData ? usageData.isMock : true
+            isMock: usageData ? Boolean(usageData.isMock) : false
         }
 
         // View selector tab bar (visible only in Tabbed layout mode)

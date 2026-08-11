@@ -64,13 +64,21 @@ function fetchUsageData(workspaceId, authCookie, apiBaseUrl, callback) {
     }
 
     var baseUrl = apiBaseUrl && apiBaseUrl.trim() !== "" ? apiBaseUrl.trim() : "https://opencode.ai/api/workspace";
-    // Strip trailing slash if present
-    if (baseUrl.endsWith("/")) {
-        baseUrl = baseUrl.slice(0, -1);
-    }
+    var cleanWs = encodeURIComponent(workspaceId.trim());
 
-    // Prepare target endpoint URL
-    var targetUrl = baseUrl + "/" + encodeURIComponent(workspaceId.trim()) + "/usage";
+    var targetUrl = "";
+    if (baseUrl.indexOf("{workspaceId}") !== -1 || baseUrl.indexOf("{id}") !== -1) {
+        targetUrl = baseUrl.replace("{workspaceId}", cleanWs).replace("{id}", cleanWs);
+    } else if (baseUrl.indexOf(workspaceId.trim()) !== -1) {
+        targetUrl = baseUrl;
+    } else if (baseUrl.endsWith("/go") || baseUrl.endsWith("/usage") || baseUrl.endsWith(".json")) {
+        targetUrl = baseUrl;
+    } else {
+        if (baseUrl.endsWith("/")) {
+            baseUrl = baseUrl.slice(0, -1);
+        }
+        targetUrl = baseUrl + "/" + cleanWs + "/usage";
+    }
     
     // Create XMLHttpRequest instance
     var xhr = new XMLHttpRequest();
