@@ -21,7 +21,7 @@ Item {
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
     property color backgroundColor: Plasmoid.configuration.backgroundColor || "#1e1e2e"
 
-    implicitHeight: 220
+    implicitHeight: barsColumn.implicitHeight
 
     // Calculates current aggregate used vs max limit for interval dataset
     function getIntervalMetrics(dataset) {
@@ -35,21 +35,22 @@ Item {
 
     // Column layout organizing 3 horizontal progress bar rows
     ColumnLayout {
+        id: barsColumn
         anchors.fill: parent
-        spacing: 16
+        spacing: 6
 
         // Repeater generating horizontal progress rows for Hourly, Weekly, and Monthly metrics
         Repeater {
             model: [
-                { id: "hourly", title: i18n("Hourly Usage"), icon: "preferences-system-time", data: usageData ? usageData.hourly : [] },
-                { id: "weekly", title: i18n("Weekly Quota"), icon: "office-calendar", data: usageData ? usageData.weekly : [] },
-                { id: "monthly", title: i18n("Monthly Limit"), icon: "view-calendar", data: usageData ? usageData.monthly : [] }
+                { id: "hourly", title: i18n("Rolling"), icon: "preferences-system-time", data: usageData ? usageData.hourly : [] },
+                { id: "weekly", title: i18n("Weekly"), icon: "office-calendar", data: usageData ? usageData.weekly : [] },
+                { id: "monthly", title: i18n("Monthly"), icon: "view-calendar", data: usageData ? usageData.monthly : [] }
             ]
 
             // Progress row container column
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                spacing: 2
 
                 // Extract metrics object for current interval row
                 property var metrics: getIntervalMetrics(modelData.data)
@@ -57,35 +58,35 @@ Item {
                 // Row header containing category icon, title, used count, and percentage
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 6
+                    spacing: 4
 
                     Kirigami.Icon {
                         source: modelData.icon
-                        implicitWidth: 16
-                        implicitHeight: 16
+                        implicitWidth: 12
+                        implicitHeight: 12
                         color: textColor
                     }
 
                     PlasmaComponents.Label {
                         text: modelData.title
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.65
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.5
                         color: textColor
                     }
 
                     Item { Layout.fillWidth: true }
 
                     PlasmaComponents.Label {
-                        text: metrics.used + " / " + metrics.max
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.55
+                        text: metrics.used + "/" + metrics.max
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.45
                         opacity: 0.75
                         color: textColor
                     }
 
                     Rectangle {
-                        implicitWidth: pctText.implicitWidth + 8
+                        implicitWidth: pctText.implicitWidth + 6
                         implicitHeight: pctText.implicitHeight + 2
-                        radius: 3
+                        radius: 2
                         color: metrics.pct >= 90 ? "#ff5555" : (metrics.pct >= 75 ? "#ffb86c" : accentColor)
 
                         Text {
@@ -93,7 +94,7 @@ Item {
                             anchors.centerIn: parent
                             text: metrics.pct + "%"
                             font.bold: true
-                            font.pixelSize: Kirigami.Units.gridUnit * 0.5
+                            font.pixelSize: Kirigami.Units.gridUnit * 0.4
                             color: "#11111b"
                         }
                     }
@@ -103,13 +104,13 @@ Item {
                 MouseArea {
                     id: barMouseArea
                     Layout.fillWidth: true
-                    implicitHeight: 22
+                    implicitHeight: 12
                     hoverEnabled: true
 
                     // Bar background Track rectangle
                     Rectangle {
                         anchors.fill: parent
-                        radius: 11
+                        radius: 6
                         color: Qt.darker(backgroundColor, 1.4)
                         border.color: barMouseArea.containsMouse ? accentColor : Qt.alpha(textColor, 0.15)
                         border.width: 1
@@ -120,9 +121,9 @@ Item {
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
-                            anchors.margins: 2
-                            radius: 9
-                            width: Math.max(18, (parent.width - 4) * (metrics.pct / 100))
+                            anchors.margins: 1
+                            radius: 5
+                            width: Math.max(4, (parent.width - 2) * (metrics.pct / 100))
 
                             // Gradient fill using primary and secondary theme bar colors
                             gradient: Gradient {

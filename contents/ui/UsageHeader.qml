@@ -23,7 +23,7 @@ Item {
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
 
-    implicitHeight: 46
+    implicitHeight: 34
 
     // Formulates the reset countdown when real data carries it, otherwise estimates burn-rate velocity
     function getDurationLabel() {
@@ -65,38 +65,38 @@ Item {
     // Row layout for header alignment
     RowLayout {
         anchors.fill: parent
-        spacing: Kirigami.Units.smallSpacing
+        spacing: Kirigami.Units.smallSpacing / 2
 
         // Left column containing plan title, billing cycle dates, and burn-rate velocity estimate
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 2
+            spacing: 1
 
             // Row containing plan title label and optional demo mode indicator
             RowLayout {
-                spacing: 6
+                spacing: 4
 
                 // Plan title text label
                 PlasmaComponents.Label {
                     text: planName
                     font.bold: true
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.85
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.7
                     color: textColor
                 }
 
                 // Demo mode badge indicator
                 Rectangle {
                     visible: isMock
-                    implicitWidth: demoText.implicitWidth + 8
+                    implicitWidth: demoText.implicitWidth + 6
                     implicitHeight: demoText.implicitHeight + 2
-                    radius: 3
+                    radius: 2
                     color: Qt.alpha(accentColor, 0.2)
 
                     Text {
                         id: demoText
                         anchors.centerIn: parent
                         text: i18n("DEMO")
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.45
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.4
                         font.bold: true
                         color: accentColor
                     }
@@ -106,7 +106,7 @@ Item {
             // Billing cycle range plus reset countdown or burn-rate velocity estimate text label
             PlasmaComponents.Label {
                 text: billingPeriod + " • " + headerRoot.getDurationLabel()
-                font.pixelSize: Kirigami.Units.gridUnit * 0.6
+                font.pixelSize: Kirigami.Units.gridUnit * 0.5
                 opacity: 0.75
                 color: textColor
             }
@@ -114,15 +114,15 @@ Item {
 
         // Quick 1-click Layout Mode Switcher Icon Button
         Rectangle {
-            implicitWidth: 28
-            implicitHeight: 28
-            radius: 14
+            implicitWidth: 22
+            implicitHeight: 22
+            radius: 11
             color: layoutToggleMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : Qt.alpha(textColor, 0.08)
 
             Kirigami.Icon {
                 anchors.centerIn: parent
-                implicitWidth: 16
-                implicitHeight: 16
+                implicitWidth: 12
+                implicitHeight: 12
                 source: {
                     var mode = Plasmoid.configuration.displayLayout || "tabbed";
                     if (mode === "tabbed") return "view-list-details";
@@ -151,9 +151,9 @@ Item {
 
         // Right container displaying subscription quota usage percentage pill
         Rectangle {
-            implicitWidth: percentLabel.implicitWidth + 14
-            implicitHeight: 28
-            radius: 14
+            implicitWidth: percentLabel.implicitWidth + 10
+            implicitHeight: 22
+            radius: 11
             color: usagePercent >= 90 ? "#ff5555" : (usagePercent >= 75 ? "#ffb86c" : accentColor)
 
             // Usage percentage text label
@@ -162,7 +162,7 @@ Item {
                 anchors.centerIn: parent
                 text: usagePercent + "% Used"
                 font.bold: true
-                font.pixelSize: Kirigami.Units.gridUnit * 0.6
+                font.pixelSize: Kirigami.Units.gridUnit * 0.5
                 color: "#11111b"
             }
         }

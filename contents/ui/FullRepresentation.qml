@@ -26,10 +26,10 @@ Rectangle {
     signal requestRefresh()
 
     // Preferred layout dimensions for Plasma expanded popup representation
-    Layout.minimumWidth: 380
-    Layout.minimumHeight: isAllInOne ? 540 : (isHorizontal ? 340 : 380)
-    Layout.preferredWidth: 420
-    Layout.preferredHeight: isAllInOne ? 580 : (isHorizontal ? 350 : 400)
+    Layout.minimumWidth: 280
+    Layout.minimumHeight: isAllInOne ? 400 : (isHorizontal ? 160 : 280)
+    Layout.preferredWidth: 340
+    Layout.preferredHeight: isAllInOne ? 450 : (isHorizontal ? 180 : 320)
 
     // Currently selected chart view mode ("hourly", "weekly", "monthly")
     property string activeView: "weekly"
@@ -64,8 +64,8 @@ Rectangle {
     // Main column layout holding header, view selector, bar chart / horizontal bars, and footer
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: Kirigami.Units.gridUnit
-        spacing: Kirigami.Units.smallSpacing
+        anchors.margins: Kirigami.Units.gridUnit / 2
+        spacing: Kirigami.Units.smallSpacing / 2
 
         // Usage header component displaying plan metadata and total percentage
         UsageHeader {
@@ -189,12 +189,12 @@ Rectangle {
         // Footer status bar row containing refresh details, export, and manual triggers
         RowLayout {
             Layout.fillWidth: true
-            spacing: Kirigami.Units.smallSpacing
+            spacing: Kirigami.Units.smallSpacing / 2
 
             // Busy indicator spinner when fetching data
             QQC2.BusyIndicator {
-                implicitWidth: 12
-                implicitHeight: 12
+                implicitWidth: 10
+                implicitHeight: 10
                 running: isLoading
                 visible: isLoading
             }
@@ -203,7 +203,7 @@ Rectangle {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: fullRoot.usageData ? i18n("Last updated: %1", fullRoot.usageData.lastRefreshed) : i18n("Loading...")
-                font.pixelSize: Kirigami.Units.gridUnit * 0.5
+                font.pixelSize: Kirigami.Units.gridUnit * 0.45
                 opacity: 0.7
                 color: fullRoot.textColor
             }
@@ -211,21 +211,21 @@ Rectangle {
             // Data export compact icon button
             MouseArea {
                 id: exportMouse
-                implicitWidth: 18
-                implicitHeight: 18
+                implicitWidth: 14
+                implicitHeight: 14
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: fullRoot.handleExport()
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 4
+                    radius: 3
                     color: exportMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
 
                     Kirigami.Icon {
                         anchors.centerIn: parent
-                        implicitWidth: 12
-                        implicitHeight: 12
+                        implicitWidth: 10
+                        implicitHeight: 10
                         source: "document-export"
                         color: exportMouse.containsMouse ? accentColor : textColor
                     }
@@ -239,21 +239,21 @@ Rectangle {
             // Manual refresh compact icon button
             MouseArea {
                 id: refreshMouse
-                implicitWidth: 18
-                implicitHeight: 18
+                implicitWidth: 14
+                implicitHeight: 14
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: requestRefresh()
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 4
+                    radius: 3
                     color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
 
                     Kirigami.Icon {
                         anchors.centerIn: parent
-                        implicitWidth: 12
-                        implicitHeight: 12
+                        implicitWidth: 10
+                        implicitHeight: 10
                         source: "view-refresh"
                         color: refreshMouse.containsMouse ? accentColor : textColor
                     }
@@ -267,8 +267,8 @@ Rectangle {
             // Configure widget settings compact icon button
             MouseArea {
                 id: configMouse
-                implicitWidth: 18
-                implicitHeight: 18
+                implicitWidth: 14
+                implicitHeight: 14
                 hoverEnabled: true
                 cursorShape: Qt.PointingHandCursor
                 onClicked: {
@@ -287,13 +287,13 @@ Rectangle {
 
                 Rectangle {
                     anchors.fill: parent
-                    radius: 4
+                    radius: 3
                     color: configMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
 
                     Kirigami.Icon {
                         anchors.centerIn: parent
-                        implicitWidth: 12
-                        implicitHeight: 12
+                        implicitWidth: 10
+                        implicitHeight: 10
                         source: "configure"
                         color: configMouse.containsMouse ? accentColor : textColor
                     }
