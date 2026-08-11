@@ -184,8 +184,8 @@ Rectangle {
 
             // Busy indicator spinner when fetching data
             QQC2.BusyIndicator {
-                implicitWidth: 16
-                implicitHeight: 16
+                implicitWidth: 14
+                implicitHeight: 14
                 running: root.isLoading
                 visible: root.isLoading
             }
@@ -199,91 +199,94 @@ Rectangle {
                 color: textColor
             }
 
-            // Data export icon button
-            Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: 4
-                color: exportMouse.containsMouse ? Qt.alpha(accentColor, 0.2) : "transparent"
+            // Data export compact icon button
+            MouseArea {
+                id: exportMouse
+                implicitWidth: 22
+                implicitHeight: 22
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: fullRoot.handleExport()
 
-                Kirigami.Icon {
-                    anchors.centerIn: parent
-                    implicitWidth: 18
-                    implicitHeight: 18
-                    source: "document-export"
-                    color: exportMouse.containsMouse ? accentColor : textColor
-                }
-
-                MouseArea {
-                    id: exportMouse
+                Rectangle {
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: fullRoot.handleExport()
+                    radius: 4
+                    color: exportMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
+
+                    Kirigami.Icon {
+                        anchors.centerIn: parent
+                        implicitWidth: 14
+                        implicitHeight: 14
+                        source: "document-export"
+                        color: exportMouse.containsMouse ? accentColor : textColor
+                    }
                 }
 
                 QQC2.ToolTip.visible: exportMouse.containsMouse
+                QQC2.ToolTip.delay: 100
                 QQC2.ToolTip.text: i18n("Export Usage CSV")
             }
 
-            // Manual refresh icon button
-            Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: 4
-                color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.2) : "transparent"
+            // Manual refresh compact icon button
+            MouseArea {
+                id: refreshMouse
+                implicitWidth: 22
+                implicitHeight: 22
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: root.refreshData()
 
-                Kirigami.Icon {
-                    anchors.centerIn: parent
-                    implicitWidth: 18
-                    implicitHeight: 18
-                    source: "view-refresh"
-                    color: refreshMouse.containsMouse ? accentColor : textColor
-                }
-
-                MouseArea {
-                    id: refreshMouse
+                Rectangle {
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: root.refreshData()
+                    radius: 4
+                    color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
+
+                    Kirigami.Icon {
+                        anchors.centerIn: parent
+                        implicitWidth: 14
+                        implicitHeight: 14
+                        source: "view-refresh"
+                        color: refreshMouse.containsMouse ? accentColor : textColor
+                    }
                 }
 
                 QQC2.ToolTip.visible: refreshMouse.containsMouse
+                QQC2.ToolTip.delay: 100
                 QQC2.ToolTip.text: i18n("Refresh Now")
             }
 
-            // Configure widget settings icon button
-            Rectangle {
-                implicitWidth: 28
-                implicitHeight: 28
-                radius: 4
-                color: configMouse.containsMouse ? Qt.alpha(accentColor, 0.2) : "transparent"
-
-                Kirigami.Icon {
-                    anchors.centerIn: parent
-                    implicitWidth: 18
-                    implicitHeight: 18
-                    source: "configure"
-                    color: configMouse.containsMouse ? accentColor : textColor
+            // Configure widget settings compact icon button
+            MouseArea {
+                id: configMouse
+                implicitWidth: 22
+                implicitHeight: 22
+                hoverEnabled: true
+                cursorShape: Qt.PointingHandCursor
+                onClicked: {
+                    var act = Plasmoid.action("configure");
+                    if (act) {
+                        act.trigger();
+                    } else if (Plasmoid.internalAction && Plasmoid.internalAction("configure")) {
+                        Plasmoid.internalAction("configure").trigger();
+                    }
                 }
 
-                MouseArea {
-                    id: configMouse
+                Rectangle {
                     anchors.fill: parent
-                    hoverEnabled: true
-                    cursorShape: Qt.PointingHandCursor
-                    onClicked: {
-                        var act = Plasmoid.action("configure");
-                        if (act) {
-                            act.trigger();
-                        } else if (Plasmoid.internalAction("configure")) {
-                            Plasmoid.internalAction("configure").trigger();
-                        }
+                    radius: 4
+                    color: configMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
+
+                    Kirigami.Icon {
+                        anchors.centerIn: parent
+                        implicitWidth: 14
+                        implicitHeight: 14
+                        source: "configure"
+                        color: configMouse.containsMouse ? accentColor : textColor
                     }
                 }
 
                 QQC2.ToolTip.visible: configMouse.containsMouse
+                QQC2.ToolTip.delay: 100
                 QQC2.ToolTip.text: i18n("Configure Widget")
             }
         }
