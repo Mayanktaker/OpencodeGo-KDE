@@ -37,7 +37,7 @@ Item {
     ColumnLayout {
         id: barsColumn
         anchors.fill: parent
-        spacing: 6
+        spacing: 4
 
         // Repeater generating horizontal progress rows for Hourly, Weekly, and Monthly metrics
         Repeater {
@@ -50,7 +50,7 @@ Item {
             // Progress row container column
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 2
+                spacing: 1
 
                 // Extract metrics object for current interval row
                 property var metrics: getIntervalMetrics(modelData.data)
@@ -58,26 +58,26 @@ Item {
                 // Row header containing category icon, title, and percentage
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 3
 
                     Kirigami.Icon {
                         source: modelData.icon
-                        implicitWidth: 12
-                        implicitHeight: 12
+                        implicitWidth: 10
+                        implicitHeight: 10
                         color: textColor
                     }
 
                     PlasmaComponents.Label {
                         text: modelData.title
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.59
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.5
                         color: textColor
                     }
 
                     Item { Layout.fillWidth: true }
 
                     Rectangle {
-                        implicitWidth: pctText.implicitWidth + 6
+                        implicitWidth: pctText.implicitWidth + 5
                         implicitHeight: pctText.implicitHeight + 2
                         radius: 2
                         color: metrics.pct >= 90 ? "#ff5555" : (metrics.pct >= 75 ? "#ffb86c" : accentColor)
@@ -87,7 +87,7 @@ Item {
                             anchors.centerIn: parent
                             text: metrics.pct + "%"
                             font.bold: true
-                            font.pixelSize: Kirigami.Units.gridUnit * 0.48
+                            font.pixelSize: Kirigami.Units.gridUnit * 0.4
                             color: "#11111b"
                         }
                     }
@@ -97,7 +97,7 @@ Item {
                 MouseArea {
                     id: barMouseArea
                     Layout.fillWidth: true
-                    implicitHeight: 12
+                    implicitHeight: 8
                     hoverEnabled: true
 
                     // Bar background Track rectangle

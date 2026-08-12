@@ -11,7 +11,6 @@ import org.kde.kirigami as Kirigami
 Item {
     id: headerRoot
 
-    // Data properties bound from root plasmoid state
     property string planName: "OpenCode Go Usage Tracker"
     property string billingPeriod: "Current Cycle"
     property int usagePercent: 0
@@ -19,13 +18,11 @@ Item {
     property var usageData: null
     signal requestRefresh()
 
-    // Color tokens bound from configuration
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
 
-    implicitHeight: 44
+    implicitHeight: 36
 
-    // Formulates the reset countdown text
     function getDurationLabel() {
         if (usageData && usageData.resetLabel) {
             return i18n("Usage resets in %1", usageData.resetLabel);
@@ -37,38 +34,37 @@ Item {
         anchors.fill: parent
         spacing: 0
 
-        // Row 1: title (left) + refresh + badge (right)
+        // Row 1: icon + title + refresh + badge
         RowLayout {
             Layout.fillWidth: true
-            spacing: 6
+            spacing: 4
 
-            // Plan icon + title
             Kirigami.Icon {
                 source: "com.mayanktaker.opencodego-usage"
-                implicitWidth: 18
-                implicitHeight: 18
+                implicitWidth: 14
+                implicitHeight: 14
             }
 
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: planName
                 font.bold: true
-                font.pixelSize: Kirigami.Units.gridUnit * 0.8
+                font.pixelSize: Kirigami.Units.gridUnit * 0.7
                 color: textColor
                 elide: Text.ElideRight
             }
 
-            // Refresh button
+            // Refresh
             Rectangle {
-                implicitWidth: 20
-                implicitHeight: 20
-                radius: 4
+                implicitWidth: 16
+                implicitHeight: 16
+                radius: 3
                 color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
 
                 Kirigami.Icon {
                     anchors.centerIn: parent
-                    implicitWidth: 14
-                    implicitHeight: 14
+                    implicitWidth: 10
+                    implicitHeight: 10
                     source: "view-refresh"
                     color: refreshMouse.containsMouse ? accentColor : textColor
                 }
@@ -86,11 +82,11 @@ Item {
                 QQC2.ToolTip.text: i18n("Refresh Now")
             }
 
-            // Usage percentage pill
+            // Badge
             Rectangle {
-                implicitWidth: percentLabel.implicitWidth + 12
-                implicitHeight: 22
-                radius: 4
+                implicitWidth: percentLabel.implicitWidth + 8
+                implicitHeight: 18
+                radius: 3
                 color: usagePercent >= 90 ? "#ff5555" : (usagePercent >= 75 ? "#ffb86c" : accentColor)
 
                 Text {
@@ -98,7 +94,7 @@ Item {
                     anchors.centerIn: parent
                     text: usagePercent + "%"
                     font.bold: true
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.59
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.5
                     color: "#11111b"
                 }
             }
@@ -107,10 +103,10 @@ Item {
         // Row 2: subtitle
         PlasmaComponents.Label {
             Layout.fillWidth: true
-            Layout.topMargin: 2
+            Layout.topMargin: 1
             text: headerRoot.getDurationLabel()
-                font.pixelSize: Kirigami.Units.gridUnit * 0.53
-            opacity: 0.65
+            font.pixelSize: Kirigami.Units.gridUnit * 0.45
+            opacity: 0.6
             color: textColor
         }
     }
