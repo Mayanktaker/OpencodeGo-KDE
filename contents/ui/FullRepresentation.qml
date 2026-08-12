@@ -26,10 +26,10 @@ Rectangle {
     signal requestRefresh()
 
     // Preferred layout dimensions for Plasma expanded popup representation
-    Layout.minimumWidth: 240
-    Layout.minimumHeight: isAllInOne ? 400 : (isHorizontal ? 130 : 280)
-    Layout.preferredWidth: 280
-    Layout.preferredHeight: isAllInOne ? 450 : (isHorizontal ? 150 : 320)
+    Layout.minimumWidth: 200
+    Layout.minimumHeight: isAllInOne ? 300 : (isHorizontal ? 100 : 200)
+    Layout.preferredWidth: 260
+    Layout.preferredHeight: isAllInOne ? 350 : (isHorizontal ? 140 : 260)
 
     // Currently selected chart view mode ("hourly", "weekly", "monthly")
     property string activeView: "weekly"
@@ -204,7 +204,7 @@ Rectangle {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: fullRoot.usageData ? i18n("Last updated: %1", fullRoot.usageData.lastRefreshed) : i18n("Loading...")
-                font.pixelSize: Kirigami.Units.gridUnit * 0.4
+                font.pixelSize: Kirigami.Units.gridUnit * 0.48
                 opacity: 0.6
                 color: fullRoot.textColor
             }
