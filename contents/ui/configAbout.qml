@@ -13,37 +13,37 @@ QQC2.ScrollView {
     ColumnLayout {
         width: Math.max(320, configAboutRoot.width - 32)
         anchors.horizontalCenter: parent.horizontalCenter
-        spacing: 12
+        spacing: 14
 
         Item { implicitHeight: 4 }
 
-        // App identity card
+        // App identity hero card
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: appColumn.implicitHeight + 24
-            radius: 8
-            color: Qt.alpha(Kirigami.Theme.highlightColor, 0.08)
-            border.color: Qt.alpha(Kirigami.Theme.highlightColor, 0.25)
+            implicitHeight: heroCol.implicitHeight + 28
+            radius: 12
+            color: Qt.alpha(Kirigami.Theme.highlightColor, 0.10)
+            border.color: Qt.alpha(Kirigami.Theme.highlightColor, 0.30)
             border.width: 1
 
             ColumnLayout {
-                id: appColumn
+                id: heroCol
                 anchors.fill: parent
-                anchors.margins: 16
-                spacing: 6
+                anchors.margins: 18
+                spacing: 8
 
                 Kirigami.Icon {
                     Layout.alignment: Qt.AlignHCenter
                     source: "com.mayanktaker.opencodego-usage"
-                    implicitWidth: 48
-                    implicitHeight: 48
+                    implicitWidth: 56
+                    implicitHeight: 56
                 }
 
                 QQC2.Label {
                     Layout.alignment: Qt.AlignHCenter
                     text: i18n("OpenCode Go Usage Tracker")
                     font.bold: true
-                    font.pixelSize: Kirigami.Units.gridUnit * 1.0
+                    font.pixelSize: Kirigami.Units.gridUnit * 1.1
                 }
 
                 QQC2.Label {
@@ -52,23 +52,39 @@ QQC2.ScrollView {
                     opacity: 0.6
                     font.pixelSize: Kirigami.Units.gridUnit * 0.55
                 }
+
+                RowLayout {
+                    Layout.alignment: Qt.AlignHCenter
+                    spacing: 4
+                    Kirigami.Icon {
+                        source: "favorite"
+                        implicitWidth: 14
+                        implicitHeight: 14
+                        color: Kirigami.Theme.negativeTextColor
+                    }
+                    QQC2.Label {
+                        text: i18n("Crafted by Mayanktaker")
+                        opacity: 0.7
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.55
+                    }
+                }
             }
         }
 
         // Developer credits
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: devCol.implicitHeight + 20
-            radius: 6
+            implicitHeight: devCol.implicitHeight + 22
+            radius: 10
             color: Qt.alpha(Kirigami.Theme.highlightColor, 0.06)
-            border.color: Qt.alpha(Kirigami.Theme.highlightColor, 0.15)
+            border.color: Qt.alpha(Kirigami.Theme.highlightColor, 0.18)
             border.width: 1
 
             ColumnLayout {
                 id: devCol
                 anchors.fill: parent
-                anchors.margins: 14
-                spacing: 6
+                anchors.margins: 16
+                spacing: 8
 
                 RowLayout {
                     spacing: 6
@@ -80,25 +96,37 @@ QQC2.ScrollView {
                     QQC2.Label {
                         text: i18n("Developer")
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.75
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.8
                     }
                 }
 
-                QQC2.Label {
-                    text: i18n("Created by Mayanktaker")
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.65
-                    opacity: 0.8
-                }
-
-                QQC2.Label {
-                    text: i18n("© Mayanktaker Computers & Web Development")
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.55
-                    opacity: 0.6
+                RowLayout {
+                    spacing: 10
+                    Kirigami.Icon {
+                        source: "user-identity"
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        color: Kirigami.Theme.highlightColor
+                    }
+                    ColumnLayout {
+                        spacing: 2
+                        QQC2.Label {
+                            text: i18n("Mayanktaker")
+                            font.bold: true
+                            font.pixelSize: Kirigami.Units.gridUnit * 0.7
+                        }
+                        QQC2.Label {
+                            text: i18n("© Mayanktaker Computers & Web Development")
+                            opacity: 0.6
+                            font.pixelSize: Kirigami.Units.gridUnit * 0.55
+                        }
+                    }
                 }
 
                 QQC2.Button {
+                    Layout.fillWidth: true
                     icon.name: "globe"
-                    text: i18n("mayanktaker.com")
+                    text: i18n("Visit mayanktaker.com")
                     onClicked: Qt.openUrlExternally("https://mayanktaker.com")
                 }
             }
@@ -107,17 +135,17 @@ QQC2.ScrollView {
         // Support / PayPal
         Rectangle {
             Layout.fillWidth: true
-            implicitHeight: payCol.implicitHeight + 20
-            radius: 6
+            implicitHeight: payCol.implicitHeight + 22
+            radius: 10
             color: Qt.alpha(Kirigami.Theme.highlightColor, 0.06)
-            border.color: Qt.alpha(Kirigami.Theme.highlightColor, 0.15)
+            border.color: Qt.alpha(Kirigami.Theme.highlightColor, 0.18)
             border.width: 1
 
             ColumnLayout {
                 id: payCol
                 anchors.fill: parent
-                anchors.margins: 14
-                spacing: 6
+                anchors.margins: 16
+                spacing: 8
 
                 RowLayout {
                     spacing: 6
@@ -129,7 +157,7 @@ QQC2.ScrollView {
                     QQC2.Label {
                         text: i18n("Support Development")
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.75
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.8
                     }
                 }
 
@@ -137,7 +165,8 @@ QQC2.ScrollView {
                     text: i18n("If you enjoy this widget, consider supporting future updates!")
                     wrapMode: Text.WordWrap
                     font.pixelSize: Kirigami.Units.gridUnit * 0.6
-                    opacity: 0.8
+                    opacity: 0.85
+                    Layout.fillWidth: true
                 }
 
                 RowLayout {
@@ -146,6 +175,7 @@ QQC2.ScrollView {
                         source: "mail-message-new"
                         implicitWidth: 14
                         implicitHeight: 14
+                        opacity: 0.8
                     }
                     QQC2.Label {
                         text: "mayanktaker_hell@yahoo.co.in"
@@ -155,6 +185,7 @@ QQC2.ScrollView {
                 }
 
                 QQC2.Button {
+                    Layout.fillWidth: true
                     icon.name: "help-donate"
                     text: i18n("Donate via PayPal")
                     onClicked: Qt.openUrlExternally("https://paypal.me/mayanktaker")

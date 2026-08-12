@@ -19,17 +19,17 @@ ConfigModel {
         source: "configAppearance.qml"
     }
 
-    // Keyboard Shortcuts tab showing available shortcuts
-    ConfigCategory {
-        name: i18n("Keyboard Shortcuts")
-        icon: "input-keyboard"
-        source: "configKeyboardShortcuts.qml"
-    }
-
     // Credits & Support tab displaying developer info, website, and PayPal donation link
     ConfigCategory {
         name: i18n("Credits & Support")
         icon: "help-about"
         source: "configAbout.qml"
+    }
+
+    // Keyboard Shortcuts tab showing available shortcuts
+    ConfigCategory {
+        name: i18n("Keyboard Shortcuts")
+        icon: "input-keyboard"
+        source: "configKeyboardShortcuts.qml"
     }
 }
