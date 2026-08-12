@@ -25,11 +25,4 @@ ConfigModel {
         icon: "help-about"
         source: "configAbout.qml"
     }
-
-    // Keyboard Shortcuts tab showing available shortcuts
-    ConfigCategory {
-        name: i18n("Keyboard Shortcuts")
-        icon: "input-keyboard"
-        source: "configKeyboardShortcuts.qml"
-    }
 }

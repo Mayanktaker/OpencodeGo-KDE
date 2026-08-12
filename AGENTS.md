@@ -13,3 +13,10 @@
 - **Error Handling:** When API errors or invalid credentials occur, the widget clears stale mock data and displays clean error messages without forcing Demo Mode.
 - **Layout:** The widget uses horizontal-only layout (`layoutMode` hardcoded to `"horizontal"`). Tabbed and all-in-one views are disabled. Use `Plasmoid.configure()` (Plasma 6 API) — the old `plasmoid` id does not exist.
 - **QML Binding Scope:** When passing properties to child components, always qualify with the parent's `id` (e.g., `fullRoot.usagePercent`) to avoid self-binding loops where the child resolves the unqualified name to its own property.
+
+## Testing Changes (MANDATORY after any QML/UI edit)
+Plasma caches compiled QML and the config dialog does **not** pick up edits to `contents/ui/*.qml` or `contents/config/*.qml` until caches are cleared and the shell restarts. After changing widget UI or config pages you MUST:
+1. Upgrade the installed plasmoid from the repo: `bash install.sh` (runs `kpackagetool6 -t Plasma/Applet -u .`, purges all Plasma QML bytecode caches, rebuilds the sycoca index, and restarts plasmashell).
+2. **Fully close the settings/config dialog** before reopening it — a config window left open across the restart keeps a stale in-memory tab list (this is the usual cause of "old tabs / duplicate tabs" after a layout change).
+3. If changes still don't appear, manually purge caches and restart: `rm -rf ~/.cache/plasmashell ~/.cache/plasmawindowed ~/.cache/qmlcache ~/.cache/kcmshell6 ~/.cache/systemsettings ~/.cache/kwin` then restart plasmashell, and `killall kcmshell6 systemsettings` to kill any lingering config processes.
+Note: the installed copy under `~/.local/share/plasma/plasmoids/com.mayanktaker.opencodego-usage/` is a **separate copy**, not a symlink — edits in the repo are only live after the upgrade step above.
