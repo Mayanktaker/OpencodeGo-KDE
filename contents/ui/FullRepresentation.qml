@@ -27,9 +27,11 @@ Rectangle {
 
     // Preferred layout dimensions for Plasma expanded popup representation
     Layout.minimumWidth: 200
-    Layout.minimumHeight: isAllInOne ? 300 : (isHorizontal ? 110 : 200)
+    Layout.minimumHeight: 110
     Layout.preferredWidth: 260
-    Layout.preferredHeight: contentColumn.implicitHeight + Math.max(12, Math.round(12 * uiScale)) * 2
+    // Set explicit size so Plasma clips the popup to content height
+    width: Math.max(Layout.minimumWidth, contentColumn.implicitWidth + 16)
+    height: contentColumn.implicitHeight + 20
 
     // Currently selected chart view mode ("hourly", "weekly", "monthly")
     property string activeView: "weekly"
@@ -41,10 +43,7 @@ Rectangle {
 
     // Layout-aware scale factor shared by responsive child components
     property real baseWidth: 260
-    property real baseHeight: 140
-    property real widthScale: width / baseWidth
-    property real heightScale: height > 0 ? height / baseHeight : widthScale
-    property real uiScale: Math.max(0.75, Math.min(1.5, Math.min(widthScale, heightScale)))
+    property real uiScale: Math.max(0.75, Math.min(1.5, width / baseWidth))
 
     color: backgroundColor
     radius: 8
@@ -80,7 +79,7 @@ Rectangle {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: Math.max(8, Math.round(8 * fullRoot.uiScale))
+        anchors.margins: 8
         spacing: 0
 
         // Usage header component displaying plan metadata and total percentage
