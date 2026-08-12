@@ -28,10 +28,10 @@ Rectangle {
     // Preferred layout dimensions for Plasma expanded popup representation
     Layout.minimumWidth: 200
     Layout.minimumHeight: 110
+    Layout.fillHeight: false
     Layout.preferredWidth: 260
-    // Set explicit size so Plasma clips the popup to content height
-    width: Math.max(Layout.minimumWidth, contentColumn.implicitWidth + 16)
-    height: contentColumn.implicitHeight + 20
+    Layout.preferredHeight: contentColumn.implicitHeight + 20
+    Layout.maximumHeight: contentColumn.implicitHeight + 20
 
     // Currently selected chart view mode ("hourly", "weekly", "monthly")
     property string activeView: "weekly"
