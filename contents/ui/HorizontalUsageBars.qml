@@ -78,7 +78,7 @@ Item {
                     PlasmaComponents.Label {
                         text: modelData.title
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.5
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.59
                         color: textColor
                     }
 
@@ -88,7 +88,7 @@ Item {
                     Text {
                         text: metrics.pct + "%"
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.45
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.48
                         color: barTextColor(index)
                     }
                 }

@@ -60,7 +60,7 @@ Item {
 
                 PlasmaComponents.Label {
                     text: "Usage Tracker"
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.4
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.46
                     opacity: 0.6
                     color: textColor
                 }
@@ -100,7 +100,7 @@ Item {
             Layout.fillWidth: true
             Layout.topMargin: 1
             text: headerRoot.getDurationLabel()
-            font.pixelSize: Kirigami.Units.gridUnit * 0.45
+            font.pixelSize: Kirigami.Units.gridUnit * 0.53
             opacity: 0.55
             color: textColor
         }
