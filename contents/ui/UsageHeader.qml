@@ -23,7 +23,7 @@ Item {
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
 
-    implicitHeight: 34
+    implicitHeight: 44
 
     // Formulates the reset countdown text
     function getDurationLabel() {
@@ -33,76 +33,79 @@ Item {
         return i18n("Usage data");
     }
 
-    // Row layout for header alignment
-    RowLayout {
+    ColumnLayout {
         anchors.fill: parent
-        spacing: Kirigami.Units.smallSpacing / 2
+        spacing: 0
 
-        // Left column containing plan title and reset countdown
-        ColumnLayout {
+        // Row 1: title (left) + refresh + badge (right)
+        RowLayout {
             Layout.fillWidth: true
-            spacing: 1
+            spacing: 6
 
             // Plan title
             PlasmaComponents.Label {
+                Layout.fillWidth: true
                 text: planName
                 font.bold: true
                 font.pixelSize: Kirigami.Units.gridUnit * 0.75
                 color: textColor
+                elide: Text.ElideRight
             }
 
-            // Reset countdown label
-            PlasmaComponents.Label {
-                text: headerRoot.getDurationLabel()
-                font.pixelSize: Kirigami.Units.gridUnit * 0.5
-                opacity: 0.75
-                color: textColor
+            // Refresh button
+            Rectangle {
+                implicitWidth: 20
+                implicitHeight: 20
+                radius: 4
+                color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
+
+                Kirigami.Icon {
+                    anchors.centerIn: parent
+                    implicitWidth: 14
+                    implicitHeight: 14
+                    source: "view-refresh"
+                    color: refreshMouse.containsMouse ? accentColor : textColor
+                }
+
+                MouseArea {
+                    id: refreshMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: headerRoot.requestRefresh()
+                }
+
+                QQC2.ToolTip.visible: refreshMouse.containsMouse
+                QQC2.ToolTip.delay: 100
+                QQC2.ToolTip.text: i18n("Refresh Now")
+            }
+
+            // Usage percentage pill
+            Rectangle {
+                implicitWidth: percentLabel.implicitWidth + 12
+                implicitHeight: 22
+                radius: 4
+                color: usagePercent >= 90 ? "#ff5555" : (usagePercent >= 75 ? "#ffb86c" : accentColor)
+
+                Text {
+                    id: percentLabel
+                    anchors.centerIn: parent
+                    text: usagePercent + "%"
+                    font.bold: true
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.55
+                    color: "#11111b"
+                }
             }
         }
 
-        // Refresh button (near the badge)
-        Rectangle {
-            implicitWidth: 18
-            implicitHeight: 18
-            radius: 4
-            color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
-
-            Kirigami.Icon {
-                anchors.centerIn: parent
-                implicitWidth: 12
-                implicitHeight: 12
-                source: "view-refresh"
-                color: refreshMouse.containsMouse ? accentColor : textColor
-            }
-
-            MouseArea {
-                id: refreshMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: headerRoot.requestRefresh()
-            }
-
-            QQC2.ToolTip.visible: refreshMouse.containsMouse
-            QQC2.ToolTip.delay: 100
-            QQC2.ToolTip.text: i18n("Refresh Now")
-        }
-
-        // Usage percentage pill
-        Rectangle {
-            implicitWidth: percentLabel.implicitWidth + 10
-            implicitHeight: 22
-            radius: 4
-            color: usagePercent >= 90 ? "#ff5555" : (usagePercent >= 75 ? "#ffb86c" : accentColor)
-
-            Text {
-                id: percentLabel
-                anchors.centerIn: parent
-                text: usagePercent + "%"
-                font.bold: true
-                font.pixelSize: Kirigami.Units.gridUnit * 0.55
-                color: "#11111b"
-            }
+        // Row 2: subtitle
+        PlasmaComponents.Label {
+            Layout.fillWidth: true
+            Layout.topMargin: 2
+            text: headerRoot.getDurationLabel()
+            font.pixelSize: Kirigami.Units.gridUnit * 0.5
+            opacity: 0.65
+            color: textColor
         }
     }
 }
