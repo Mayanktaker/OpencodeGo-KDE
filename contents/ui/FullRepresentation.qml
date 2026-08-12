@@ -39,6 +39,9 @@ Rectangle {
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
 
+    // Responsive scale factor: 1.0 at preferred width, scales up/down with widget
+    property real scaleFactor: Math.max(0.6, Math.min(2.0, width / Layout.preferredWidth))
+
     color: backgroundColor
     radius: 8
     border.width: (Plasmoid.configuration.showBorder === true) ? 1 : 0
@@ -83,6 +86,7 @@ Rectangle {
             usagePercent: fullRoot.usagePercent || 0
             isMock: fullRoot.usageData ? Boolean(fullRoot.usageData.isMock) : false
             usageData: fullRoot.usageData
+            scale: fullRoot.scaleFactor
             onRequestRefresh: fullRoot.requestRefresh()
         }
 
@@ -191,6 +195,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             usageData: fullRoot.usageData
+            scale: fullRoot.scaleFactor
         }
 
         // Footer — timestamp only
