@@ -4,16 +4,18 @@
         "Authors": [
             {
                 "Email": "info@mayanktaker.com",
-                "Name": "Mayanktaker"
+                "Name": "Mayanktaker",
+                "Website": "https://mayanktaker.com"
             }
         ],
         "Category": "System Information",
-        "Description": "Tracks OpenCode Go subscription usage (hourly, weekly, monthly) with customizable presets & themes.",
+        "Description": "Tracks OpenCode Go subscription usage across Rolling, Weekly, and Monthly windows with animated progress bars, reset countdowns, customizable themes, and a companion CLI utility.",
         "Icon": "com.mayanktaker.opencodego-usage",
         "Id": "com.mayanktaker.opencodego-usage",
+        "License": "MIT",
         "Name": "OpenCode Go Usage Tracker",
         "Version": "1.0.0",
-        "Website": "https://mayanktaker.com"
+        "Website": "https://github.com/Mayanktaker/OpencodeGo-KDE"
     },
     "KPackageStructure": "Plasma/Applet",
     "X-Plasma-API-Minimum-Version": "6.0"
