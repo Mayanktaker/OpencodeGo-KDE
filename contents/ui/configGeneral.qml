@@ -46,6 +46,7 @@ Item {
     property alias cfg_refreshInterval: refreshIntervalField.value
     property alias cfg_enableNotifications: enableNotifyCheckBox.checked
     property alias cfg_notificationThreshold: thresholdSpinBox.value
+    property alias cfg_showBarIcons: showBarIconsCheckBox.checked
 
     Kirigami.FormLayout {
         id: formLayout
@@ -155,6 +156,13 @@ Item {
             QQC2.Label {
                 text: i18n("% of plan quota")
             }
+        }
+
+        // Show icons next to bar labels checkbox
+        QQC2.CheckBox {
+            id: showBarIconsCheckBox
+            Kirigami.FormData.label: i18n("Bar Icons:")
+            text: i18n("Show icons next to Rolling / Weekly / Monthly labels")
         }
 
         // Help instruction card box

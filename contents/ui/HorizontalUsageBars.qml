@@ -11,10 +11,9 @@ import org.kde.kirigami as Kirigami
 Item {
     id: horizontalRoot
 
-    // Input data object containing {hourly, weekly, monthly, usagePercent}
     property var usageData: null
+    property bool showIcons: Plasmoid.configuration.showBarIcons !== false
 
-    // Custom theme colors bound from Plasmoid configuration
     property color barColor: Plasmoid.configuration.barColor || "#89b4fa"
     property color barSecondaryColor: Plasmoid.configuration.barSecondaryColor || "#74c7ec"
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
@@ -23,7 +22,11 @@ Item {
 
     implicitHeight: barsColumn.implicitHeight
 
-    // Calculates current aggregate used vs max limit for interval dataset
+    // Distinct colors per interval for visual differentiation
+    property color rollingColor: Qt.alpha(textColor, 0.6)
+    property color weeklyColor: accentColor
+    property color monthlyColor: "#ffb86c"
+
     function getIntervalMetrics(dataset) {
         if (!dataset || dataset.length === 0) return { used: 0, max: 100, pct: 0 };
         var lastItem = dataset[dataset.length - 1];
@@ -33,13 +36,18 @@ Item {
         return { used: used, max: max, pct: pct };
     }
 
-    // Column layout organizing 3 horizontal progress bar rows
+    // Returns the color for a given bar index (0=rolling, 1=weekly, 2=monthly)
+    function barTextColor(index) {
+        if (index === 0) return rollingColor;
+        if (index === 1) return weeklyColor;
+        return monthlyColor;
+    }
+
     ColumnLayout {
         id: barsColumn
         anchors.fill: parent
-        spacing: 6
+        spacing: 4
 
-        // Repeater generating horizontal progress rows for Hourly, Weekly, and Monthly metrics
         Repeater {
             model: [
                 { id: "hourly", title: i18n("Rolling"), icon: "preferences-system-time", data: usageData ? usageData.hourly : [] },
@@ -47,60 +55,51 @@ Item {
                 { id: "monthly", title: i18n("Monthly"), icon: "view-calendar", data: usageData ? usageData.monthly : [] }
             ]
 
-            // Progress row container column
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 2
+                spacing: 1
 
-                // Extract metrics object for current interval row
                 property var metrics: getIntervalMetrics(modelData.data)
 
-                // Row header containing category icon, title, and percentage
+                // Row header: title + colored percentage text
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: 3
 
+                    // Optional icon (hidden by default)
                     Kirigami.Icon {
                         source: modelData.icon
-                        implicitWidth: 12
-                        implicitHeight: 12
+                        implicitWidth: 10
+                        implicitHeight: 10
                         color: textColor
+                        visible: horizontalRoot.showIcons
                     }
 
                     PlasmaComponents.Label {
                         text: modelData.title
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.59
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.5
                         color: textColor
                     }
 
                     Item { Layout.fillWidth: true }
 
-                    Rectangle {
-                        implicitWidth: pctText.implicitWidth + 6
-                        implicitHeight: pctText.implicitHeight + 2
-                        radius: 2
-                        color: metrics.pct >= 90 ? "#ff5555" : (metrics.pct >= 75 ? "#ffb86c" : accentColor)
-
-                        Text {
-                            id: pctText
-                            anchors.centerIn: parent
-                            text: metrics.pct + "%"
-                            font.bold: true
-                            font.pixelSize: Kirigami.Units.gridUnit * 0.48
-                            color: "#11111b"
-                        }
+                    // Colored percentage text (no background)
+                    Text {
+                        text: metrics.pct + "%"
+                        font.bold: true
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.45
+                        color: barTextColor(index)
                     }
                 }
 
-                // Interactive MouseArea for horizontal bar container
+                // Bar track
                 MouseArea {
                     id: barMouseArea
                     Layout.fillWidth: true
-                    implicitHeight: 12
+                    implicitHeight: 8
                     hoverEnabled: true
 
-                    // Bar background Track rectangle
                     Rectangle {
                         anchors.fill: parent
                         radius: 3
@@ -108,13 +107,11 @@ Item {
                         border.color: barMouseArea.containsMouse ? accentColor : Qt.alpha(textColor, 0.15)
                         border.width: 1
 
-                        // Subtle inset gradient on track
                         gradient: Gradient {
                             GradientStop { position: 0.0; color: Qt.darker(backgroundColor, 1.2) }
                             GradientStop { position: 1.0; color: Qt.darker(backgroundColor, 1.5) }
                         }
 
-                        // Animated horizontal progress fill bar rectangle
                         Rectangle {
                             id: fillBar
                             anchors.left: parent.left
@@ -124,21 +121,18 @@ Item {
                             radius: 2
                             width: Math.max(4, (parent.width - 2) * (metrics.pct / 100))
 
-                            // Gradient fill using primary and secondary theme bar colors
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
                                 GradientStop { position: 0.0; color: barColor }
                                 GradientStop { position: 1.0; color: barSecondaryColor }
                             }
 
-                            // Behavior animation for smooth horizontal fill width transition
                             Behavior on width {
                                 NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
                             }
                         }
                     }
 
-                    // Tooltip displaying detailed statistics on bar hover
                     QQC2.ToolTip.visible: barMouseArea.containsMouse
                     QQC2.ToolTip.delay: 100
                     QQC2.ToolTip.text: modelData.title + ": " + metrics.used + " of " + metrics.max + " (" + metrics.pct + "% used)"

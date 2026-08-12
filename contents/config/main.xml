@@ -46,6 +46,10 @@
             <!-- Toggle outer card border display -->
             <default>false</default>
         </entry>
+        <entry name="showBarIcons" type="Bool">
+            <!-- Toggle icons next to Rolling/Weekly/Monthly bar labels -->
+            <default>false</default>
+        </entry>
         <entry name="activePreset" type="String">
             <!-- Active theme preset name -->
             <default>catppuccin_mocha</default>
