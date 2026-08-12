@@ -78,7 +78,7 @@ Rectangle {
     ColumnLayout {
         id: contentColumn
         anchors.fill: parent
-        anchors.margins: Kirigami.Units.gridUnit / 4
+        anchors.margins: Math.max(8, Math.round(8 * fullRoot.uiScale))
         spacing: 0
 
         // Usage header component displaying plan metadata and total percentage
@@ -196,9 +196,11 @@ Rectangle {
 
         // Horizontal Usage Bars Layout mode
         HorizontalUsageBars {
+            id: horizontalBars
             visible: isHorizontal
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.fillHeight: false
+            Layout.preferredHeight: horizontalBars.implicitHeight
             usageData: fullRoot.usageData
             uiScale: fullRoot.uiScale
         }

@@ -21,7 +21,8 @@ Item {
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
     property color backgroundColor: Plasmoid.configuration.backgroundColor || "#1e1e2e"
 
-    implicitHeight: barsColumn.implicitHeight
+    property real contentPadding: Math.max(8, Math.round(8 * uiScale))
+    implicitHeight: barsColumn.implicitHeight + contentPadding * 2
 
     // Distinct colors per interval for visual differentiation
     property color rollingColor: Qt.alpha(textColor, 0.6)
@@ -46,8 +47,13 @@ Item {
 
     ColumnLayout {
         id: barsColumn
-        anchors.fill: parent
-        spacing: Math.round(4 * uiScale)
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.leftMargin: contentPadding
+        anchors.rightMargin: contentPadding
+        anchors.topMargin: contentPadding
+        spacing: Math.round(5 * uiScale)
 
         Repeater {
             model: [
@@ -58,7 +64,7 @@ Item {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: Math.round(uiScale)
+                spacing: Math.round(2 * uiScale)
 
                 property var metrics: getIntervalMetrics(modelData.data)
 
@@ -98,7 +104,7 @@ Item {
                 MouseArea {
                     id: barMouseArea
                     Layout.fillWidth: true
-                    implicitHeight: Math.round(8 * uiScale)
+                    implicitHeight: Math.round(12 * uiScale)
                     hoverEnabled: true
 
                     Rectangle {
