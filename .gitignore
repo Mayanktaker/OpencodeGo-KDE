@@ -11,5 +11,9 @@
 .cache/
 *.log
 
+# Generated release packages & archives
+*.plasmoid
+*.zip
+
 # System files
 .DS_Store

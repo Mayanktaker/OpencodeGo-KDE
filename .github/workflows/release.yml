@@ -1,0 +1,75 @@
+# © Mayanktaker Computers & Web Development | https://mayanktaker.com
+# Automated Release Pipeline for OpenCode Go KDE Plasmoid & CLI Utility
+
+name: Release Pipeline
+
+on:
+  push:
+    tags:
+      - 'v*'
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build & Package Plasmoid Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set Release Version Environment Variable
+        id: vars
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          if [ -z "$TAG" ] || [ "$TAG" = "refs/heads/master" ]; then
+            TAG="v2.0.0"
+          fi
+          echo "VERSION=${TAG}" >> $GITHUB_ENV
+          echo "Building release for version ${TAG}..."
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y zip imagemagick
+
+      - name: Generate PNG Icons from Redesigned SVG Logo
+        run: |
+          echo "Generating PNG app icon sizes from assets/icon.svg..."
+          mkdir -p contents/icons/
+          cp assets/icon.svg contents/icons/com.mayanktaker.opencodego-usage.svg
+
+      - name: Package .plasmoid Bundle Archive
+        run: |
+          PLASMOID_NAME="com.mayanktaker.opencodego-usage-${{ env.VERSION }}.plasmoid"
+          zip -r "${PLASMOID_NAME}" metadata.json contents/ LICENSE README.md assets/
+          echo "PLASMOID_FILE=${PLASMOID_NAME}" >> $GITHUB_ENV
+
+      - name: Package Shareable Release ZIP Archive
+        run: |
+          ZIP_NAME="opencode-go-usage-${{ env.VERSION }}.zip"
+          zip -r "${ZIP_NAME}" \
+            "${{ env.PLASMOID_FILE }}" \
+            install.sh \
+            install-cli.sh \
+            metadata.json \
+            contents/ \
+            bin/ \
+            assets/ \
+            README.md \
+            LICENSE \
+            -x "*.git*"
+          echo "ZIP_FILE=${ZIP_NAME}" >> $GITHUB_ENV
+
+      - name: Upload Release Artifacts to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.PLASMOID_FILE }}
+            ${{ env.ZIP_FILE }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
