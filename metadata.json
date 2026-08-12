@@ -14,7 +14,7 @@
         "Id": "com.mayanktaker.opencodego-usage",
         "License": "MIT",
         "Name": "OpenCode Go Usage Tracker",
-        "Version": "1.0.0",
+        "Version": "2.0.0",
         "Website": "https://github.com/Mayanktaker/OpencodeGo-KDE"
     },
     "KPackageStructure": "Plasma/Applet",
