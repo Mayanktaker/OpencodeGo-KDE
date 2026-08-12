@@ -175,7 +175,7 @@ function parseSolidUsageStore(responseText) {
 
     return {
         isMock: false,
-        planName: "OpenCode Go",
+        planName: "OpenCode Go Usage Tracker",
         billingPeriod: "Rolling / Weekly / Monthly",
         usagePercent: headline,
         resetLabel: formatReset(headlineResetSec),

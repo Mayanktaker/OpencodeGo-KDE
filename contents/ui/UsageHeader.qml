@@ -12,7 +12,7 @@ Item {
     id: headerRoot
 
     // Data properties bound from root plasmoid state
-    property string planName: "OpenCode Go"
+    property string planName: "OpenCode Go Usage Tracker"
     property string billingPeriod: "Current Cycle"
     property int usagePercent: 0
     property bool isMock: false
