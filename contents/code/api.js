@@ -227,7 +227,7 @@ function parseAnyResponse(responseText) {
         var windowPct = parseInt(usagePercentMatch[1], 10);
         return {
             isMock: false,
-            planName: "OpenCode Go",
+        planName: "OpenCode Go Usage Tracker",
             billingPeriod: "Current Cycle",
             usagePercent: windowPct,
             hourly: [],

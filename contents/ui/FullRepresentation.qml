@@ -72,7 +72,7 @@ Rectangle {
             id: usageHeader
             visible: Plasmoid.configuration.showTitle !== false
             Layout.fillWidth: true
-            planName: fullRoot.usageData ? fullRoot.usageData.planName : "OpenCode Go"
+            planName: fullRoot.usageData ? fullRoot.usageData.planName : "OpenCode Go Usage Tracker"
             billingPeriod: fullRoot.usageData ? fullRoot.usageData.billingPeriod : "Current Cycle"
             usagePercent: fullRoot.usagePercent || 0
             isMock: fullRoot.usageData ? Boolean(fullRoot.usageData.isMock) : false

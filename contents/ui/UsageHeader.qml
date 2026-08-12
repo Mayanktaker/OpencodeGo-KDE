@@ -42,7 +42,13 @@ Item {
             Layout.fillWidth: true
             spacing: 6
 
-            // Plan title
+            // Plan icon + title
+            Kirigami.Icon {
+                source: "com.mayanktaker.opencodego-usage"
+                implicitWidth: 18
+                implicitHeight: 18
+            }
+
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: planName
