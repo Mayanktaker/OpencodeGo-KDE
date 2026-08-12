@@ -1,39 +1,53 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
   <defs>
-    <!-- Dark glassmorphic background gradient -->
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#1e1e2e"/>
-      <stop offset="100%" stop-color="#11111b"/>
+    <!-- Vibrant OpenCode Go Cyan/Teal Gradient -->
+    <linearGradient id="opencodeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#2dd4bf"/>
+      <stop offset="50%" stop-color="#22d3ee"/>
+      <stop offset="100%" stop-color="#0284c7"/>
     </linearGradient>
-    <!-- Vibrant MT branding neon gradient -->
-    <linearGradient id="mtGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#74c7ec"/>
-      <stop offset="50%" stop-color="#89b4fa"/>
-      <stop offset="100%" stop-color="#f38ba8"/>
+
+    <!-- Spark Highlight Gradient -->
+    <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#a5f3fc"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
     </linearGradient>
-    <!-- Subtle glow filter -->
+
+    <!-- Subtle Glow Filter -->
     <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feGaussianBlur stdDeviation="3" result="blur" />
+      <feGaussianBlur stdDeviation="2.5" result="blur" />
       <feComposite in="SourceGraphic" in2="blur" operator="over" />
     </filter>
   </defs>
 
-  <!-- Outer rounded background square -->
-  <rect x="6" y="6" width="116" height="116" rx="28" fill="url(#bgGrad)" stroke="#313244" stroke-width="2.5"/>
+  <!-- Group holding redesigned OpenCode Go logo artwork matching mock design -->
+  <g filter="url(#glow)">
+    <!-- Left Angle Bracket '<' -->
+    <path d="M 36 44 L 18 64 L 36 84" 
+          fill="none" 
+          stroke="url(#opencodeGrad)" 
+          stroke-width="10" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
 
-  <!-- OpenCode Go Usage rising vertical bars background artwork -->
-  <rect x="22" y="58" width="12" height="38" rx="6" fill="#89b4fa" opacity="0.35"/>
-  <rect x="42" y="44" width="12" height="52" rx="6" fill="#74c7ec" opacity="0.5"/>
-  <rect x="62" y="32" width="12" height="64" rx="6" fill="#b4befe" opacity="0.65"/>
-  <rect x="82" y="24" width="12" height="72" rx="6" fill="#f38ba8" opacity="0.8"/>
+    <!-- Right Angle Bracket '>' -->
+    <path d="M 92 44 L 110 64 L 92 84" 
+          fill="none" 
+          stroke="url(#opencodeGrad)" 
+          stroke-width="10" 
+          stroke-linecap="round" 
+          stroke-linejoin="round"/>
 
-  <!-- Stylized MT Lettering combined with OpenCode Go branding stroke -->
-  <path d="M22 96 V52 L42 76 L62 52 V96 M62 52 H106 M84 52 V96" 
-        fill="none" 
-        stroke="url(#mtGrad)" 
-        stroke-width="10" 
-        stroke-linecap="round" 
-        stroke-linejoin="round" 
-        filter="url(#glow)"/>
+    <!-- Center Ring 'O' -->
+    <circle cx="64" cy="65" r="19" 
+            fill="none" 
+            stroke="url(#opencodeGrad)" 
+            stroke-width="10" 
+            stroke-linecap="round"/>
+
+    <!-- Top-Right Glowing Spark '✦' on Center Ring -->
+    <path d="M 76 33 Q 76 41 84 41 Q 76 41 76 49 Q 76 41 68 41 Q 76 41 76 33 Z" 
+          fill="url(#sparkGrad)"/>
+  </g>
 </svg>

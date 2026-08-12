@@ -11,15 +11,17 @@ A compact **KDE Plasma 6** widget and companion command-line utility for trackin
 
 ## 🌟 Key Features
 
+- 🎨 **Redesigned Brand Logo (`<O✦>`)**: Custom cyan-teal vector logo combining code brackets `< >`, central ring `O`, and glowing spark `✦`, integrated seamlessly across panel icons, header containers, SVGs, and system theme icon sizes (16px–128px).
 - 📊 **Real-Time Usage Tracking**: Fetches live data from `opencode.ai/workspace/{id}/go` via `curl` (Qt's QML XHR strips the Cookie header). Shows Rolling/Weekly/Monthly usage percentages with reset countdowns.
-- 📐 **Horizontal Progress Bars**: Compact horizontal bars with animated fill, percentage badges, and hover tooltips showing detailed stats.
-- 🔄 **In-Header Refresh**: One-click refresh button next to the percentage badge — no footer buttons needed.
+- 📐 **Horizontal Progress Bars**: Compact horizontal bars with animated cyan fills, percentage highlights, and hover tooltips showing detailed stats.
+- 🖼️ **Header Background Container**: Distinct header title section with configurable background color (`headerBackgroundColor`) and subtle border separation.
+- 🔄 **Animated Circular Refresh**: Interactive refresh button with smooth hover scale pulse and continuous rotation animation while data fetching is active.
 - 🏷️ **Dynamic Panel Badge**: Real-time percentage badge on the taskbar icon with automatic color shifts:
   - `< 75%`: Configured theme accent color
   - `75% - 89%`: Warning Orange (`#ffb86c`)
   - `≥ 90%`: Critical Red (`#ff5555`)
-- 🔔 **Native KDE Desktop Alerts**: System notification toasts when usage crosses your configured threshold (e.g., 80%).
-- 🎨 **12 Developer Theme Presets**: Catppuccin Mocha (default), Breeze Dark, Nord, Dracula, Solarized, Gruvbox, Tokyo Night, One Dark, plus 4 light themes. Full custom color picker support.
+- 🔔 **Native KDE Desktop Alerts**: System notification toasts when usage crosses your configured threshold (e.g., 80%) or when auth session cookies expire.
+- 🎨 **12 Developer Theme Presets**: Catppuccin Mocha (default), Breeze Dark, Nord, Dracula, Solarized, Gruvbox, Tokyo Night, One Dark, plus 4 light themes. Full custom color pickers including background, header background, text, bar primary/secondary, and accent colors.
 - 💻 **Global CLI Utility (`opencode-usage`)**: Terminal access with formatted output, JSON mode (`--json`), CSV export (`--export`), and Bash/Zsh tab completions.
 
 ---

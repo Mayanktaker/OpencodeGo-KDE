@@ -91,23 +91,22 @@ if [ -f "$SCRIPT_DIR/assets/icon.svg" ]; then
     cp "$SCRIPT_DIR/assets/icon.svg" "$SCRIPT_DIR/contents/icons/$PLASMOID_ID.svg"
 fi
 
-# Generate PNG icon representations across all standard icon sizes
-python3 -c "
-from PIL import Image
-import os
+# Generate PNG icon representations across all standard icon sizes from redesigned SVG logo
+CONVERT_CMD=""
+if command -v magick &> /dev/null; then
+    CONVERT_CMD="magick"
+elif command -v convert &> /dev/null; then
+    CONVERT_CMD="convert"
+fi
 
-sizes = [128, 64, 48, 32, 22, 16]
-img_path = '$SCRIPT_DIR/assets/branding-icon.jpg'
-if os.path.exists(img_path):
-    try:
-        img = Image.open(img_path)
-        for s in sizes:
-            out_dir = f'$ICON_BASE/{s}x{s}/apps'
-            os.makedirs(out_dir, exist_ok=True)
-            img.resize((s, s)).save(f'{out_dir}/$PLASMOID_ID.png')
-    except Exception as e:
-        print('Warning generating icons:', e)
-" 2>/dev/null || true
+if [ -n "$CONVERT_CMD" ] && [ -f "$SCRIPT_DIR/assets/icon.svg" ]; then
+    echo "Generating PNG app icon sizes from redesigned SVG logo..."
+    for s in 128 64 48 32 22 16; do
+        out_dir="$ICON_BASE/${s}x${s}/apps"
+        mkdir -p "$out_dir"
+        $CONVERT_CMD -background none "$SCRIPT_DIR/assets/icon.svg" -resize "${s}x${s}" "$out_dir/$PLASMOID_ID.png" 2>/dev/null || true
+    done
+fi
 
 # Rebuild GTK icon cache & KDE Sycoca service index
 gtk-update-icon-cache -f "$ICON_BASE" 2>/dev/null || true

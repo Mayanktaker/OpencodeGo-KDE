@@ -13,3 +13,4 @@
 - **Error Handling:** When API errors or invalid credentials occur, the widget clears stale mock data and displays clean error messages without forcing Demo Mode.
 - **Layout:** The widget uses horizontal-only layout (`layoutMode` hardcoded to `"horizontal"`). Tabbed and all-in-one views are disabled. Use `Plasmoid.configure()` (Plasma 6 API) — the old `plasmoid` id does not exist.
 - **QML Binding Scope:** When passing properties to child components, always qualify with the parent's `id` (e.g., `fullRoot.usagePercent`) to avoid self-binding loops where the child resolves the unqualified name to its own property.
+- **Branding & Assets:** Vector artwork uses the redesigned cyan-teal OpenCode Go logo SVG (`<O✦>` code brackets enclosing center ring and glowing spark) located in `assets/icon.svg` and `contents/icons/com.mayanktaker.opencodego-usage.svg`. `install.sh` generates PNG app icons across all system theme sizes (16px–128px) directly from this SVG.

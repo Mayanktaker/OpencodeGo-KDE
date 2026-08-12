@@ -12,12 +12,16 @@ Item {
     Layout.fillWidth: true
     implicitHeight: formLayout.implicitHeight + 40
 
+    // Flag tracking programmatic preset changes to prevent reverting activePreset to custom
+    property bool isApplyingPreset: false
+
     // Configuration property aliases bound automatically via cfg_ prefix to main.xml
     property alias cfg_displayLayout: displayLayoutField.text
     property alias cfg_showTitle: showTitleCheckBox.checked
     property alias cfg_showBorder: showBorderCheckBox.checked
     property alias cfg_activePreset: activePresetField.text
     property alias cfg_backgroundColor: bgColorField.text
+    property alias cfg_headerBackgroundColor: headerBgColorField.text
     property alias cfg_textColor: textColorField.text
     property alias cfg_barColor: barColorField.text
     property alias cfg_barSecondaryColor: bar2ColorField.text
@@ -43,79 +47,94 @@ Item {
 
         // Apply color preset helper function with dark & white developer theme palettes
         function applyPreset(presetId) {
+            configAppearanceRoot.isApplyingPreset = true;
             if (presetId === "catppuccin_mocha") {
                 cfg_backgroundColor = "#1e1e2e";
+                cfg_headerBackgroundColor = "#181825";
                 cfg_textColor = "#cdd6f4";
-                cfg_barColor = "#89b4fa";
-                cfg_barSecondaryColor = "#74c7ec";
+                cfg_barColor = "#2dd4bf";
+                cfg_barSecondaryColor = "#06b6d4";
                 cfg_accentColor = "#f38ba8";
             } else if (presetId === "breeze_dark") {
                 cfg_backgroundColor = "#232629";
+                cfg_headerBackgroundColor = "#1b1e20";
                 cfg_textColor = "#eff0f1";
                 cfg_barColor = "#3daee9";
                 cfg_barSecondaryColor = "#2980b9";
                 cfg_accentColor = "#fd971f";
             } else if (presetId === "nord_dark") {
                 cfg_backgroundColor = "#2e3440";
+                cfg_headerBackgroundColor = "#242933";
                 cfg_textColor = "#eceff4";
                 cfg_barColor = "#88c0d0";
                 cfg_barSecondaryColor = "#81a1c1";
                 cfg_accentColor = "#bf616a";
             } else if (presetId === "dracula") {
                 cfg_backgroundColor = "#282a36";
+                cfg_headerBackgroundColor = "#21222c";
                 cfg_textColor = "#f8f8f2";
                 cfg_barColor = "#bd93f9";
                 cfg_barSecondaryColor = "#8be9fd";
                 cfg_accentColor = "#ff5555";
             } else if (presetId === "solarized_dark") {
                 cfg_backgroundColor = "#002b36";
+                cfg_headerBackgroundColor = "#00212b";
                 cfg_textColor = "#839496";
                 cfg_barColor = "#268bd2";
                 cfg_barSecondaryColor = "#2aa198";
                 cfg_accentColor = "#b58900";
             } else if (presetId === "gruvbox_dark") {
                 cfg_backgroundColor = "#282828";
+                cfg_headerBackgroundColor = "#1d2021";
                 cfg_textColor = "#ebdbb2";
                 cfg_barColor = "#83a598";
                 cfg_barSecondaryColor = "#8ec07c";
                 cfg_accentColor = "#fabd2f";
             } else if (presetId === "tokyo_night") {
                 cfg_backgroundColor = "#1a1b26";
+                cfg_headerBackgroundColor = "#16161e";
                 cfg_textColor = "#c0caf5";
                 cfg_barColor = "#7aa2f7";
                 cfg_barSecondaryColor = "#7dcfff";
                 cfg_accentColor = "#f7768e";
             } else if (presetId === "one_dark") {
                 cfg_backgroundColor = "#282c34";
+                cfg_headerBackgroundColor = "#21252b";
                 cfg_textColor = "#abb2bf";
                 cfg_barColor = "#61afef";
                 cfg_barSecondaryColor = "#56b6c2";
                 cfg_accentColor = "#e06c75";
             } else if (presetId === "breeze_light") {
                 cfg_backgroundColor = "#ffffff";
+                cfg_headerBackgroundColor = "#f5f5f5";
                 cfg_textColor = "#232629";
                 cfg_barColor = "#3daee9";
                 cfg_barSecondaryColor = "#2980b9";
                 cfg_accentColor = "#da4453";
             } else if (presetId === "catppuccin_latte") {
                 cfg_backgroundColor = "#eff1f5";
+                cfg_headerBackgroundColor = "#e6e9ef";
                 cfg_textColor = "#4c4f69";
                 cfg_barColor = "#1e66f5";
                 cfg_barSecondaryColor = "#209fb5";
                 cfg_accentColor = "#8839ef";
             } else if (presetId === "solarized_light") {
                 cfg_backgroundColor = "#fdf6e3";
+                cfg_headerBackgroundColor = "#eee8d5";
                 cfg_textColor = "#657b83";
                 cfg_barColor = "#268bd2";
                 cfg_barSecondaryColor = "#2aa198";
                 cfg_accentColor = "#b58900";
             } else if (presetId === "paper_white") {
                 cfg_backgroundColor = "#f8f9fa";
+                cfg_headerBackgroundColor = "#e9ecef";
                 cfg_textColor = "#212529";
                 cfg_barColor = "#0d6efd";
                 cfg_barSecondaryColor = "#0dcaf0";
                 cfg_accentColor = "#d63384";
             }
+            activePresetField.text = presetId;
+            configAppearanceRoot.isApplyingPreset = false;
         }
 
         // Layout style mode combo box selector
@@ -208,7 +227,7 @@ Item {
             QQC2.TextField {
                 id: bgColorField
                 Layout.fillWidth: true
-                onTextChanged: activePresetField.text = "custom"
+                onTextEdited: activePresetField.text = "custom"
             }
 
             QQC2.Button {
@@ -220,7 +239,46 @@ Item {
                 id: bgDialog
                 title: i18n("Select Background Color")
                 selectedColor: cfg_backgroundColor
-                onAccepted: cfg_backgroundColor = selectedColor.toString()
+                onAccepted: {
+                    activePresetField.text = "custom";
+                    cfg_backgroundColor = selectedColor.toString();
+                }
+            }
+        }
+
+        // Header Background color configuration row
+        RowLayout {
+            Kirigami.FormData.label: i18n("Header Background:")
+            spacing: 8
+
+            Rectangle {
+                implicitWidth: 24
+                implicitHeight: 24
+                radius: 4
+                color: cfg_headerBackgroundColor
+                border.color: "#666"
+                border.width: 1
+            }
+
+            QQC2.TextField {
+                id: headerBgColorField
+                Layout.fillWidth: true
+                onTextEdited: activePresetField.text = "custom"
+            }
+
+            QQC2.Button {
+                text: i18n("Pick...")
+                onClicked: headerBgDialog.open()
+            }
+
+            ColorDialog {
+                id: headerBgDialog
+                title: i18n("Select Header Background Color")
+                selectedColor: cfg_headerBackgroundColor
+                onAccepted: {
+                    activePresetField.text = "custom";
+                    cfg_headerBackgroundColor = selectedColor.toString();
+                }
             }
         }
 
@@ -241,7 +299,7 @@ Item {
             QQC2.TextField {
                 id: textColorField
                 Layout.fillWidth: true
-                onTextChanged: activePresetField.text = "custom"
+                onTextEdited: activePresetField.text = "custom"
             }
 
             QQC2.Button {
@@ -253,7 +311,10 @@ Item {
                 id: textDialog
                 title: i18n("Select Text Color")
                 selectedColor: cfg_textColor
-                onAccepted: cfg_textColor = selectedColor.toString()
+                onAccepted: {
+                    activePresetField.text = "custom";
+                    cfg_textColor = selectedColor.toString();
+                }
             }
         }
 
@@ -274,7 +335,7 @@ Item {
             QQC2.TextField {
                 id: barColorField
                 Layout.fillWidth: true
-                onTextChanged: activePresetField.text = "custom"
+                onTextEdited: activePresetField.text = "custom"
             }
 
             QQC2.Button {
@@ -286,7 +347,10 @@ Item {
                 id: barDialog
                 title: i18n("Select Bar Primary Color")
                 selectedColor: cfg_barColor
-                onAccepted: cfg_barColor = selectedColor.toString()
+                onAccepted: {
+                    activePresetField.text = "custom";
+                    cfg_barColor = selectedColor.toString();
+                }
             }
         }
 
@@ -307,7 +371,7 @@ Item {
             QQC2.TextField {
                 id: bar2ColorField
                 Layout.fillWidth: true
-                onTextChanged: activePresetField.text = "custom"
+                onTextEdited: activePresetField.text = "custom"
             }
 
             QQC2.Button {
@@ -319,7 +383,10 @@ Item {
                 id: bar2Dialog
                 title: i18n("Select Bar Secondary Color")
                 selectedColor: cfg_barSecondaryColor
-                onAccepted: cfg_barSecondaryColor = selectedColor.toString()
+                onAccepted: {
+                    activePresetField.text = "custom";
+                    cfg_barSecondaryColor = selectedColor.toString();
+                }
             }
         }
 
@@ -340,7 +407,7 @@ Item {
             QQC2.TextField {
                 id: accentColorField
                 Layout.fillWidth: true
-                onTextChanged: activePresetField.text = "custom"
+                onTextEdited: activePresetField.text = "custom"
             }
 
             QQC2.Button {
@@ -352,8 +419,12 @@ Item {
                 id: accentDialog
                 title: i18n("Select Accent Color")
                 selectedColor: cfg_accentColor
-                onAccepted: cfg_accentColor = selectedColor.toString()
+                onAccepted: {
+                    activePresetField.text = "custom";
+                    cfg_accentColor = selectedColor.toString();
+                }
             }
         }
     }
 }
+

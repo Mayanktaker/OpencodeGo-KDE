@@ -11,24 +11,22 @@ import org.kde.kirigami as Kirigami
 Item {
     id: horizontalRoot
 
+    // Usage dataset and scale properties
     property var usageData: null
-    property bool showIcons: Plasmoid.configuration.showBarIcons !== false
+    property bool showIcons: Plasmoid.configuration.showBarIcons || false
     property real uiScale: 1.0
 
-    property color barColor: Plasmoid.configuration.barColor || "#89b4fa"
-    property color barSecondaryColor: Plasmoid.configuration.barSecondaryColor || "#74c7ec"
+    // Custom theme colors with vibrant cyan defaults
+    property color barColor: Plasmoid.configuration.barColor || "#2dd4bf"
+    property color barSecondaryColor: Plasmoid.configuration.barSecondaryColor || "#06b6d4"
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
     property color backgroundColor: Plasmoid.configuration.backgroundColor || "#1e1e2e"
 
-    property real contentPadding: Math.max(8, Math.round(8 * uiScale))
+    property real contentPadding: Math.max(4, Math.round(4 * uiScale))
     implicitHeight: barsColumn.implicitHeight + contentPadding * 2
 
-    // Distinct colors per interval for visual differentiation
-    property color rollingColor: Qt.alpha(textColor, 0.6)
-    property color weeklyColor: accentColor
-    property color monthlyColor: "#ffb86c"
-
+    // Helper function to calculate usage values and percentage
     function getIntervalMetrics(dataset) {
         if (!dataset || dataset.length === 0) return { used: 0, max: 100, pct: 0 };
         var lastItem = dataset[dataset.length - 1];
@@ -38,13 +36,13 @@ Item {
         return { used: used, max: max, pct: pct };
     }
 
-    // Returns the color for a given bar index (0=rolling, 1=weekly, 2=monthly)
-    function barTextColor(index) {
-        if (index === 0) return rollingColor;
-        if (index === 1) return weeklyColor;
-        return monthlyColor;
+    // Helper function for percentage text color (highlights >=80% in amber/gold)
+    function percentageTextColor(pct) {
+        if (pct >= 80) return "#fbbf24";
+        return horizontalRoot.textColor;
     }
 
+    // Column container wrapping the three progress bar rows
     ColumnLayout {
         id: barsColumn
         anchors.left: parent.left
@@ -53,8 +51,9 @@ Item {
         anchors.leftMargin: contentPadding
         anchors.rightMargin: contentPadding
         anchors.topMargin: contentPadding
-        spacing: Math.round(5 * uiScale)
+        spacing: Math.round(12 * uiScale)
 
+        // Repeater for Rolling, Weekly, and Monthly usage windows
         Repeater {
             model: [
                 { id: "hourly", title: i18n("Rolling"), icon: "preferences-system-time", data: usageData ? usageData.hourly : [] },
@@ -62,78 +61,78 @@ Item {
                 { id: "monthly", title: i18n("Monthly"), icon: "view-calendar", data: usageData ? usageData.monthly : [] }
             ]
 
+            // Individual progress bar item container
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: Math.round(2 * uiScale)
+                spacing: Math.round(6 * uiScale)
 
-                property var metrics: getIntervalMetrics(modelData.data)
+                property var metrics: horizontalRoot.getIntervalMetrics(modelData.data)
 
-                // Row header: title + colored percentage text
+                // Top label row: title on left, percentage on right
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: Math.round(3 * uiScale)
+                    spacing: Math.round(4 * uiScale)
 
-                    // Optional icon (hidden by default)
+                    // Optional bar icon
                     Kirigami.Icon {
                         source: modelData.icon
-                        implicitWidth: Math.round(10 * uiScale)
-                        implicitHeight: Math.round(10 * uiScale)
-                        color: textColor
+                        implicitWidth: Math.round(12 * uiScale)
+                        implicitHeight: Math.round(12 * uiScale)
+                        color: horizontalRoot.textColor
                         visible: horizontalRoot.showIcons
                     }
 
+                    // Usage interval title (Rolling / Weekly / Monthly)
                     PlasmaComponents.Label {
                         text: modelData.title
                         font.bold: true
-                        font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.59 * uiScale)
-                        color: textColor
+                        font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.75 * uiScale)
+                        color: horizontalRoot.textColor
                     }
 
                     Item { Layout.fillWidth: true }
 
-                    // Colored percentage text (no background)
+                    // Usage percentage value text
                     Text {
                         text: metrics.pct + "%"
                         font.bold: true
-                        font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.48 * uiScale)
-                        color: barTextColor(index)
+                        font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.72 * uiScale)
+                        color: horizontalRoot.percentageTextColor(metrics.pct)
                     }
                 }
 
-                // Bar track
+                // Progress bar track and animated fill
                 MouseArea {
                     id: barMouseArea
                     Layout.fillWidth: true
                     implicitHeight: Math.round(12 * uiScale)
                     hoverEnabled: true
 
+                    // Dark recessed track background
                     Rectangle {
                         anchors.fill: parent
-                        radius: Math.round(3 * uiScale)
-                        color: Qt.darker(backgroundColor, 1.4)
-                        border.color: barMouseArea.containsMouse ? accentColor : Qt.alpha(textColor, 0.15)
+                        radius: height / 2
+                        color: Qt.darker(horizontalRoot.backgroundColor, 1.45)
+                        border.color: barMouseArea.containsMouse ? horizontalRoot.accentColor : Qt.alpha(horizontalRoot.textColor, 0.12)
                         border.width: 1
 
-                        gradient: Gradient {
-                            GradientStop { position: 0.0; color: Qt.darker(backgroundColor, 1.2) }
-                            GradientStop { position: 1.0; color: Qt.darker(backgroundColor, 1.5) }
-                        }
-
+                        // Gradient bar fill indicator
                         Rectangle {
                             id: fillBar
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
-                            anchors.margins: Math.max(1, Math.round(uiScale))
-                            radius: Math.round(2 * uiScale)
-                            width: Math.max(Math.round(4 * uiScale), (parent.width - 2 * Math.max(1, Math.round(uiScale))) * (metrics.pct / 100))
+                            anchors.margins: 1
+                            radius: height / 2
+                            width: Math.max(height, (parent.width - 2) * (metrics.pct / 100))
 
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
-                                GradientStop { position: 0.0; color: barColor }
-                                GradientStop { position: 1.0; color: barSecondaryColor }
+                                GradientStop { position: 0.0; color: horizontalRoot.barColor }
+                                GradientStop { position: 1.0; color: horizontalRoot.barSecondaryColor }
                             }
 
+                            // Smooth width transition animation
                             Behavior on width {
                                 NumberAnimation { duration: 400; easing.type: Easing.OutCubic }
                             }
@@ -148,3 +147,4 @@ Item {
         }
     }
 }
+

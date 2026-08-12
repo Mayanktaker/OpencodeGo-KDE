@@ -30,6 +30,10 @@
             <!-- Quota usage percentage threshold that triggers notification (e.g. 80%) -->
             <default>80</default>
         </entry>
+        <entry name="enableSound" type="Bool">
+            <!-- Toggle audible sound chime on quota threshold notification -->
+            <default>false</default>
+        </entry>
     </group>
 
     <!-- Appearance settings group for themes, layouts, borders, and headers -->
@@ -58,17 +62,21 @@
             <!-- Widget card background color -->
             <default>#1e1e2e</default>
         </entry>
+        <entry name="headerBackgroundColor" type="String">
+            <!-- Header title section background color -->
+            <default>#16191e</default>
+        </entry>
         <entry name="textColor" type="String">
             <!-- Primary text color -->
             <default>#cdd6f4</default>
         </entry>
         <entry name="barColor" type="String">
-            <!-- Primary bar chart fill color -->
-            <default>#89b4fa</default>
+            <!-- Primary bar chart fill color (cyan) -->
+            <default>#2dd4bf</default>
         </entry>
         <entry name="barSecondaryColor" type="String">
-            <!-- Secondary bar chart gradient color -->
-            <default>#74c7ec</default>
+            <!-- Secondary bar chart gradient color (cyan) -->
+            <default>#06b6d4</default>
         </entry>
         <entry name="accentColor" type="String">
             <!-- Accent highlight and badge color -->

@@ -58,6 +58,13 @@ PlasmoidItem {
                     usageData = null;
                     usagePercent = 0;
                 }
+                // Send desktop notification if auth cookie has expired or is invalid
+                var notifyEnabled = Plasmoid.configuration.enableNotifications !== false;
+                if (notifyEnabled && (err.indexOf("cookie") !== -1 || err.indexOf("auth") !== -1)) {
+                    if (typeof Plasmoid.showNotification === "function") {
+                        Plasmoid.showNotification("OpenCode Auth Alert", err, "dialog-warning");
+                    }
+                }
             } else {
                 errorMessage = "";
             }

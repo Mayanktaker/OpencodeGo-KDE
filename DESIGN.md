@@ -7,31 +7,39 @@ This document defines the reusable UI patterns, settings architecture, and data-
 
 ## 🎯 Design Principles
 
-1. **Compact by default** — widget should scale as small as possible while remaining readable
-2. **Color-coded bars** — each usage window gets a distinct text color for quick visual scanning
-3. **Gradient depth** — subtle top-to-bottom gradient on backgrounds for visual polish
-4. **Minimal chrome** — no badge backgrounds in header, no value/max labels, just percentage text
-5. **Horizontal-only layout** — single layout mode, no tabbed/all-in-one complexity
-6. **Reset countdown** — always show when the quota resets (not vague "est. days left")
+1. **Brand Identity Logo (`<O✦>`)** — vector cyan-teal code brackets `< >` enclosing center ring `O` and glowing spark `✦`
+2. **Distinct Header Title Block** — top header area styled with separate `headerBackgroundColor` and subtle border
+3. **Compact by default** — widget height Hugs content tightly without leftover bottom padding
+4. **Color-coded bars** — each usage window gets a distinct text color for quick visual scanning with amber highlights for high usage (≥ 80%)
+5. **Gradient depth** — smooth horizontal cyan gradient fills on progress bars
+6. **Minimal chrome** — percentage text aligned on top right of progress bar rows
+7. **Horizontal-only layout** — single layout mode, no tabbed/all-in-one complexity
+8. **Reset countdown** — always show when the quota resets
 
 ---
 
 ## 📐 Widget Layout Structure
 
 ```
-┌─────────────────────────────────────┐
-│ [icon] OpenCode Go    [🔄] Usage Tracker │  ← Row 1: icon + title + refresh
-│        Usage resets in 4d                │  ← Row 2: subtitle
-│                                          │
-│ Rolling                        1%       │  ← Bar: label + colored % text
-│ [████████░░░░░░░░░░░░░░░░░░░░░░░]       │  ← Progress bar
-│ Weekly                        32%       │
-│ [███████████████████░░░░░░░░░░░]         │
-│ Monthly                       77%       │
-│ [██████████████████████████████]         │
-│                                          │
-│ Last updated: 6:35:08 PM                 │  ← Footer: timestamp only
-└─────────────────────────────────────┘
+┌───────────────────────────────────────────┐
+│ ┌───────────────────────────────────────┐ │
+│ │ [<O✦>] OpenCode Go               [🔄] │ │  ← Header block (headerBackgroundColor)
+│ │        Usage Tracker                  │ │
+│ └───────────────────────────────────────┘ │
+│                                           │
+│ Usage resets in 4 Days                    │  ← Section Header
+│                                           │
+│ Rolling                               14% │  ← Row 1: label + percentage
+│ [████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] │  ← Progress bar
+│                                           │
+│ Weekly                                37% │  ← Row 2
+│ [███████████████████░░░░░░░░░░░░░░░░░░░] │
+│                                           │
+│ Monthly                               80% │  ← Row 3 (highlighted gold ≥80%)
+│ [███████████████████████████████████░░░] │
+│                                           │
+│ Last updated: 7:15:48 PM | Time Zone      │  ← Footer: timestamp
+└───────────────────────────────────────────┘
 ```
 
 ---

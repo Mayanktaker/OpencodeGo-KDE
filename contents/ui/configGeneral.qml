@@ -45,6 +45,7 @@ Item {
     property alias cfg_authCookie: authCookieField.text
     property alias cfg_refreshInterval: refreshIntervalField.value
     property alias cfg_enableNotifications: enableNotifyCheckBox.checked
+    property alias cfg_enableSound: enableSoundCheckBox.checked
     property alias cfg_notificationThreshold: thresholdSpinBox.value
     property alias cfg_showBarIcons: showBarIconsCheckBox.checked
 
@@ -137,6 +138,14 @@ Item {
             id: enableNotifyCheckBox
             Kirigami.FormData.label: i18n("Quota Alerts:")
             text: i18n("Send desktop notification when usage threshold is exceeded")
+        }
+
+        // Enable notification sound chime checkbox
+        QQC2.CheckBox {
+            id: enableSoundCheckBox
+            Kirigami.FormData.label: i18n("Notification Sound:")
+            visible: enableNotifyCheckBox.checked
+            text: i18n("Play audible notification chime when quota alert triggers")
         }
 
         // Quota alert percentage threshold spinbox

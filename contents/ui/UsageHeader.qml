@@ -11,77 +11,116 @@ import org.kde.kirigami as Kirigami
 Item {
     id: headerRoot
 
+    // Public properties passed from FullRepresentation
     property string planName: "OpenCode Go Usage Tracker"
     property string billingPeriod: "Current Cycle"
     property int usagePercent: 0
     property bool isMock: false
+    property bool isLoading: false
     property var usageData: null
     property real uiScale: 1.0
     signal requestRefresh()
 
+    // Theme color properties with configurable header background color
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
+    property color backgroundColor: Plasmoid.configuration.backgroundColor || "#1e1e2e"
+    property color headerBackgroundColor: Plasmoid.configuration.headerBackgroundColor || Qt.darker(backgroundColor, 1.25)
 
-    implicitHeight: Math.round(38 * uiScale)
+    implicitHeight: Math.round(46 * uiScale)
 
-    function getDurationLabel() {
-        if (usageData && usageData.resetLabel) {
-            return i18n("Usage resets in %1", usageData.resetLabel);
-        }
-        return i18n("Usage data");
-    }
-
-    ColumnLayout {
+    // Header container rectangle with rounded corners and distinct header background color
+    Rectangle {
         anchors.fill: parent
-        spacing: 0
+        color: headerRoot.headerBackgroundColor
+        radius: Math.round(8 * uiScale)
+        border.color: Qt.alpha(headerRoot.textColor, 0.1)
+        border.width: 1
 
-        // Row 1: title (left) + refresh (right)
+        // Header inner layout row
         RowLayout {
-            Layout.fillWidth: true
-            spacing: Math.round(4 * uiScale)
+            anchors.fill: parent
+            anchors.leftMargin: Math.round(10 * uiScale)
+            anchors.rightMargin: Math.round(10 * uiScale)
+            anchors.topMargin: Math.round(6 * uiScale)
+            anchors.bottomMargin: Math.round(6 * uiScale)
+            spacing: Math.round(8 * uiScale)
 
-            // Plan icon
+            // Brand icon on the left vertically centered
             Kirigami.Icon {
                 source: "com.mayanktaker.opencodego-usage"
-                implicitWidth: Math.round(16 * uiScale)
-                implicitHeight: Math.round(16 * uiScale)
+                implicitWidth: Math.round(24 * uiScale)
+                implicitHeight: Math.round(24 * uiScale)
+                Layout.alignment: Qt.AlignVCenter
             }
 
-            // Title: "OpenCode Go" full size + "Usage Tracker" smaller
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: Math.round(4 * uiScale)
+            // Column containing title "OpenCode Go" and subtitle "Usage Tracker"
+            ColumnLayout {
+                spacing: 0
+                Layout.alignment: Qt.AlignVCenter
 
+                // Title label
                 PlasmaComponents.Label {
                     text: "OpenCode Go"
                     font.bold: true
-                    font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.8 * uiScale)
-                    color: textColor
+                    font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.85 * uiScale)
+                    color: headerRoot.textColor
+                    Layout.alignment: Qt.AlignLeft
                 }
 
+                // Subtitle label
                 PlasmaComponents.Label {
                     text: "Usage Tracker"
-                    font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.46 * uiScale)
-                    opacity: 0.6
-                    color: textColor
+                    font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.52 * uiScale)
+                    opacity: 0.55
+                    color: headerRoot.textColor
+                    Layout.alignment: Qt.AlignLeft
                 }
             }
 
-            // Refresh button (smaller)
-            Rectangle {
-                implicitWidth: Math.round(14 * uiScale)
-                implicitHeight: Math.round(14 * uiScale)
-                radius: Math.round(3 * uiScale)
-                color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
+            // Flexible spacer pushing the refresh button to the far right edge
+            Item {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
 
-                Kirigami.Icon {
-                    anchors.centerIn: parent
-                    implicitWidth: Math.round(8 * uiScale)
-                    implicitHeight: Math.round(8 * uiScale)
-                    source: "view-refresh"
-                    color: refreshMouse.containsMouse ? accentColor : textColor
+            // Circular refresh button container on top-right, aligned right & centered vertically
+            Rectangle {
+                id: refreshBtnContainer
+                implicitWidth: Math.round(28 * uiScale)
+                implicitHeight: Math.round(28 * uiScale)
+                radius: width / 2
+                color: refreshMouse.containsMouse ? Qt.alpha(headerRoot.accentColor, 0.2) : Qt.alpha(headerRoot.textColor, 0.08)
+                border.color: refreshMouse.containsMouse ? headerRoot.accentColor : Qt.alpha(headerRoot.textColor, 0.18)
+                border.width: 1
+                scale: refreshMouse.containsMouse ? 1.08 : 1.0
+                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+
+                // Smooth scale hover pulse transition animation
+                Behavior on scale {
+                    NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
                 }
 
+                // Refresh icon centered inside circle with rotation animation when loading
+                Kirigami.Icon {
+                    id: refreshIcon
+                    anchors.centerIn: parent
+                    implicitWidth: Math.round(13 * uiScale)
+                    implicitHeight: Math.round(13 * uiScale)
+                    source: "view-refresh"
+                    color: refreshMouse.containsMouse ? headerRoot.accentColor : headerRoot.textColor
+
+                    // Continuous rotation animation when data fetching is active
+                    NumberAnimation on rotation {
+                        running: headerRoot.isLoading
+                        from: 0
+                        to: 360
+                        loops: Animation.Infinite
+                        duration: 900
+                    }
+                }
+
+                // Mouse interaction for refresh button
                 MouseArea {
                     id: refreshMouse
                     anchors.fill: parent
@@ -95,15 +134,8 @@ Item {
                 QQC2.ToolTip.text: i18n("Refresh Now")
             }
         }
-
-        // Row 2: subtitle
-        PlasmaComponents.Label {
-            Layout.fillWidth: true
-            Layout.topMargin: Math.round(uiScale)
-            text: headerRoot.getDurationLabel()
-            font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.53 * uiScale)
-            opacity: 0.55
-            color: textColor
-        }
     }
 }
+
+
+

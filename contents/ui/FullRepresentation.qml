@@ -1,5 +1,5 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// Full expanded representation component displaying metrics, vertical charts, horizontal bars, export, and settings shortcut
+// Full expanded representation component displaying metrics, horizontal bars, reset header, and timestamp footer
 
 import QtQuick
 import QtQuick.Layouts
@@ -25,64 +25,59 @@ Rectangle {
     property bool isLoading: false
     signal requestRefresh()
 
-    // Preferred layout dimensions for Plasma expanded popup representation
-    Layout.minimumWidth: 200
-    Layout.minimumHeight: 110
-    Layout.fillHeight: false
-    Layout.preferredWidth: 260
-    Layout.preferredHeight: contentColumn.implicitHeight + 20
-    Layout.maximumHeight: contentColumn.implicitHeight + 20
-
-    // Currently selected chart view mode ("hourly", "weekly", "monthly")
-    property string activeView: "weekly"
-
-    // Custom theme colors bound from Plasmoid configuration
+    // Public scale factor and theme colors
     property color backgroundColor: Plasmoid.configuration.backgroundColor || "#1e1e2e"
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
 
     // Layout-aware scale factor shared by responsive child components
-    property real baseWidth: 260
+    property real baseWidth: 320
     property real uiScale: Math.max(0.75, Math.min(1.5, width / baseWidth))
 
+    // Implicit and explicit height tied strictly to content column height to eliminate empty space at bottom
+    implicitWidth: 320
+    implicitHeight: contentColumn.implicitHeight + Math.round(24 * uiScale)
+    height: implicitHeight
+
+    Layout.minimumWidth: 260
+    Layout.minimumHeight: implicitHeight
+    Layout.preferredWidth: 320
+    Layout.preferredHeight: implicitHeight
+    Layout.maximumHeight: implicitHeight
+    Layout.fillHeight: false
+
+
+
+
     color: backgroundColor
-    radius: 8
+    radius: Math.round(12 * uiScale)
     border.width: (Plasmoid.configuration.showBorder === true) ? 1 : 0
     border.color: (Plasmoid.configuration.showBorder === true) ? Qt.alpha(textColor, 0.3) : "transparent"
 
     // Subtle top-to-bottom gradient for depth across all themes
     gradient: Gradient {
-        GradientStop { position: 0.0; color: Qt.lighter(backgroundColor, 1.08) }
-        GradientStop { position: 1.0; color: Qt.darker(backgroundColor, 1.05) }
+        GradientStop { position: 0.0; color: Qt.lighter(backgroundColor, 1.06) }
+        GradientStop { position: 1.0; color: Qt.darker(backgroundColor, 1.04) }
     }
 
     // Connections listening for live configuration property updates
     Connections {
         target: Plasmoid.configuration
         function onDisplayLayoutChanged() {
-            fullRoot.layoutMode = Plasmoid.configuration.displayLayout || "tabbed";
+            fullRoot.layoutMode = Plasmoid.configuration.displayLayout || "horizontal";
         }
     }
 
-    // Exports usage statistics to CSV file
-    function handleExport() {
-        if (!usageData) return;
-        var csvContent = Api.generateCSV(usageData);
-        // Display CSV data in export dialog
-        csvTextArea.text = csvContent;
-        exportDialog.open();
-    }
-
-    // Main column layout holding header, view selector, bar chart / horizontal bars, and footer
+    // Main column layout holding header, section label, horizontal bars, and footer
     ColumnLayout {
         id: contentColumn
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.margins: 8
-        spacing: 0
+        anchors.margins: Math.round(12 * uiScale)
+        spacing: Math.round(10 * uiScale)
 
-        // Usage header component displaying plan metadata and total percentage
+        // Usage header component displaying brand logo, stacked title, and circular refresh button
         UsageHeader {
             id: usageHeader
             visible: Plasmoid.configuration.showTitle !== false
@@ -91,25 +86,15 @@ Rectangle {
             billingPeriod: fullRoot.usageData ? fullRoot.usageData.billingPeriod : "Current Cycle"
             usagePercent: fullRoot.usagePercent || 0
             isMock: fullRoot.usageData ? Boolean(fullRoot.usageData.isMock) : false
+            isLoading: fullRoot.isLoading
             usageData: fullRoot.usageData
             uiScale: fullRoot.uiScale
             onRequestRefresh: fullRoot.requestRefresh()
         }
 
-        // View selector tab bar (visible only in Tabbed layout mode)
-        ViewSelector {
-            id: viewSelector
-            visible: isTabbed
-            Layout.fillWidth: true
-            activeView: fullRoot.activeView
-            onViewSelected: function(viewName) {
-                fullRoot.activeView = viewName;
-            }
-        }
-
         // Error message banner displayed when network or auth fails
         Rectangle {
-            visible: errorMessage !== ""
+            visible: fullRoot.errorMessage !== ""
             Layout.fillWidth: true
             implicitHeight: errorText.implicitHeight + 8
             radius: 4
@@ -122,83 +107,27 @@ Rectangle {
                 anchors.centerIn: parent
                 width: parent.width - 16
                 wrapMode: Text.WordWrap
-                text: errorMessage
+                text: fullRoot.errorMessage
                 font.pixelSize: Kirigami.Units.gridUnit * 0.5
                 color: "#ff5555"
             }
         }
 
-        // Single vertical bar chart representation for Tabbed layout mode
-        UsageBarChart {
-            id: singleBarChart
-            visible: isTabbed
+        // Section header label: "Usage resets in X"
+        PlasmaComponents.Label {
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            chartData: {
-                if (!fullRoot.usageData) return [];
-                if (fullRoot.activeView === "hourly") return fullRoot.usageData.hourly || [];
-                if (fullRoot.activeView === "monthly") return fullRoot.usageData.monthly || [];
-                return fullRoot.usageData.weekly || [];
-            }
+            text: (fullRoot.usageData && fullRoot.usageData.resetLabel)
+                ? i18n("Usage resets in %1", fullRoot.usageData.resetLabel)
+                : i18n("Usage resets in 4 Days")
+            font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.62 * fullRoot.uiScale)
+            opacity: 0.55
+            color: fullRoot.textColor
         }
 
-        // Scrollable All-in-One Dashboard container showing all 3 vertical charts together
-        QQC2.ScrollView {
-            visible: isAllInOne
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            clip: true
-
-            // Vertical column layout organizing all 3 usage section charts
-            ColumnLayout {
-                width: parent.width
-                spacing: 12
-
-                // Hourly Usage Section
-                PlasmaComponents.Label {
-                    text: i18n("📊 Hourly Usage (24 Hours)")
-                    font.bold: true
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.65
-                    color: fullRoot.accentColor
-                }
-                UsageBarChart {
-                    Layout.fillWidth: true
-                    implicitHeight: 120
-                    chartData: fullRoot.usageData ? fullRoot.usageData.hourly || [] : []
-                }
-
-                // Weekly Usage Section
-                PlasmaComponents.Label {
-                    text: i18n("📅 Weekly Usage (7 Days)")
-                    font.bold: true
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.65
-                    color: fullRoot.accentColor
-                }
-                UsageBarChart {
-                    Layout.fillWidth: true
-                    implicitHeight: 120
-                    chartData: fullRoot.usageData ? fullRoot.usageData.weekly || [] : []
-                }
-
-                // Monthly Usage Section
-                PlasmaComponents.Label {
-                    text: i18n("🗓️ Monthly Usage (4 Weeks)")
-                    font.bold: true
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.65
-                    color: fullRoot.accentColor
-                }
-                UsageBarChart {
-                    Layout.fillWidth: true
-                    implicitHeight: 120
-                    chartData: fullRoot.usageData ? fullRoot.usageData.monthly || [] : []
-                }
-            }
-        }
-
-        // Horizontal Usage Bars Layout mode
+        // Horizontal Usage Bars component
         HorizontalUsageBars {
             id: horizontalBars
-            visible: isHorizontal
+            visible: fullRoot.isHorizontal
             Layout.fillWidth: true
             Layout.fillHeight: false
             Layout.preferredHeight: horizontalBars.implicitHeight
@@ -206,64 +135,30 @@ Rectangle {
             uiScale: fullRoot.uiScale
         }
 
-        // Footer — timestamp only
+        // Footer — timestamp label and busy spinner
         RowLayout {
             Layout.fillWidth: true
-            spacing: Kirigami.Units.smallSpacing / 2
+            spacing: Math.round(4 * fullRoot.uiScale)
 
             // Busy indicator spinner when fetching data
             QQC2.BusyIndicator {
-                implicitWidth: 10
-                implicitHeight: 10
-                running: isLoading
-                visible: isLoading
+                implicitWidth: Math.round(12 * fullRoot.uiScale)
+                implicitHeight: Math.round(12 * fullRoot.uiScale)
+                running: fullRoot.isLoading
+                visible: fullRoot.isLoading
             }
 
             // Text label displaying last refreshed timestamp
             PlasmaComponents.Label {
                 Layout.fillWidth: true
-                text: fullRoot.usageData ? i18n("Last updated: %1", fullRoot.usageData.lastRefreshed) : i18n("Loading...")
-                font.pixelSize: Kirigami.Units.gridUnit * 0.48
-                opacity: 0.6
+                text: fullRoot.usageData
+                    ? i18n("Last updated: %1", fullRoot.usageData.lastRefreshed)
+                    : i18n("Loading...")
+                font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.55 * fullRoot.uiScale)
+                opacity: 0.5
                 color: fullRoot.textColor
             }
         }
     }
-
-    // Export CSV Dialog overlay
-    QQC2.Dialog {
-        id: exportDialog
-        anchors.centerIn: parent
-        width: 400
-        height: 300
-        title: i18n("Export CSV Data")
-        modal: true
-        standardButtons: QQC2.Dialog.Close
-
-        ColumnLayout {
-            anchors.fill: parent
-            spacing: Kirigami.Units.smallSpacing
-
-            QQC2.TextArea {
-                id: csvTextArea
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                text: ""
-                readOnly: true
-                wrapMode: Text.NoWrap
-                font.family: "monospace"
-            }
-
-            QQC2.Button {
-                Layout.fillWidth: true
-                text: i18n("Copy to Clipboard")
-                icon.name: "edit-copy"
-                onClicked: {
-                    csvTextArea.selectAll();
-                    csvTextArea.copy();
-                    exportDialog.close();
-                }
-            }
-        }
-    }
 }
+
