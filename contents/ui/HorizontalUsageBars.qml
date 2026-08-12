@@ -108,6 +108,12 @@ Item {
                         border.color: barMouseArea.containsMouse ? accentColor : Qt.alpha(textColor, 0.15)
                         border.width: 1
 
+                        // Subtle inset gradient on track
+                        gradient: Gradient {
+                            GradientStop { position: 0.0; color: Qt.darker(backgroundColor, 1.2) }
+                            GradientStop { position: 1.0; color: Qt.darker(backgroundColor, 1.5) }
+                        }
+
                         // Animated horizontal progress fill bar rectangle
                         Rectangle {
                             id: fillBar

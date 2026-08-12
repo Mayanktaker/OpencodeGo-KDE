@@ -44,6 +44,12 @@ Rectangle {
     border.width: (Plasmoid.configuration.showBorder === true) ? 1 : 0
     border.color: (Plasmoid.configuration.showBorder === true) ? Qt.alpha(textColor, 0.3) : "transparent"
 
+    // Subtle top-to-bottom gradient for depth across all themes
+    gradient: Gradient {
+        GradientStop { position: 0.0; color: Qt.lighter(backgroundColor, 1.08) }
+        GradientStop { position: 1.0; color: Qt.darker(backgroundColor, 1.05) }
+    }
+
     // Connections listening for live configuration property updates
     Connections {
         target: Plasmoid.configuration
