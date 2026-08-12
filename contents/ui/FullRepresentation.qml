@@ -27,9 +27,9 @@ Rectangle {
 
     // Preferred layout dimensions for Plasma expanded popup representation
     Layout.minimumWidth: 200
-    Layout.minimumHeight: isAllInOne ? 300 : (isHorizontal ? 100 : 200)
+    Layout.minimumHeight: isAllInOne ? 300 : (isHorizontal ? 110 : 200)
     Layout.preferredWidth: 260
-    Layout.preferredHeight: isAllInOne ? 350 : (isHorizontal ? 140 : 260)
+    Layout.preferredHeight: contentColumn.implicitHeight + Math.max(12, Math.round(12 * uiScale)) * 2
 
     // Currently selected chart view mode ("hourly", "weekly", "monthly")
     property string activeView: "weekly"
@@ -77,7 +77,9 @@ Rectangle {
     // Main column layout holding header, view selector, bar chart / horizontal bars, and footer
     ColumnLayout {
         id: contentColumn
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.margins: Math.max(8, Math.round(8 * fullRoot.uiScale))
         spacing: 0
 
