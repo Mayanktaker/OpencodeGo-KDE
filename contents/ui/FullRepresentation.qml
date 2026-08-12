@@ -204,7 +204,7 @@ Rectangle {
             PlasmaComponents.Label {
                 Layout.fillWidth: true
                 text: fullRoot.usageData ? i18n("Last updated: %1", fullRoot.usageData.lastRefreshed) : i18n("Loading...")
-                font.pixelSize: Kirigami.Units.gridUnit * 0.45
+                font.pixelSize: Kirigami.Units.gridUnit * 0.48
                 opacity: 0.6
                 color: fullRoot.textColor
             }

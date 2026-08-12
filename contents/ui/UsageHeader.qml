@@ -47,7 +47,7 @@ Item {
                 Layout.fillWidth: true
                 text: planName
                 font.bold: true
-                font.pixelSize: Kirigami.Units.gridUnit * 0.75
+                font.pixelSize: Kirigami.Units.gridUnit * 0.8
                 color: textColor
                 elide: Text.ElideRight
             }
@@ -92,7 +92,7 @@ Item {
                     anchors.centerIn: parent
                     text: usagePercent + "%"
                     font.bold: true
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.55
+                    font.pixelSize: Kirigami.Units.gridUnit * 0.59
                     color: "#11111b"
                 }
             }
@@ -103,7 +103,7 @@ Item {
             Layout.fillWidth: true
             Layout.topMargin: 2
             text: headerRoot.getDurationLabel()
-            font.pixelSize: Kirigami.Units.gridUnit * 0.5
+                font.pixelSize: Kirigami.Units.gridUnit * 0.53
             opacity: 0.65
             color: textColor
         }
