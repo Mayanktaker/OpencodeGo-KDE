@@ -16,12 +16,13 @@ Item {
     property int usagePercent: 0
     property bool isMock: false
     property var usageData: null
+    property real uiScale: 1.0
     signal requestRefresh()
 
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
 
-    implicitHeight: 38
+    implicitHeight: Math.round(38 * uiScale)
 
     function getDurationLabel() {
         if (usageData && usageData.resetLabel) {
@@ -37,30 +38,30 @@ Item {
         // Row 1: title (left) + refresh (right)
         RowLayout {
             Layout.fillWidth: true
-            spacing: 4
+            spacing: Math.round(4 * uiScale)
 
             // Plan icon
             Kirigami.Icon {
                 source: "com.mayanktaker.opencodego-usage"
-                implicitWidth: 16
-                implicitHeight: 16
+                implicitWidth: Math.round(16 * uiScale)
+                implicitHeight: Math.round(16 * uiScale)
             }
 
             // Title: "OpenCode Go" full size + "Usage Tracker" smaller
             RowLayout {
                 Layout.fillWidth: true
-                spacing: 4
+                spacing: Math.round(4 * uiScale)
 
                 PlasmaComponents.Label {
                     text: "OpenCode Go"
                     font.bold: true
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.8
+                    font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.8 * uiScale)
                     color: textColor
                 }
 
                 PlasmaComponents.Label {
                     text: "Usage Tracker"
-                    font.pixelSize: Kirigami.Units.gridUnit * 0.46
+                    font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.46 * uiScale)
                     opacity: 0.6
                     color: textColor
                 }
@@ -68,15 +69,15 @@ Item {
 
             // Refresh button (smaller)
             Rectangle {
-                implicitWidth: 14
-                implicitHeight: 14
-                radius: 3
+                implicitWidth: Math.round(14 * uiScale)
+                implicitHeight: Math.round(14 * uiScale)
+                radius: Math.round(3 * uiScale)
                 color: refreshMouse.containsMouse ? Qt.alpha(accentColor, 0.25) : "transparent"
 
                 Kirigami.Icon {
                     anchors.centerIn: parent
-                    implicitWidth: 8
-                    implicitHeight: 8
+                    implicitWidth: Math.round(8 * uiScale)
+                    implicitHeight: Math.round(8 * uiScale)
                     source: "view-refresh"
                     color: refreshMouse.containsMouse ? accentColor : textColor
                 }
@@ -98,9 +99,9 @@ Item {
         // Row 2: subtitle
         PlasmaComponents.Label {
             Layout.fillWidth: true
-            Layout.topMargin: 1
+            Layout.topMargin: Math.round(uiScale)
             text: headerRoot.getDurationLabel()
-            font.pixelSize: Kirigami.Units.gridUnit * 0.53
+            font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.53 * uiScale)
             opacity: 0.55
             color: textColor
         }

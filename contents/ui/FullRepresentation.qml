@@ -39,8 +39,12 @@ Rectangle {
     property color textColor: Plasmoid.configuration.textColor || "#cdd6f4"
     property color accentColor: Plasmoid.configuration.accentColor || "#f38ba8"
 
-    // Responsive scale factor: 1.0 at preferred width, scales up/down with widget
-    property real scaleFactor: Math.max(0.6, Math.min(2.0, width / Layout.preferredWidth))
+    // Layout-aware scale factor shared by responsive child components
+    property real baseWidth: 260
+    property real baseHeight: 140
+    property real widthScale: width / baseWidth
+    property real heightScale: height > 0 ? height / baseHeight : widthScale
+    property real uiScale: Math.max(0.75, Math.min(1.5, Math.min(widthScale, heightScale)))
 
     color: backgroundColor
     radius: 8
@@ -72,6 +76,7 @@ Rectangle {
 
     // Main column layout holding header, view selector, bar chart / horizontal bars, and footer
     ColumnLayout {
+        id: contentColumn
         anchors.fill: parent
         anchors.margins: Kirigami.Units.gridUnit / 4
         spacing: 0
@@ -86,7 +91,7 @@ Rectangle {
             usagePercent: fullRoot.usagePercent || 0
             isMock: fullRoot.usageData ? Boolean(fullRoot.usageData.isMock) : false
             usageData: fullRoot.usageData
-            scale: fullRoot.scaleFactor
+            uiScale: fullRoot.uiScale
             onRequestRefresh: fullRoot.requestRefresh()
         }
 
@@ -195,7 +200,7 @@ Rectangle {
             Layout.fillWidth: true
             Layout.fillHeight: true
             usageData: fullRoot.usageData
-            scale: fullRoot.scaleFactor
+            uiScale: fullRoot.uiScale
         }
 
         // Footer — timestamp only

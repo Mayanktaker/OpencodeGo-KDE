@@ -13,6 +13,7 @@ Item {
 
     property var usageData: null
     property bool showIcons: Plasmoid.configuration.showBarIcons !== false
+    property real uiScale: 1.0
 
     property color barColor: Plasmoid.configuration.barColor || "#89b4fa"
     property color barSecondaryColor: Plasmoid.configuration.barSecondaryColor || "#74c7ec"
@@ -46,7 +47,7 @@ Item {
     ColumnLayout {
         id: barsColumn
         anchors.fill: parent
-        spacing: 4
+        spacing: Math.round(4 * uiScale)
 
         Repeater {
             model: [
@@ -57,20 +58,20 @@ Item {
 
             ColumnLayout {
                 Layout.fillWidth: true
-                spacing: 1
+                spacing: Math.round(uiScale)
 
                 property var metrics: getIntervalMetrics(modelData.data)
 
                 // Row header: title + colored percentage text
                 RowLayout {
                     Layout.fillWidth: true
-                    spacing: 3
+                    spacing: Math.round(3 * uiScale)
 
                     // Optional icon (hidden by default)
                     Kirigami.Icon {
                         source: modelData.icon
-                        implicitWidth: 10
-                        implicitHeight: 10
+                        implicitWidth: Math.round(10 * uiScale)
+                        implicitHeight: Math.round(10 * uiScale)
                         color: textColor
                         visible: horizontalRoot.showIcons
                     }
@@ -78,7 +79,7 @@ Item {
                     PlasmaComponents.Label {
                         text: modelData.title
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.59
+                        font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.59 * uiScale)
                         color: textColor
                     }
 
@@ -88,7 +89,7 @@ Item {
                     Text {
                         text: metrics.pct + "%"
                         font.bold: true
-                        font.pixelSize: Kirigami.Units.gridUnit * 0.48
+                        font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.48 * uiScale)
                         color: barTextColor(index)
                     }
                 }
@@ -97,12 +98,12 @@ Item {
                 MouseArea {
                     id: barMouseArea
                     Layout.fillWidth: true
-                    implicitHeight: 8
+                    implicitHeight: Math.round(8 * uiScale)
                     hoverEnabled: true
 
                     Rectangle {
                         anchors.fill: parent
-                        radius: 3
+                        radius: Math.round(3 * uiScale)
                         color: Qt.darker(backgroundColor, 1.4)
                         border.color: barMouseArea.containsMouse ? accentColor : Qt.alpha(textColor, 0.15)
                         border.width: 1
@@ -117,9 +118,9 @@ Item {
                             anchors.left: parent.left
                             anchors.top: parent.top
                             anchors.bottom: parent.bottom
-                            anchors.margins: 1
-                            radius: 2
-                            width: Math.max(4, (parent.width - 2) * (metrics.pct / 100))
+                            anchors.margins: Math.max(1, Math.round(uiScale))
+                            radius: Math.round(2 * uiScale)
+                            width: Math.max(Math.round(4 * uiScale), (parent.width - 2 * Math.max(1, Math.round(uiScale))) * (metrics.pct / 100))
 
                             gradient: Gradient {
                                 orientation: Gradient.Horizontal
