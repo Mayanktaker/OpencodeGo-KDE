@@ -33,10 +33,12 @@ Rectangle {
     // Layout-aware scale factor shared by responsive child components
     property real baseWidth: 320
     property real uiScale: Math.max(0.75, Math.min(1.5, width / baseWidth))
+    // Shared card corner radius used by the widget frame and the full-bleed header stripe
+    property real cardCornerRadius: Math.round(12 * uiScale)
 
     // Implicit and explicit height tied strictly to content column height to eliminate empty space at bottom
     implicitWidth: 320
-    implicitHeight: contentColumn.implicitHeight + Math.round(24 * uiScale)
+    implicitHeight: usageHeader.height + contentColumn.implicitHeight + Math.round(24 * uiScale)
     height: implicitHeight
 
     Layout.minimumWidth: 260
@@ -50,7 +52,7 @@ Rectangle {
 
 
     color: backgroundColor
-    radius: Math.round(12 * uiScale)
+    radius: fullRoot.cardCornerRadius
     border.width: (Plasmoid.configuration.showBorder === true) ? 1 : 0
     border.color: (Plasmoid.configuration.showBorder === true) ? Qt.alpha(textColor, 0.3) : "transparent"
 
@@ -68,29 +70,34 @@ Rectangle {
         }
     }
 
-    // Main column layout holding header, section label, horizontal bars, and footer
+    // Full-bleed header strip spanning the card's full width at the top
+    UsageHeader {
+        id: usageHeader
+        visible: Plasmoid.configuration.showTitle !== false
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        planName: fullRoot.usageData ? fullRoot.usageData.planName : "OpenCode Go Usage Tracker"
+        billingPeriod: fullRoot.usageData ? fullRoot.usageData.billingPeriod : "Current Cycle"
+        usagePercent: fullRoot.usagePercent || 0
+        isMock: fullRoot.usageData ? Boolean(fullRoot.usageData.isMock) : false
+        isLoading: fullRoot.isLoading
+        usageData: fullRoot.usageData
+        uiScale: fullRoot.uiScale
+        cardCornerRadius: fullRoot.cardCornerRadius
+        onRequestRefresh: fullRoot.requestRefresh()
+    }
+
+    // Main column layout holding section label, horizontal bars, and footer
     ColumnLayout {
         id: contentColumn
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.top: parent.top
-        anchors.margins: Math.round(12 * uiScale)
+        anchors.top: usageHeader.bottom
+        anchors.leftMargin: Math.round(12 * uiScale)
+        anchors.rightMargin: Math.round(12 * uiScale)
+        anchors.topMargin: Math.round(12 * uiScale)
         spacing: Math.round(10 * uiScale)
-
-        // Usage header component displaying brand logo, stacked title, and circular refresh button
-        UsageHeader {
-            id: usageHeader
-            visible: Plasmoid.configuration.showTitle !== false
-            Layout.fillWidth: true
-            planName: fullRoot.usageData ? fullRoot.usageData.planName : "OpenCode Go Usage Tracker"
-            billingPeriod: fullRoot.usageData ? fullRoot.usageData.billingPeriod : "Current Cycle"
-            usagePercent: fullRoot.usagePercent || 0
-            isMock: fullRoot.usageData ? Boolean(fullRoot.usageData.isMock) : false
-            isLoading: fullRoot.isLoading
-            usageData: fullRoot.usageData
-            uiScale: fullRoot.uiScale
-            onRequestRefresh: fullRoot.requestRefresh()
-        }
 
         // Error message banner displayed when network or auth fails
         Rectangle {

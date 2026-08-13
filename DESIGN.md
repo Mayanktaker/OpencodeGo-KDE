@@ -8,7 +8,7 @@ This document defines the reusable UI patterns, settings architecture, and data-
 ## 🎯 Design Principles
 
 1. **Brand Identity Logo (`<O✦>`)** — vector cyan-teal code brackets `< >` enclosing center ring `O` and glowing spark `✦`
-2. **Distinct Header Title Block** — top header area styled with separate `headerBackgroundColor` and subtle border
+2. **Full-bleed Header Title Block** — top header area styled with separate `headerBackgroundColor`, spans full widget width with top corners matching the card radius, separated from content by a 1px hairline
 3. **Compact by default** — widget height Hugs content tightly without leftover bottom padding
 4. **Color-coded bars** — each usage window gets a distinct text color for quick visual scanning with amber highlights for high usage (≥ 80%)
 5. **Gradient depth** — smooth horizontal cyan gradient fills on progress bars
@@ -22,11 +22,9 @@ This document defines the reusable UI patterns, settings architecture, and data-
 
 ```
 ┌───────────────────────────────────────────┐
-│ ┌───────────────────────────────────────┐ │
-│ │ [<O✦>] OpenCode Go               [🔄] │ │  ← Header block (headerBackgroundColor)
-│ │        Usage Tracker                  │ │
-│ └───────────────────────────────────────┘ │
-│                                           │
+│ [<O✦>] OpenCode Go               [🔄]     │  ← Full-bleed header (headerBackgroundColor)
+│        Usage Tracker                       │
+├───────────────────────────────────────────┤  ← 1px hairline divider
 │ Usage resets in 4 Days                    │  ← Section Header
 │                                           │
 │ Rolling                               14% │  ← Row 1: label + percentage
