@@ -48,7 +48,7 @@ QQC2.ScrollView {
 
                 QQC2.Label {
                     Layout.alignment: Qt.AlignHCenter
-                    text: i18n("Version 1.0.0 • KDE Plasma 6.5+ & Wayland Native")
+                    text: i18n("Version 2.1.0 • KDE Plasma 6 & Wayland Native")
                     opacity: 0.6
                     font.pixelSize: Kirigami.Units.gridUnit * 0.55
                 }
@@ -128,6 +128,74 @@ QQC2.ScrollView {
                     icon.name: "globe"
                     text: i18n("Visit mayanktaker.com")
                     onClicked: Qt.openUrlExternally("https://mayanktaker.com")
+                }
+            }
+        }
+
+        // Open source repository card
+        Rectangle {
+            Layout.fillWidth: true
+            implicitHeight: repoCol.implicitHeight + 22
+            radius: 10
+            color: Qt.alpha(Kirigami.Theme.highlightColor, 0.06)
+            border.color: Qt.alpha(Kirigami.Theme.highlightColor, 0.18)
+            border.width: 1
+
+            ColumnLayout {
+                id: repoCol
+                anchors.fill: parent
+                anchors.margins: 16
+                spacing: 8
+
+                RowLayout {
+                    spacing: 6
+                    Kirigami.Icon {
+                        source: "code-block"
+                        implicitWidth: 16
+                        implicitHeight: 16
+                    }
+                    QQC2.Label {
+                        text: i18n("Open Source")
+                        font.bold: true
+                        font.pixelSize: Kirigami.Units.gridUnit * 0.8
+                    }
+                }
+
+                RowLayout {
+                    spacing: 10
+                    Kirigami.Icon {
+                        source: "code-class"
+                        implicitWidth: 22
+                        implicitHeight: 22
+                        color: Kirigami.Theme.highlightColor
+                    }
+                    ColumnLayout {
+                        spacing: 2
+                        QQC2.Label {
+                            text: i18n("GitHub Repository")
+                            font.bold: true
+                            font.pixelSize: Kirigami.Units.gridUnit * 0.7
+                        }
+                        QQC2.Label {
+                            text: "github.com/Mayanktaker/OpencodeGo-KDE"
+                            opacity: 0.6
+                            font.pixelSize: Kirigami.Units.gridUnit * 0.55
+                        }
+                    }
+                }
+
+                QQC2.Button {
+                    Layout.fillWidth: true
+                    icon.name: "internet-services"
+                    text: i18n("View Source on GitHub")
+                    onClicked: Qt.openUrlExternally("https://github.com/Mayanktaker/OpencodeGo-KDE")
+                }
+
+                QQC2.Button {
+                    Layout.fillWidth: true
+                    icon.name: "tools-report-bug"
+                    text: i18n("Report an Issue")
+                    onClicked: Qt.openUrlExternally("https://github.com/Mayanktaker/OpencodeGo-KDE/issues")
                 }
             }
         }

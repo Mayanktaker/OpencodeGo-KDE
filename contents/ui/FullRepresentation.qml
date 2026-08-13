@@ -127,6 +127,8 @@ Rectangle {
             font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.62 * fullRoot.uiScale)
             opacity: 0.55
             color: fullRoot.textColor
+            // Ellipsize instead of wrapping when the card is at its narrowest width
+            elide: Text.ElideRight
         }
 
         // Horizontal Usage Bars component
@@ -162,6 +164,8 @@ Rectangle {
                 font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.55 * fullRoot.uiScale)
                 opacity: 0.5
                 color: fullRoot.textColor
+                // Ellipsize instead of wrapping when the card is at its narrowest width
+                elide: Text.ElideRight
             }
         }
     }

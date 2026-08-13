@@ -13,8 +13,9 @@ A compact **KDE Plasma 6** widget and companion command-line utility for trackin
 
 - 🎨 **Redesigned Brand Logo (`<O✦>`)**: Custom cyan-teal vector logo combining code brackets `< >`, central ring `O`, and glowing spark `✦`, integrated seamlessly across panel icons, header containers, SVGs, and system theme icon sizes (16px–128px).
 - 📊 **Real-Time Usage Tracking**: Fetches live data from `opencode.ai/workspace/{id}/go` via `curl` (Qt's QML XHR strips the Cookie header). Shows Rolling/Weekly/Monthly usage percentages with reset countdowns.
+- ⏱️ **Per-Window Reset Countdowns**: Natural-language `(reset in 3 hours 45 minutes)` brackets next to Rolling/Weekly/Monthly labels — toggleable from settings, shown with real API reset data (demo data included).
 - 📐 **Horizontal Progress Bars**: Compact horizontal bars with animated cyan fills, percentage highlights, and hover tooltips showing detailed stats.
-- 🖼️ **Header Background Container**: Distinct header title section with configurable background color (`headerBackgroundColor`) and subtle border separation.
+- 🖼️ **Full-Bleed Header**: Distinct header title section spanning the widget's full width with configurable `headerBackgroundColor`, top corners matched to the card radius, and a 1px hairline divider.
 - 🔄 **Animated Circular Refresh**: Interactive refresh button with smooth hover scale pulse and continuous rotation animation while data fetching is active.
 - 🏷️ **Dynamic Panel Badge**: Real-time percentage badge on the taskbar icon with automatic color shifts:
   - `< 75%`: Configured theme accent color
@@ -23,6 +24,7 @@ A compact **KDE Plasma 6** widget and companion command-line utility for trackin
 - 🔔 **Native KDE Desktop Alerts**: System notification toasts when usage crosses your configured threshold (e.g., 80%) or when auth session cookies expire.
 - 🎨 **12 Developer Theme Presets**: Catppuccin Mocha (default), Breeze Dark, Nord, Dracula, Solarized, Gruvbox, Tokyo Night, One Dark, plus 4 light themes. Full custom color pickers including background, header background, text, bar primary/secondary, and accent colors.
 - 💻 **Global CLI Utility (`opencode-usage`)**: Terminal access with formatted output, JSON mode (`--json`), CSV export (`--export`), and Bash/Zsh tab completions.
+- 📦 **Open Source**: Full source, issue tracker, and releases on [GitHub](https://github.com/Mayanktaker/OpencodeGo-KDE) — linked with icons right from the widget's About page.
 
 ---
 
@@ -51,6 +53,16 @@ This automatically:
 3. Purges QML caches and restarts `plasmashell`
 4. Links `opencode-usage` CLI to `~/.local/bin/`
 5. Installs Bash tab completions
+
+---
+
+## 📦 Download & Releases
+
+Prefer a ready-made bundle? Grab the latest `.plasmoid` package or the shareable `.zip` (includes the installer + CLI) from the [GitHub Releases page](https://github.com/Mayanktaker/OpencodeGo-KDE/releases). Install a downloaded `.plasmoid` with:
+
+```bash
+kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v2.1.0.plasmoid
+```
 
 ---
 

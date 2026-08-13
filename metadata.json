@@ -14,8 +14,10 @@
         "Id": "com.mayanktaker.opencodego-usage",
         "License": "MIT",
         "Name": "OpenCode Go Usage Tracker",
-        "Version": "2.0.0",
-        "Website": "https://github.com/Mayanktaker/OpencodeGo-KDE"
+        "Version": "2.1.0",
+        "Website": "https://github.com/Mayanktaker/OpencodeGo-KDE",
+        "Repository": "https://github.com/Mayanktaker/OpencodeGo-KDE",
+        "BugReportUrl": "https://github.com/Mayanktaker/OpencodeGo-KDE/issues"
     },
     "KPackageStructure": "Plasma/Applet",
     "X-Plasma-API-Minimum-Version": "6.0"
