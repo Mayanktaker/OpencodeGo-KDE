@@ -24,29 +24,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Validate QML & JS Syntax
-        run: |
-          echo "Checking api.js syntax..."
-          node --check contents/code/api.js
-          echo "Checking QML brace balance..."
-          FAIL=0
-          for f in $(find contents/ui -name '*.qml'); do
-            DEPTH=$(python3 -c "
-import re, sys
-src = open('$f').read()
-d = 0
-for line in src.split('\n'):
-    s = re.sub(r'//.*', '', line)
-    s = re.sub(r'\"(?:\\\\.|[^\"\\\\])*\"', '\"\"', s)
-    d += s.count('{') - s.count('}')
-print(d)
-")
-            if [ "$DEPTH" != "0" ]; then
-              echo "FAIL: $f has unbalanced braces (depth=$DEPTH)"
-              FAIL=1
-            fi
-          done
-          if [ "$FAIL" = "1" ]; then exit 1; fi
-          echo "All QML files OK"
+        run: bash .github/workflows/validate.sh
 
   build-and-release:
     name: Build & Package Plasmoid Release
