@@ -15,5 +15,10 @@
 *.plasmoid
 *.zip
 
+# Internal docs (not for public)
+AGENTS.md
+DESIGN.md
+.agents/
+
 # System files
 .DS_Store

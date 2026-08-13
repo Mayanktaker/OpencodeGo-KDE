@@ -55,8 +55,6 @@ function getMockData() {
         usagePercent: usagePercent,
         // Demo reset countdowns so the per-window brackets are visible without real credentials
         resetSeconds: { hourly: 13500, weekly: 370800, monthly: 1659600 },
-        // Natural-language headline reset matching the weekly demo window
-        resetLabel: formatResetFull(370800),
         hourly: hourlyData,
         weekly: weeklyData,
         monthly: monthlyData,
@@ -136,15 +134,6 @@ function isOpenAuthLoginPage(text) {
            text.indexOf("Continue with Google") !== -1;
 }
 
-// Formats a seconds countdown into a compact human-readable reset label
-function formatReset(sec) {
-    if (!sec || sec <= 0) return "";
-    if (sec < 60) return Math.round(sec) + "s";
-    if (sec < 3600) return Math.round(sec / 60) + "m";
-    if (sec < 86400) return Math.round(sec / 3600) + "h";
-    return Math.round(sec / 86400) + "d";
-}
-
 // Formats a seconds countdown into a natural multi-unit label (e.g. "3 hours 45 minutes")
 function formatResetFull(sec) {
     sec = Math.max(0, Math.floor(Number(sec) || 0));
@@ -199,17 +188,15 @@ function parseSolidUsageStore(responseText) {
         planName: "OpenCode Go Usage Tracker",
         billingPeriod: "Rolling / Weekly / Monthly",
         usagePercent: headline,
-        // Natural-language reset countdown for the "Usage resets in X" section header
-        resetLabel: formatResetFull(headlineResetSec),
         // Per-window reset countdowns (seconds) used by the per-window bracket labels
         resetSeconds: {
             hourly: results.rollingUsageReset || 0,
             weekly: results.weeklyUsageReset || 0,
             monthly: results.monthlyUsageReset || 0
         },
-        hourly: results.rollingUsage !== undefined ? [{ label: "Rolling", value: results.rollingUsage, maxValue: 100, resetLabel: formatReset(results.rollingUsageReset) }] : [],
-        weekly: results.weeklyUsage !== undefined ? [{ label: "Weekly", value: results.weeklyUsage, maxValue: 100, resetLabel: formatReset(results.weeklyUsageReset) }] : [],
-        monthly: results.monthlyUsage !== undefined ? [{ label: "Monthly", value: results.monthlyUsage, maxValue: 100, resetLabel: formatReset(results.monthlyUsageReset) }] : [],
+        hourly: results.rollingUsage !== undefined ? [{ label: "Rolling", value: results.rollingUsage, maxValue: 100 }] : [],
+        weekly: results.weeklyUsage !== undefined ? [{ label: "Weekly", value: results.weeklyUsage, maxValue: 100 }] : [],
+        monthly: results.monthlyUsage !== undefined ? [{ label: "Monthly", value: results.monthlyUsage, maxValue: 100 }] : [],
         lastRefreshed: new Date().toLocaleTimeString()
     };
 }

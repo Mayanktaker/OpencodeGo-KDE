@@ -118,19 +118,6 @@ Rectangle {
             }
         }
 
-        // Section header label: "Usage resets in X"
-        PlasmaComponents.Label {
-            Layout.fillWidth: true
-            text: (fullRoot.usageData && fullRoot.usageData.resetLabel)
-                ? i18n("Usage resets in %1", fullRoot.usageData.resetLabel)
-                : i18n("Usage resets in 4 days")
-            font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.62 * fullRoot.uiScale)
-            opacity: 0.55
-            color: fullRoot.textColor
-            // Ellipsize instead of wrapping when the card is at its narrowest width
-            elide: Text.ElideRight
-        }
-
         // Horizontal Usage Bars component
         HorizontalUsageBars {
             id: horizontalBars
