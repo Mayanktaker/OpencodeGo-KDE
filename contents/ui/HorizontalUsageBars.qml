@@ -103,9 +103,13 @@ Item {
                     PlasmaComponents.Label {
                         visible: horizontalRoot.formatWindowReset(modelData.id) !== ""
                         text: "(" + i18n("reset in %1", horizontalRoot.formatWindowReset(modelData.id)) + ")"
-                        font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.6 * uiScale)
+                        // 80% of the standard label size so the countdown stays subordinate to the title
+                        font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.48 * uiScale)
                         opacity: 0.6
                         color: horizontalRoot.textColor
+                        // Let the layout shrink + elide this label instead of pushing the percentage off-card
+                        elide: Text.ElideRight
+                        Layout.minimumWidth: 0
                     }
 
                     Item { Layout.fillWidth: true }

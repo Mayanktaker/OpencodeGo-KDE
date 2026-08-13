@@ -19,6 +19,7 @@ Item {
     property alias cfg_displayLayout: displayLayoutField.text
     property alias cfg_showTitle: showTitleCheckBox.checked
     property alias cfg_showBorder: showBorderCheckBox.checked
+    property alias cfg_showBarIcons: showBarIconsCheckBox.checked
     property alias cfg_showResetTimes: showResetTimesCheckBox.checked
     property alias cfg_activePreset: activePresetField.text
     property alias cfg_backgroundColor: bgColorField.text
@@ -171,6 +172,13 @@ Item {
             id: showBorderCheckBox
             Kirigami.FormData.label: i18n("Outer Border:")
             text: i18n("Enable outer border outline on widget card")
+        }
+
+        // Bar icons toggle checkbox
+        QQC2.CheckBox {
+            id: showBarIconsCheckBox
+            Kirigami.FormData.label: i18n("Bar Icons:")
+            text: i18n("Show icons next to Rolling/Weekly/Monthly labels")
         }
 
         // Per-window reset countdown toggle checkbox

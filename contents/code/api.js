@@ -55,6 +55,8 @@ function getMockData() {
         usagePercent: usagePercent,
         // Demo reset countdowns so the per-window brackets are visible without real credentials
         resetSeconds: { hourly: 13500, weekly: 370800, monthly: 1659600 },
+        // Natural-language headline reset matching the weekly demo window
+        resetLabel: formatResetFull(370800),
         hourly: hourlyData,
         weekly: weeklyData,
         monthly: monthlyData,
@@ -197,7 +199,8 @@ function parseSolidUsageStore(responseText) {
         planName: "OpenCode Go Usage Tracker",
         billingPeriod: "Rolling / Weekly / Monthly",
         usagePercent: headline,
-        resetLabel: formatReset(headlineResetSec),
+        // Natural-language reset countdown for the "Usage resets in X" section header
+        resetLabel: formatResetFull(headlineResetSec),
         // Per-window reset countdowns (seconds) used by the per-window bracket labels
         resetSeconds: {
             hourly: results.rollingUsageReset || 0,

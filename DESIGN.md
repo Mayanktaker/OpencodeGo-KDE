@@ -25,7 +25,7 @@ This document defines the reusable UI patterns, settings architecture, and data-
 │ [<O✦>] OpenCode Go               [🔄]     │  ← Full-bleed header (headerBackgroundColor)
 │        Usage Tracker                       │
 ├───────────────────────────────────────────┤  ← 1px hairline divider
-│ Usage resets in 4 Days                    │  ← Section Header
+│ Usage resets in 4 days 7 hours            │  ← Section Header
 │                                           │
 │ Rolling (reset in 3 hours 45 minutes)  14% │  ← Row 1: label + reset bracket + percentage
 │ [████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] │  ← Progress bar
@@ -77,6 +77,7 @@ This document defines the reusable UI patterns, settings architecture, and data-
 </group>
 <group name="Appearance">
     <entry name="showBarIcons" type="Bool"><default>false</default></entry>
+    <entry name="showResetTimes" type="Bool"><default>true</default></entry>
     <entry name="showTitle" type="Bool"><default>true</default></entry>
     <entry name="showBorder" type="Bool"><default>false</default></entry>
     <!-- Theme colors: backgroundColor, textColor, barColor, barSecondaryColor, accentColor -->
@@ -84,8 +85,8 @@ This document defines the reusable UI patterns, settings architecture, and data-
 ```
 
 ### Config Dialog Tabs
-1. **General** — workspace ID, auth cookie, refresh interval, notifications, bar icons toggle
-2. **Appearance** — theme presets, custom color pickers
+1. **General** — workspace ID, auth cookie, refresh interval, notifications
+2. **Appearance** — theme presets, custom color pickers, title/border toggles, bar icons, per-window reset countdown
 3. **Credits & Support** — developer info, donation links
 4. **About** — KDE built-in from metadata.json
 
