@@ -9,6 +9,14 @@ A compact **KDE Plasma 6** widget and companion command-line utility for trackin
 
 ---
 
+## 📸 Screenshots
+
+| Light Theme | Settings | Dark Theme |
+|:---:|:---:|:---:|
+| ![Light Theme](screenshots/image-1.png) | ![Settings](screenshots/image-2.png) | ![Dark Theme](screenshots/image-3.png) |
+
+---
+
 ## 🌟 Key Features
 
 - 🎨 **Redesigned Brand Logo (`<O✦>`)**: Custom cyan-teal vector logo combining code brackets `< >`, central ring `O`, and glowing spark `✦`, integrated seamlessly across panel icons, header containers, SVGs, and system theme icon sizes (16px–128px).
@@ -110,14 +118,14 @@ OpencodeGo-KDE/
 │   │   ├── main.qml                 # Root PlasmoidItem, timer, data flow
 │   │   ├── CompactRepresentation.qml # Panel tray badge
 │   │   ├── FullRepresentation.qml   # Expanded popup
-│   │   ├── UsageHeader.qml          # Title, refresh, percentage badge
-│   │   ├── HorizontalUsageBars.qml  # Progress bars
+│   │   ├── UsageHeader.qml          # Title, refresh, full-bleed stripe
+│   │   ├── HorizontalUsageBars.qml  # Progress bars + reset brackets
 │   │   ├── UsageBarChart.qml        # Bar chart component
 │   │   ├── UsageFetcher.qml         # curl transport via executable engine
 │   │   ├── ViewSelector.qml         # (disabled) tab bar
 │   │   ├── configGeneral.qml        # Settings: workspace, cookie, Test button
-│   │   ├── configAppearance.qml     # Theme presets & color pickers
-│   │   └── configAbout.qml          # Credits & support
+│   │   ├── configAppearance.qml     # Theme presets, toggles & color pickers
+│   │   └── configAbout.qml          # Credits, GitHub repo & support
 │   └── code/
 │       └── api.js                   # Parsing, shell-quote, curl builder
 ├── bin/
@@ -127,9 +135,11 @@ OpencodeGo-KDE/
 ├── assets/
 │   ├── icon.svg
 │   └── branding-icon.jpg
+├── .github/
+│   └── workflows/
+│       └── release.yml              # CI: build + publish release bundles
 ├── install.sh
 ├── install-cli.sh
-├── AGENTS.md
 ├── LICENSE
 └── README.md
 ```
