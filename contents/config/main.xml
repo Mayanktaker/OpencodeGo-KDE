@@ -54,6 +54,10 @@
             <!-- Toggle icons next to Rolling/Weekly/Monthly bar labels -->
             <default>false</default>
         </entry>
+        <entry name="showResetTimes" type="Bool">
+            <!-- Toggle per-window reset countdown brackets next to Rolling/Weekly/Monthly labels -->
+            <default>true</default>
+        </entry>
         <entry name="activePreset" type="String">
             <!-- Active theme preset name -->
             <default>catppuccin_mocha</default>

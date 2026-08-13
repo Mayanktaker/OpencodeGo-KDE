@@ -7,6 +7,7 @@ import QtQuick.Controls as QQC2
 import org.kde.plasma.plasmoid 2.0
 import org.kde.plasma.components 3.0 as PlasmaComponents
 import org.kde.kirigami as Kirigami
+import "../code/api.js" as Api
 
 Item {
     id: horizontalRoot
@@ -14,6 +15,8 @@ Item {
     // Usage dataset and scale properties
     property var usageData: null
     property bool showIcons: Plasmoid.configuration.showBarIcons || false
+    // Toggle for the per-window reset countdown brackets (Rolling/Weekly/Monthly)
+    property bool showResetTimes: Plasmoid.configuration.showResetTimes || false
     property real uiScale: 1.0
 
     // Custom theme colors with vibrant cyan defaults
@@ -40,6 +43,12 @@ Item {
     function percentageTextColor(pct) {
         if (pct >= 80) return "#fbbf24";
         return horizontalRoot.textColor;
+    }
+
+    // Returns a natural-language reset countdown for a usage window, or "" when hidden or unknown
+    function formatWindowReset(windowId) {
+        if (!horizontalRoot.showResetTimes || !usageData || !usageData.resetSeconds) return "";
+        return Api.formatResetFull(usageData.resetSeconds[windowId]);
     }
 
     // Column container wrapping the three progress bar rows
@@ -87,6 +96,15 @@ Item {
                         text: modelData.title
                         font.bold: true
                         font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.75 * uiScale)
+                        color: horizontalRoot.textColor
+                    }
+
+                    // Per-window reset countdown bracket (e.g. "(reset in 3 hours 45 minutes)")
+                    PlasmaComponents.Label {
+                        visible: horizontalRoot.formatWindowReset(modelData.id) !== ""
+                        text: "(" + i18n("reset in %1", horizontalRoot.formatWindowReset(modelData.id)) + ")"
+                        font.pixelSize: Math.round(Kirigami.Units.gridUnit * 0.6 * uiScale)
+                        opacity: 0.6
                         color: horizontalRoot.textColor
                     }
 

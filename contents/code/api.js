@@ -53,6 +53,8 @@ function getMockData() {
         planName: "OpenCode Go (Demo Mode)",
         billingPeriod: "Aug 01 - Aug 31",
         usagePercent: usagePercent,
+        // Demo reset countdowns so the per-window brackets are visible without real credentials
+        resetSeconds: { hourly: 13500, weekly: 370800, monthly: 1659600 },
         hourly: hourlyData,
         weekly: weeklyData,
         monthly: monthlyData,
@@ -141,6 +143,23 @@ function formatReset(sec) {
     return Math.round(sec / 86400) + "d";
 }
 
+// Formats a seconds countdown into a natural multi-unit label (e.g. "3 hours 45 minutes")
+function formatResetFull(sec) {
+    sec = Math.max(0, Math.floor(Number(sec) || 0));
+    if (sec <= 0) return "";
+    var days = Math.floor(sec / 86400);
+    var hours = Math.floor((sec % 86400) / 3600);
+    var minutes = Math.floor((sec % 3600) / 60);
+    var parts = [];
+    if (days > 0) parts.push(days + (days === 1 ? " day" : " days"));
+    if (hours > 0) parts.push(hours + (hours === 1 ? " hour" : " hours"));
+    if (minutes > 0) parts.push(minutes + (minutes === 1 ? " minute" : " minutes"));
+    if (parts.length === 0) {
+        parts.push(sec + (sec === 1 ? " second" : " seconds"));
+    }
+    return parts.join(" ");
+}
+
 // Extracts usage windows from the authenticated SolidJS Go page's inlined store state
 function parseSolidUsageStore(responseText) {
     // The three rolling usage windows the OpenCode Go page exposes
@@ -179,6 +198,12 @@ function parseSolidUsageStore(responseText) {
         billingPeriod: "Rolling / Weekly / Monthly",
         usagePercent: headline,
         resetLabel: formatReset(headlineResetSec),
+        // Per-window reset countdowns (seconds) used by the per-window bracket labels
+        resetSeconds: {
+            hourly: results.rollingUsageReset || 0,
+            weekly: results.weeklyUsageReset || 0,
+            monthly: results.monthlyUsageReset || 0
+        },
         hourly: results.rollingUsage !== undefined ? [{ label: "Rolling", value: results.rollingUsage, maxValue: 100, resetLabel: formatReset(results.rollingUsageReset) }] : [],
         weekly: results.weeklyUsage !== undefined ? [{ label: "Weekly", value: results.weeklyUsage, maxValue: 100, resetLabel: formatReset(results.weeklyUsageReset) }] : [],
         monthly: results.monthlyUsage !== undefined ? [{ label: "Monthly", value: results.monthlyUsage, maxValue: 100, resetLabel: formatReset(results.monthlyUsageReset) }] : [],
@@ -230,6 +255,7 @@ function parseAnyResponse(responseText) {
         planName: "OpenCode Go Usage Tracker",
             billingPeriod: "Current Cycle",
             usagePercent: windowPct,
+            resetSeconds: {},
             hourly: [],
             weekly: [{ label: "Usage", value: windowPct, maxValue: 100 }],
             monthly: [],
@@ -248,6 +274,7 @@ function parseUsageResponse(data) {
         planName: data.planName || data.name || "OpenCode Go Plan",
         billingPeriod: data.billingPeriod || data.period || "Current Billing Cycle",
         usagePercent: data.usagePercent || calculatePercentage(data.currentUsed || data.used || 0, data.currentLimit || data.limit || 100),
+        resetSeconds: data.resetSeconds || {},
         hourly: data.hourly || [],
         weekly: data.weekly || [],
         monthly: data.monthly || [],

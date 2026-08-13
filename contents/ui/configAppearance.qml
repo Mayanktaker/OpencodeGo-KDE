@@ -19,6 +19,7 @@ Item {
     property alias cfg_displayLayout: displayLayoutField.text
     property alias cfg_showTitle: showTitleCheckBox.checked
     property alias cfg_showBorder: showBorderCheckBox.checked
+    property alias cfg_showResetTimes: showResetTimesCheckBox.checked
     property alias cfg_activePreset: activePresetField.text
     property alias cfg_backgroundColor: bgColorField.text
     property alias cfg_headerBackgroundColor: headerBgColorField.text
@@ -170,6 +171,13 @@ Item {
             id: showBorderCheckBox
             Kirigami.FormData.label: i18n("Outer Border:")
             text: i18n("Enable outer border outline on widget card")
+        }
+
+        // Per-window reset countdown toggle checkbox
+        QQC2.CheckBox {
+            id: showResetTimesCheckBox
+            Kirigami.FormData.label: i18n("Reset Countdown:")
+            text: i18n("Show 'reset in X' countdown next to each usage window")
         }
 
         // Theme preset combo box selector with 12 dark & light developer palettes

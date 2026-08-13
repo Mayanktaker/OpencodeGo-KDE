@@ -14,7 +14,7 @@ This document defines the reusable UI patterns, settings architecture, and data-
 5. **Gradient depth** — smooth horizontal cyan gradient fills on progress bars
 6. **Minimal chrome** — percentage text aligned on top right of progress bar rows
 7. **Horizontal-only layout** — single layout mode, no tabbed/all-in-one complexity
-8. **Reset countdown** — always show when the quota resets
+8. **Reset countdown** — always show when the quota resets; per-window "reset in X" brackets next to Rolling/Weekly/Monthly are toggleable in settings
 
 ---
 
@@ -27,13 +27,13 @@ This document defines the reusable UI patterns, settings architecture, and data-
 ├───────────────────────────────────────────┤  ← 1px hairline divider
 │ Usage resets in 4 Days                    │  ← Section Header
 │                                           │
-│ Rolling                               14% │  ← Row 1: label + percentage
+│ Rolling (reset in 3 hours 45 minutes)  14% │  ← Row 1: label + reset bracket + percentage
 │ [████████░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] │  ← Progress bar
 │                                           │
-│ Weekly                                37% │  ← Row 2
+│ Weekly (reset in 4 days 7 hours)       37% │  ← Row 2
 │ [███████████████████░░░░░░░░░░░░░░░░░░░] │
 │                                           │
-│ Monthly                               80% │  ← Row 3 (highlighted gold ≥80%)
+│ Monthly (reset in 19 days 5 hours)     80% │  ← Row 3 (highlighted gold ≥80%)
 │ [███████████████████████████████████░░░] │
 │                                           │
 │ Last updated: 7:15:48 PM | Time Zone      │  ← Footer: timestamp
