@@ -37,6 +37,31 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y zip imagemagick
 
+      - name: Validate QML & JS Syntax
+        run: |
+          echo "Checking api.js syntax..."
+          node --check contents/code/api.js
+          echo "Checking QML brace balance..."
+          FAIL=0
+          for f in $(find contents/ui -name '*.qml'); do
+            DEPTH=$(python3 -c "
+import re, sys
+src = open('$f').read()
+d = 0
+for line in src.split('\n'):
+    s = re.sub(r'//.*', '', line)
+    s = re.sub(r'\"(?:\\\\.|[^\"\\\\])*\"', '\"\"', s)
+    d += s.count('{') - s.count('}')
+print(d)
+")
+            if [ "$DEPTH" != "0" ]; then
+              echo "FAIL: $f has unbalanced braces (depth=$DEPTH)"
+              FAIL=1
+            fi
+          done
+          if [ "$FAIL" = "1" ]; then exit 1; fi
+          echo "All QML files OK"
+
       - name: Generate PNG Icons from Redesigned SVG Logo
         run: |
           echo "Generating PNG app icon sizes from assets/icon.svg..."

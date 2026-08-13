@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import org.kde.plasma.plasmoid 2.0
 
 QQC2.ScrollView {
     id: configAboutRoot
@@ -48,7 +49,8 @@ QQC2.ScrollView {
 
                 QQC2.Label {
                     Layout.alignment: Qt.AlignHCenter
-                    text: i18n("Version 2.1.0 • KDE Plasma 6 & Wayland Native")
+                    // Dynamic version from metadata.json — no manual updates needed
+                    text: i18n("Version %1 • KDE Plasma 6 & Wayland Native", Plasmoid.metaData.version || "2.1.0")
                     opacity: 0.6
                     font.pixelSize: Kirigami.Units.gridUnit * 0.55
                 }
