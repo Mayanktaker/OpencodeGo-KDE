@@ -53,8 +53,6 @@ Rectangle {
 
     color: backgroundColor
     radius: fullRoot.cardCornerRadius
-    border.width: (Plasmoid.configuration.showBorder === true) ? 1 : 0
-    border.color: (Plasmoid.configuration.showBorder === true) ? Qt.alpha(textColor, 0.3) : "transparent"
 
     // Subtle top-to-bottom gradient for depth across all themes
     gradient: Gradient {
@@ -166,6 +164,15 @@ Rectangle {
                 color: fullRoot.textColor
             }
         }
+    }
+
+    // Overlay card border drawn above the full-bleed header so showBorder keeps a full rounded edge
+    Rectangle {
+        anchors.fill: parent
+        radius: fullRoot.cardCornerRadius
+        color: "transparent"
+        border.width: (Plasmoid.configuration.showBorder === true) ? 1 : 0
+        border.color: (Plasmoid.configuration.showBorder === true) ? Qt.alpha(fullRoot.textColor, 0.3) : "transparent"
     }
 }
 

@@ -21,3 +21,16 @@ Plasma caches compiled QML and the config dialog does **not** pick up edits to `
 2. **Fully close the settings/config dialog** before reopening it — a config window left open across the restart keeps a stale in-memory tab list (this is the usual cause of "old tabs / duplicate tabs" after a layout change).
 3. If changes still don't appear, manually purge caches and restart: `rm -rf ~/.cache/plasmashell ~/.cache/plasmawindowed ~/.cache/qmlcache ~/.cache/kcmshell6 ~/.cache/systemsettings ~/.cache/kwin` then restart plasmashell, and `killall kcmshell6 systemsettings` to kill any lingering config processes.
 Note: the installed copy under `~/.local/share/plasma/plasmoids/com.mayanktaker.opencodego-usage/` is a **separate copy**, not a symlink — edits in the repo are only live after the upgrade step above.
+
+### Quick Visual Smoke Test (before/after any UI change)
+After `bash install.sh`, render the widget standalone and capture it for review:
+```bash
+nohup plasmawindowed com.mayanktaker.opencodego-usage >/tmp/opencode/pw.log 2>&1 &   # full representation in its own window
+sleep 10
+spectacle -f -b -n -o /tmp/opencode/pw_test.png   # capture screen (capture tools are display-dependent)
+```
+Check `/tmp/opencode/pw.log` is free of QML errors, then inspect the captured card: the header stripe must span full width edge-to-edge with top corners matching the card radius, and (if `showBorder` is enabled) a full 1px border including the top edge. On Wayland, `xdotool`/`qdbus` window lookups often return nothing — rely on the screenshot instead. Note: `plasmawindowed`'s own window geometry (see `~/.config/plasmawindowedrc`) can differ from the rendered card size, so it is NOT a valid way to verify applet sizing — applet popup width is fixed by `Layout.preferredWidth` in `FullRepresentation.qml`.
+When done, kill only by exact PID to avoid `pkill -f plasmawindowed` matching the invoking shell's own command line (which contains the same string) and killing the shell mid-command:
+```bash
+kill $(ps -eo pid,args | grep '[p]lasmawindowed' | awk '{print $1}')
+```
