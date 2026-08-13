@@ -69,7 +69,7 @@ This automatically:
 Prefer a ready-made bundle? Grab the latest `.plasmoid` package or the shareable `.zip` (includes the installer + CLI) from the [GitHub Releases page](https://github.com/Mayanktaker/OpencodeGo-KDE/releases). Install a downloaded `.plasmoid` with:
 
 ```bash
-kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v2.1.0.plasmoid
+kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v2.2.0.plasmoid
 ```
 
 ---
