@@ -80,7 +80,7 @@ Item {
         QQC2.TextField {
             id: authCookieField
             Kirigami.FormData.label: i18n("Auth Cookie:")
-            placeholderText: i18n("Paste session auth cookie from opencode.ai")
+            placeholderText: i18n("Paste __Host-console_session from opencode.ai")
             echoMode: QQC2.TextField.Password
             Layout.fillWidth: true
         }
@@ -183,7 +183,7 @@ Item {
             Layout.fillWidth: true
             type: Kirigami.Information
             visible: true
-            text: i18n("To configure the widget:\n1. Open your workspace in the OpenCode Console (opencode.ai/console/wrk_.../go) and sign in.\n2. Copy the Workspace ID from the URL — it starts with 'wrk_' (e.g. wrk_01KE20AQRQ9QR7N15TWGJBE2V9).\n3. Press F12 -> Application (or Storage) -> Cookies -> opencode.ai -> copy the entire 'auth' cookie value (starts with Fe26..., 500+ characters).\n4. Paste both values above, then click Test Connection.\n5. Leave the fields empty to return to Demo Mode.")
+            text: i18n("To configure the widget:\n1. Open your workspace in the OpenCode Console (opencode.ai/console/wrk_.../go) and sign in.\n2. Copy the Workspace ID from the URL — it starts with 'wrk_' (e.g. wrk_01KE20AQRQ9QR7N15TWGJBE2V9).\n3. Press F12 -> Application (or Storage) -> Cookies -> opencode.ai -> copy the entire '__Host-console_session' cookie value (a short token, about 39 characters).\n4. Paste both values above, then click Test Connection.\n5. Leave the fields empty to return to Demo Mode.")
         }
     }
 }

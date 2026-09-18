@@ -6,6 +6,7 @@ import QtQml
 import org.kde.plasma.plasmoid 2.0
 import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents
+import "../code/api.js" as Api
 
 PlasmoidItem {
     id: root
@@ -52,15 +53,22 @@ PlasmoidItem {
         usageFetcher.fetch(wsId, cookie, function(err, data) {
             isLoading = false;
             if (err) {
-                errorMessage = err;
-                // If a real error occurred, clear mock data so the UI doesn't say "Demo Mode"
-                if (usageData && usageData.isMock) {
-                    usageData = null;
-                    usagePercent = 0;
+                // Transient console outages keep the last known figures on screen
+                var hasLiveFigures = usageData && !usageData.isMock;
+                if (Api.isTransientError(err) && hasLiveFigures) {
+                    errorMessage = "Console temporarily unavailable — showing last known figures.";
+                } else {
+                    errorMessage = err;
+                    // If a real error occurred, clear mock data so the UI doesn't say "Demo Mode"
+                    if (usageData && usageData.isMock) {
+                        usageData = null;
+                        usagePercent = 0;
+                    }
                 }
                 // Send desktop notification if auth cookie has expired or is invalid
                 var notifyEnabled = Plasmoid.configuration.enableNotifications !== false;
-                if (notifyEnabled && (err.indexOf("cookie") !== -1 || err.indexOf("auth") !== -1)) {
+                var errLower = String(err || "").toLowerCase();
+                if (notifyEnabled && (errLower.indexOf("cookie") !== -1 || errLower.indexOf("auth") !== -1 || errLower.indexOf("session") !== -1)) {
                     if (typeof Plasmoid.showNotification === "function") {
                         Plasmoid.showNotification("OpenCode Auth Alert", err, "dialog-warning");
                     }

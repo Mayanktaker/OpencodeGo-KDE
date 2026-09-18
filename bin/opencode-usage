@@ -104,23 +104,45 @@ def get_mock_data():
         ]
     }
 
+# Cookie names the console has used; only these are trusted as a name=value header
+_KNOWN_COOKIE_NAMES = (_SESSION_COOKIE_NAME, "console_session", _LEGACY_COOKIE_NAME)
+
+# True when the pasted value already carries a known cookie name at the start or after ";"
+def _has_known_cookie_name(val):
+    v = (val or "").strip()
+    for name in _KNOWN_COOKIE_NAMES:
+        if v.startswith(name + "=") or ("; " + name + "=") in v or (";" + name + "=") in v:
+            return True
+    return False
+
 # Normalizes a pasted console credential into a valid Cookie header value
 def normalize_cookie(raw):
     val = (raw or "").strip()
+    # Strip surrounding quotes left by a careless copy from DevTools
+    if len(val) >= 2 and ((val[0] == '"' and val[-1] == '"') or (val[0] == "'" and val[-1] == "'")):
+        val = val[1:-1].strip()
     if not val:
         return ""
+    # A full Cookie header or a name=value pair with a known name passes through untouched
+    if _has_known_cookie_name(val):
+        return val
     # Bare legacy iron-session seal (no cookie name) -> keep the old auth cookie name
     if val.startswith("Fe26"):
         return _LEGACY_COOKIE_NAME + "=" + val
-    # A whole Cookie header or a name=value pair is already usable as-is
-    if "=" in val:
-        return val
-    # Any other bare token is the current console session cookie value
+    # Any other bare value is a console session token — even when it contains "="
     return _SESSION_COOKIE_NAME + "=" + val
 
 # Extracts the credential value from a Cookie header for the length sanity check
 def cookie_value(cookie):
-    head = (cookie or "").split(";")[0].strip()
+    parts = (cookie or "").split(";")
+    # Prefer the value of a known cookie name wherever it sits in the header
+    for part in parts:
+        head = part.strip()
+        if "=" in head:
+            name, _, value = head.partition("=")
+            if name.strip() in _KNOWN_COOKIE_NAMES:
+                return value.strip()
+    head = parts[0].strip() if parts else ""
     return head.split("=", 1)[1].strip() if "=" in head else head
 
 # Formats a seconds countdown into a compact human-readable reset label

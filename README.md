@@ -20,7 +20,7 @@ A compact **KDE Plasma 6** widget and companion command-line utility for trackin
 ## 🌟 Key Features
 
 - 🎨 **Redesigned Brand Logo (`<O✦>`)**: Custom cyan-teal vector logo combining code brackets `< >`, central ring `O`, and glowing spark `✦`, integrated seamlessly across panel icons, header containers, SVGs, and system theme icon sizes (16px–128px).
-- 📊 **Real-Time Usage Tracking**: Fetches live data from the OpenCode Console JSON API `opencode.ai/console/api/go/status` via `curl` (Qt's QML XHR strips the Cookie header). The workspace ID travels in the required `x-org-id` header — it is **not** part of the path. Shows Rolling (5h)/Weekly/Monthly usage percentages with reset countdowns. The fetch walks a candidate route list and retries the next path whenever a route answers HTTP 404 (empty body = route moved), so a future server-side rename costs one retry instead of a hard failure; a transient HTTP 5xx is retried up to 3 times on the same route (the endpoint is currently intermittent) and then reports "Console API temporarily unavailable (HTTP 5xx) — retry shortly"; if every candidate 404s it reports "OpenCode Console API route not found — check for a widget update", while a 401 still means the auth session expired.
+- 📊 **Real-Time Usage Tracking**: Fetches live data from the OpenCode Console JSON API `opencode.ai/console/api/go/status` via `curl` (Qt's QML XHR strips the Cookie header). The workspace ID travels in the required `x-org-id` header — it is **not** part of the path. Shows Rolling (5h)/Weekly/Monthly usage percentages with reset countdowns. The fetch walks a candidate route list and retries the next path whenever a route answers HTTP 404 (empty body = route moved), so a future server-side rename costs one retry instead of a hard failure; a transient HTTP 5xx is retried in place (plasmoid up to 4 attempts, CLI up to 3) and then reports "Console API temporarily unavailable (HTTP 5xx) — retry shortly" (the endpoint is currently intermittent); if every candidate 404s it reports "OpenCode Console API route not found — check for a widget update", while a 401 still means the auth session expired.
 - ⏱️ **Per-Window Reset Countdowns**: Natural-language `(reset in 3 hours 45 minutes)` brackets next to Rolling (5h)/Weekly/Monthly labels — toggleable from settings, shown with real API reset data (demo data included).
 - 📐 **Horizontal Progress Bars**: Compact horizontal bars with animated cyan fills, percentage highlights, and hover tooltips showing detailed stats.
 - 🖼️ **Full-Bleed Header**: Distinct header title section spanning the widget's full width with configurable `headerBackgroundColor`, top corners matched to the card radius, and a 1px hairline divider.
@@ -32,6 +32,7 @@ A compact **KDE Plasma 6** widget and companion command-line utility for trackin
 - 🔔 **Native KDE Desktop Alerts**: System notification toasts when usage crosses your configured threshold (e.g., 80%) or when auth session cookies expire.
 - 🎨 **12 Developer Theme Presets**: Catppuccin Mocha (default), Breeze Dark, Nord, Dracula, Solarized, Gruvbox, Tokyo Night, One Dark, plus 4 light themes. Full custom color pickers including background, header background, text, bar primary/secondary, and accent colors.
 - 💻 **Global CLI Utility (`opencode-usage`)**: Terminal access with formatted output, JSON mode (`--json`), CSV export (`--export`), and Bash/Zsh tab completions.
+- 🧾 **Stale-Figures Fallback**: When the console has a brief outage, the widget keeps your last known numbers on screen with a "showing last known figures" note instead of going blank.
 - 📦 **Open Source**: Full source, issue tracker, and releases on [GitHub](https://github.com/Mayanktaker/OpencodeGo-KDE) — linked with icons right from the widget's About page.
 
 ---
@@ -69,7 +70,7 @@ This automatically:
 Prefer a ready-made bundle? Grab the latest `.plasmoid` package or the shareable `.zip` (includes the installer + CLI) from the [GitHub Releases page](https://github.com/Mayanktaker/OpencodeGo-KDE/releases). Install a downloaded `.plasmoid` with:
 
 ```bash
-kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v2.3.0.plasmoid
+kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v2.4.0.plasmoid
 ```
 
 ---
@@ -153,6 +154,23 @@ OpencodeGo-KDE/
 - **QML Bindings**: Child components must qualify parent properties with the parent's `id` (e.g., `fullRoot.usagePercent`) — unqualified names resolve to the child's own property, creating silent self-binding loops.
 
 ---
+
+## ✨ What's New in v2.4.0
+
+- Works again with the new OpenCode sign-in — just paste your current session cookie and the numbers load.
+- The first bar now reads Rolling (5h) so it's clear what time window it covers.
+- If OpenCode has a brief hiccup, the widget keeps your last numbers on screen instead of going blank.
+- Pasting your cookie is more forgiving: full cookie rows, quoted copies, and old formats are all accepted.
+- Full release notes live in [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## ⚠️ Known Issue: Brief "Temporarily Unavailable" Messages
+
+OpenCode's usage page itself sometimes answers with a short outage (even in a browser). The widget retries automatically and keeps your last numbers on screen, then picks up fresh numbers on the next refresh — no action needed. If you see it often, you can report it to OpenCode with this template:
+
+> Subject: `GET /console/api/go/status` returns intermittent HTTP 500
+> Body: "While signed in, `GET https://opencode.ai/console/api/go/status` (with `x-org-id`) intermittently returns `500 {\"_tag\":\"InternalServerError\"}` — roughly 6 of 8 tries during one window — while `/console/api/orgs` stays 200. Seen on 2026-09-18. Please investigate."
 
 ## ⚖️ License & Copyright
 

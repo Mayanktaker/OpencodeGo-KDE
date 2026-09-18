@@ -12,7 +12,10 @@ var CONSOLE_SESSION_COOKIE = "__Host-console_session";
 // the support-staff variant, which answers 403 for regular accounts.
 var CONSOLE_STATUS_ROUTES = [
     "https://opencode.ai/console/api/go/status",
-    "https://opencode.ai/console/api/internal/orgs/%ORG%/go/status"
+    "https://opencode.ai/console/api/internal/orgs/%ORG%/go/status",
+    "https://opencode.ai/console/api/orgs/%ORG%/go/status",
+    "https://opencode.ai/console/api/v2/orgs/%ORG%/go/status",
+    "https://opencode.ai/console/api/v1/orgs/%ORG%/go/status"
 ];
 // curl -w marker carrying the HTTP status code after the response body
 var HTTP_STATUS_MARKER = "HTTPSTATUS:";
@@ -23,21 +26,49 @@ function calculatePercentage(used, total) {
     return Math.min(100, Math.max(0, Math.round((used / total) * 100)));
 }
 
+// Cookie names the console has used; only these are trusted as a name=value header
+var KNOWN_COOKIE_NAMES = ["__Host-console_session", "console_session", "auth"];
+
+// True when the pasted value already carries one of the known cookie names
+// (anchored to the start or a ";" separator so a bare token containing e.g.
+// "auth=" is not misclassified as a full header)
+function hasKnownCookieName(val) {
+    var v = String(val || "").trim();
+    for (var i = 0; i < KNOWN_COOKIE_NAMES.length; i++) {
+        var n = KNOWN_COOKIE_NAMES[i];
+        if (v.indexOf(n + "=") === 0) return true;
+        if (v.indexOf("; " + n + "=") !== -1) return true;
+        if (v.indexOf(";" + n + "=") !== -1) return true;
+    }
+    return false;
+}
+
 // Normalizes a user-pasted credential into a valid HTTP Cookie header value
 function buildCookieHeader(authCookie) {
     var val = (authCookie || "").trim();
+    // Strip surrounding quotes left by a careless copy from DevTools
+    if (val.length >= 2 && ((val.charAt(0) === '"' && val.charAt(val.length - 1) === '"') ||
+        (val.charAt(0) === "'" && val.charAt(val.length - 1) === "'"))) {
+        val = val.slice(1, -1).trim();
+    }
     if (!val) return "";
-    // A full Cookie header or a name=value pair is passed through untouched, e.g.
-    // "__Host-console_session=st_..." (current console) or "auth=Fe26.2**..." (legacy site)
-    if (val.indexOf("=") !== -1) {
+    // A full Cookie header or a name=value pair with a known name passes through untouched
+    if (hasKnownCookieName(val)) {
         return val;
     }
     // Bare legacy iron-session seal pasted without its cookie name
     if (val.indexOf("Fe26") === 0) {
         return "auth=" + val;
     }
-    // Bare console session token (short and opaque) — supply the cookie name the console expects
+    // Any other bare value is a console session token — even when it contains "="
+    // (e.g. base64 padding), so the cookie name is supplied explicitly
     return CONSOLE_SESSION_COOKIE + "=" + val;
+}
+// True when the error is a transient console outage that should keep last known figures
+function isTransientError(err) {
+    var msg = String(err || "");
+    return msg.indexOf("temporarily unavailable") !== -1 ||
+        msg.indexOf("Retrying on the next refresh") !== -1;
 }
 
 // Generates realistic mock usage data when no workspace credentials are provided
@@ -110,7 +141,7 @@ function checkWorkspaceIdError(workspaceId) {
     var ws = String(workspaceId || "").trim();
     if (!ws) return "";
     if (!/^(wrk_|org_)/.test(ws)) {
-        return "Workspace ID must start with 'wrk_' (or 'org_'). Copy it from the console URL: opencode.ai/console/wrk_XXXXXXXX/usage";
+        return "Workspace ID must start with 'wrk_' (or 'org_'). Copy it from the console URL: opencode.ai/console/wrk_XXXXXXXX/go";
     }
     return "";
 }
