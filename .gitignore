@@ -10,14 +10,14 @@
 # Temporary & cache files
 .cache/
 *.log
+__pycache__/
+*.pyc
 
 # Generated release packages & archives
 *.plasmoid
 *.zip
 
-# Internal docs (not for public)
-AGENTS.md
-DESIGN.md
+# Docs are versioned now; only the duplicate .agents/ twin stays private
 .agents/
 
 # System files

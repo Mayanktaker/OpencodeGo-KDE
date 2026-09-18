@@ -62,10 +62,11 @@ Item {
         anchors.topMargin: contentPadding
         spacing: Math.round(12 * uiScale)
 
-        // Repeater for Rolling, Weekly, and Monthly usage windows
+        // Repeater for Rolling, Weekly, and Monthly usage windows.
+        // "Rolling" alone is ambiguous, so its 5-hour window is spelled out as the console does.
         Repeater {
             model: [
-                { id: "hourly", title: i18n("Rolling"), icon: "preferences-system-time", data: usageData ? usageData.hourly : [] },
+                { id: "hourly", title: i18n("Rolling (5h)"), icon: "preferences-system-time", data: usageData ? usageData.hourly : [] },
                 { id: "weekly", title: i18n("Weekly"), icon: "office-calendar", data: usageData ? usageData.weekly : [] },
                 { id: "monthly", title: i18n("Monthly"), icon: "view-calendar", data: usageData ? usageData.monthly : [] }
             ]

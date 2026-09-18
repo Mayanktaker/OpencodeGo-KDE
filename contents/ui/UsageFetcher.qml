@@ -15,6 +15,23 @@ Item {
     // In-flight callbacks keyed by their curl command string (one at a time in practice)
     property var pending: ({})
 
+    // Request context kept across a candidate-route retry
+    property int activeRoute: 0
+    property string activeWorkspaceId: ""
+    property string activeCookie: ""
+    property var activeCallback: null
+
+    // Runs curl for the currently selected candidate console route
+    function attemptRoute() {
+        var cmd = Api.buildCurlCommand(fetcher.activeWorkspaceId, fetcher.activeCookie, fetcher.activeRoute);
+        // Stash the callback keyed by command so onNewData can route the result back to the caller
+        var p = fetcher.pending;
+        p[cmd] = fetcher.activeCallback;
+        fetcher.pending = p;
+        // Ask the executable engine to run curl once
+        dataSource.connectSource(cmd);
+    }
+
     // One-shot fetch; callback(errString, dataModel) mirrors the legacy api.js signature
     function fetch(workspaceId, authCookie, callback) {
         // No credentials -> demo mode (caller decides what to do)
@@ -34,13 +51,12 @@ Item {
             return;
         }
 
-        var cmd = Api.buildCurlCommand(workspaceId, authCookie);
-        // Stash the callback keyed by command so onNewData can route the result back to the caller
-        var p = fetcher.pending;
-        p[cmd] = callback;
-        fetcher.pending = p;
-        // Ask the executable engine to run curl once
-        dataSource.connectSource(cmd);
+        // Remember the request context so a 404 on this path can walk to the next candidate route
+        fetcher.activeWorkspaceId = workspaceId;
+        fetcher.activeCookie = authCookie;
+        fetcher.activeCallback = callback;
+        fetcher.activeRoute = 0;
+        fetcher.attemptRoute();
     }
 
     // Plasma executable dataengine: runs the source string via the shell and returns stdout/stderr
@@ -62,6 +78,16 @@ Item {
             var stderr = (data["stderr"] || "").toString();
             var exitCode = data["exit code"] !== undefined ? data["exit code"] : 0;
             var result = Api.parseCurlOutput(stdout, stderr, exitCode);
+            // An unanswered candidate route means the console API moved — walk to the next path
+            if (!result.error && !result.data && result.httpStatus === 404) {
+                if (fetcher.activeRoute + 1 < Api.consoleRouteCount()) {
+                    fetcher.activeRoute = fetcher.activeRoute + 1;
+                    fetcher.attemptRoute();
+                    return;
+                }
+                cb(Api.noRouteError(), null);
+                return;
+            }
             cb(result.error, result.data);
         }
     }

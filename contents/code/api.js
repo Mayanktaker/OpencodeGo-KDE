@@ -4,6 +4,19 @@
 // Browser-like User-Agent reused by every curl call so the console accepts the request
 var USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
+// Candidate console API paths for the Go status payload, tried in order so a server-side path
+// rename costs one retry instead of a hard failure. The first entry is the verified one (2026-09).
+var CONSOLE_STATUS_ROUTES = [
+    "/console/api/internal/orgs/",
+    "/console/api/orgs/",
+    "/console/api/v2/orgs/",
+    "/console/api/v1/orgs/"
+];
+// Every candidate route ends with this suffix
+var CONSOLE_STATUS_SUFFIX = "/go/status";
+// curl -w marker carrying the HTTP status code after the response body
+var HTTP_STATUS_MARKER = "HTTPSTATUS:";
+
 // Calculates integer percentage from used and total values safely
 function calculatePercentage(used, total) {
     if (!total || total <= 0) return 0;
@@ -96,15 +109,34 @@ function checkWorkspaceIdError(workspaceId) {
     return "";
 }
 
+// Error shown when every candidate console route came back 404 (the API path moved again)
+function noRouteError() {
+    return "OpenCode Console API route not found. The endpoint may have moved — check for a widget update.";
+}
+
+// Number of candidate console routes the caller may walk through
+function consoleRouteCount() {
+    return CONSOLE_STATUS_ROUTES.length;
+}
+
+// Builds the Go status URL for a candidate route index, clamped into the supported range
+function buildStatusUrl(workspaceId, routeIndex) {
+    var ws = String(workspaceId || "").trim();
+    var idx = parseInt(routeIndex, 10);
+    if (isNaN(idx) || idx < 0) idx = 0;
+    if (idx > CONSOLE_STATUS_ROUTES.length - 1) idx = CONSOLE_STATUS_ROUTES.length - 1;
+    return "https://opencode.ai" + CONSOLE_STATUS_ROUTES[idx] + encodeURIComponent(ws) + CONSOLE_STATUS_SUFFIX;
+}
+
 // Builds the curl shell command used to fetch Go status JSON. Qt's QML XMLHttpRequest strips the
 // Cookie header, so we shell out to curl which honors it; the executable Plasma dataengine runs it.
-// Endpoint: OpenCode Console API (the legacy /workspace/{id}/go HTML page no longer serves data).
-function buildCurlCommand(workspaceId, authCookie) {
+function buildCurlCommand(workspaceId, authCookie, routeIndex) {
     var ws = String(workspaceId || "").trim();
     var cookie = buildCookieHeader(authCookie);
-    var url = "https://opencode.ai/console/api/internal/orgs/" + encodeURIComponent(ws) + "/go/status";
+    var url = buildStatusUrl(ws, routeIndex);
     // -sSL: silent + show errors + follow redirects (so a dead session surfaces as JSON 401)
     // --max-time: bound the request so the widget never hangs
+    // -w: append the HTTP status so the caller can tell "path moved" (404) from "bad session" (401)
     var parts = [
         "curl", "-sSL", "--max-time", "15",
         "-H", shellQuote("Cookie: " + cookie),
@@ -113,29 +145,46 @@ function buildCurlCommand(workspaceId, authCookie) {
         // x-org-id is the console's own workspace selector header
         "-H", shellQuote("x-org-id: " + ws),
         "-H", shellQuote("Referer: https://opencode.ai/console/" + ws + "/go"),
+        "-w", shellQuote(HTTP_STATUS_MARKER + "%{http_code}"),
         shellQuote(url)
     ];
     return parts.join(" ");
 }
 
-// Parses the captured curl output (stdout JSON, stderr text, exit code) into the widget model
+// Splits curl's -w status marker off the captured stdout into a body and an HTTP status code
+function splitHttpStatus(stdout) {
+    var raw = String(stdout || "");
+    var idx = raw.lastIndexOf(HTTP_STATUS_MARKER);
+    if (idx === -1) return { body: raw, httpStatus: 0 };
+    var status = parseInt(raw.slice(idx + HTTP_STATUS_MARKER.length), 10);
+    return { body: raw.slice(0, idx), httpStatus: isNaN(status) ? 0 : status };
+}
+
+// Parses the captured curl output (stdout JSON, stderr text, exit code) into the widget model.
+// httpStatus is surfaced so the caller can walk to the next candidate route on a 404.
 function parseCurlOutput(stdout, stderr, exitCode) {
     // curl exit 28 = timeout, 6 = DNS, 7 = connection refused, etc.
     if (exitCode && parseInt(exitCode, 10) !== 0) {
         // Non-zero exit: surface a helpful network/auth message
         var code = parseInt(exitCode, 10);
-        if (code === 28) return { error: "Request timed out. Server did not respond within 15s.", data: null };
-        if (code === 6 || code === 7) return { error: "Network unreachable. Please check your internet connection.", data: null };
+        if (code === 28) return { error: "Request timed out. Server did not respond within 15s.", data: null, httpStatus: 0 };
+        if (code === 6 || code === 7) return { error: "Network unreachable. Please check your internet connection.", data: null, httpStatus: 0 };
         // Other codes still may have produced a useful body on stdout — try parsing it
     }
-    var body = stdout || "";
-    if (!body && stderr) {
-        return { error: "curl failed: " + String(stderr).slice(0, 200), data: null };
+    var split = splitHttpStatus(stdout);
+    // 404 means this candidate path is not served at all — the caller retries instead of reporting
+    if (split.httpStatus === 404) {
+        return { error: null, data: null, httpStatus: 404 };
+    }
+    var body = split.body;
+    if (!body.trim()) {
+        if (stderr) return { error: "curl failed: " + String(stderr).slice(0, 200), data: null, httpStatus: split.httpStatus };
+        return { error: "Console API returned an empty response (HTTP " + split.httpStatus + ").", data: null, httpStatus: split.httpStatus };
     }
     try {
-        return { error: null, data: parseAnyResponse(body) };
+        return { error: null, data: parseAnyResponse(body), httpStatus: split.httpStatus };
     } catch (e) {
-        return { error: e.message, data: null };
+        return { error: e.message, data: null, httpStatus: split.httpStatus };
     }
 }
 
