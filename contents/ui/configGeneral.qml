@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
+import "../code/api.js" as Api
 
 Item {
     id: configGeneralRoot
@@ -36,7 +37,10 @@ Item {
                 return;
             }
             configGeneralRoot.testSucceeded = true;
-            configGeneralRoot.testResultText = i18n("Connected — %1% used%2", data.usagePercent || 0, data.resetLabel ? i18n(" (resets in %1)", data.resetLabel) : "");
+            var resetSec = (data.resetSeconds && data.resetSeconds.weekly) ? data.resetSeconds.weekly : 0;
+            configGeneralRoot.testResultText = resetSec > 0
+                ? i18n("Connected — %1% of weekly quota used (resets in %2)", data.usagePercent || 0, Api.formatResetFull(resetSec))
+                : i18n("Connected — %1% of weekly quota used", data.usagePercent || 0);
         });
     }
 
@@ -68,7 +72,7 @@ Item {
         QQC2.TextField {
             id: workspaceIdField
             Kirigami.FormData.label: i18n("Workspace ID:")
-            placeholderText: i18n("e.g. ws_123456789")
+            placeholderText: i18n("e.g. wrk_01KE20AQRQ9QR7N15TWGJBE2V9")
             Layout.fillWidth: true
         }
 
@@ -179,7 +183,7 @@ Item {
             Layout.fillWidth: true
             type: Kirigami.Information
             visible: true
-            text: i18n("To obtain your full Auth Cookie:\n1. Open opencode.ai in browser and log in, then open any workspace.\n2. Press F12 -> Application (or Storage) -> Cookies -> opencode.ai (NOT auth.opencode.ai).\n3. Find the 'auth' cookie row, double-click its Value cell and copy the entire value (starts with Fe26..., 500+ characters).\n4. Paste that value into the field above (the widget adds 'auth=' automatically).\n5. Leave empty to return to Demo Mode.")
+            text: i18n("To configure the widget:\n1. Open your workspace in the OpenCode Console (opencode.ai/console/wrk_.../go) and sign in.\n2. Copy the Workspace ID from the URL — it starts with 'wrk_' (e.g. wrk_01KE20AQRQ9QR7N15TWGJBE2V9).\n3. Press F12 -> Application (or Storage) -> Cookies -> opencode.ai -> copy the entire 'auth' cookie value (starts with Fe26..., 500+ characters).\n4. Paste both values above, then click Test Connection.\n5. Leave the fields empty to return to Demo Mode.")
         }
     }
 }

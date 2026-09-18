@@ -10,7 +10,7 @@
     <!-- General settings group for API authentication and polling -->
     <group name="General">
         <entry name="workspaceId" type="String">
-            <!-- Workspace identifier for OpenCode account -->
+            <!-- Workspace (org) identifier from the console URL, e.g. wrk_01KE20AQRQ9QR7N15TWGJBE2V9 -->
             <default></default>
         </entry>
         <entry name="authCookie" type="String">

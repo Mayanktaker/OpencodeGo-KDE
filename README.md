@@ -20,7 +20,7 @@ A compact **KDE Plasma 6** widget and companion command-line utility for trackin
 ## 🌟 Key Features
 
 - 🎨 **Redesigned Brand Logo (`<O✦>`)**: Custom cyan-teal vector logo combining code brackets `< >`, central ring `O`, and glowing spark `✦`, integrated seamlessly across panel icons, header containers, SVGs, and system theme icon sizes (16px–128px).
-- 📊 **Real-Time Usage Tracking**: Fetches live data from `opencode.ai/workspace/{id}/go` via `curl` (Qt's QML XHR strips the Cookie header). Shows Rolling/Weekly/Monthly usage percentages with reset countdowns.
+- 📊 **Real-Time Usage Tracking**: Fetches live data from the OpenCode Console JSON API `opencode.ai/console/api/internal/orgs/{orgId}/go/status` via `curl` (Qt's QML XHR strips the Cookie header). Shows Rolling/Weekly/Monthly usage percentages with reset countdowns.
 - ⏱️ **Per-Window Reset Countdowns**: Natural-language `(reset in 3 hours 45 minutes)` brackets next to Rolling/Weekly/Monthly labels — toggleable from settings, shown with real API reset data (demo data included).
 - 📐 **Horizontal Progress Bars**: Compact horizontal bars with animated cyan fills, percentage highlights, and hover tooltips showing detailed stats.
 - 🖼️ **Full-Bleed Header**: Distinct header title section spanning the widget's full width with configurable `headerBackgroundColor`, top corners matched to the card radius, and a 1px hairline divider.
@@ -69,19 +69,19 @@ This automatically:
 Prefer a ready-made bundle? Grab the latest `.plasmoid` package or the shareable `.zip` (includes the installer + CLI) from the [GitHub Releases page](https://github.com/Mayanktaker/OpencodeGo-KDE/releases). Install a downloaded `.plasmoid` with:
 
 ```bash
-kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v2.2.0.plasmoid
+kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v2.3.0.plasmoid
 ```
 
 ---
 
 ## 🔑 How to Get Your Workspace ID & Auth Cookie
 
-1. Open `https://opencode.ai` and sign in.
-2. Press `F12` → **Application** → **Cookies** → `opencode.ai`.
-3. Copy the `auth` cookie value (starts with `Fe26.2**`, 500+ characters).
-4. Right-click the widget → **Configure** → paste **Workspace ID** and **Auth Cookie**.
-5. Click **Apply** or **OK**.
-
+1. Open the OpenCode Console Go page: `https://opencode.ai/console/wrk_XXXXXXXX/go` (sign in if prompted). Use the console — `/usage` is a separate cost dashboard, not the Go usage page.
+2. Copy the workspace ID from the browser URL bar (it starts with `wrk_`, e.g. `wrk_01KE20AQRQ9QR7N15TWGJBE2V9`; `org_...` ids work too).
+3. Press `F12` → **Application** → **Cookies** → `opencode.ai`.
+4. Copy the `auth` cookie value (starts with `Fe26.2**`, 500+ characters).
+5. Right-click the widget → **Configure** → paste **Workspace ID** and **Auth Cookie**.
+6. Click **Apply** or **OK**.
 ---
 
 ## 💻 CLI Usage
@@ -100,7 +100,7 @@ opencode-usage --export /tmp/usage.csv
 opencode-usage --demo
 
 # Custom credentials
-opencode-usage -w "ws_123" -c "auth_token"
+opencode-usage -w "wrk_01KE20AQRQ9QR7N15TWGJBE2V9" -c "auth_token"
 ```
 
 ---
@@ -149,7 +149,7 @@ OpencodeGo-KDE/
 ## 🏗️ Architecture Notes
 
 - **Network Transport**: Qt's QML XHR silently strips the `Cookie` header (Qt `CookieLoadControlAttribute`), so `UsageFetcher.qml` shells out to `curl` via Plasma's `executable` dataengine. The cookie is shell-quoted before inlining.
-- **Data Parsing**: `api.js` extracts `rollingUsage`/`weeklyUsage`/`monthlyUsage` from the SolidJS store inlined in the Go page HTML. Falls back to Next.js `__NEXT_DATA__` or generic regex extraction.
+- **Data Parsing**: `api.js` parses the console `go/status` JSON response (`access.meters.fiveHour` / `week` / `month`, BigInt money fields as strings), converting each meter into a percentage, reset countdown, and progress bar.
 - **QML Bindings**: Child components must qualify parent properties with the parent's `id` (e.g., `fullRoot.usagePercent`) — unqualified names resolve to the child's own property, creating silent self-binding loops.
 
 ---

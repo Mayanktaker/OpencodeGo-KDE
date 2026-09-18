@@ -1,6 +1,9 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
 // API logic module for fetching, parsing, and exporting OpenCode Go subscription usage data
 
+// Browser-like User-Agent reused by every curl call so the console accepts the request
+var USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+
 // Calculates integer percentage from used and total values safely
 function calculatePercentage(used, total) {
     if (!total || total <= 0) return 0;
@@ -64,7 +67,7 @@ function getMockData() {
 
 // Wraps a string in POSIX single quotes so it is safe to inline in a shell command
 function shellQuote(s) {
-    // Single-quote the value, escaping any embedded single quotes via '"'"'
+    // Single-quote the value, escaping any embedded single quotes via '\"'\"'
     return "'" + String(s).replace(/'/g, "'\\''") + "'";
 }
 
@@ -83,26 +86,39 @@ function checkCookieError(authCookie) {
     return "";
 }
 
-// Builds the curl shell command used to fetch the Go page (Qt's QML XHR strips the Cookie header,
-// so we shell out to curl which honors it; the executable Plasma dataengine runs the command)
+// Validates the workspace id against the console's own accepted formats (wrk_/org_)
+function checkWorkspaceIdError(workspaceId) {
+    var ws = String(workspaceId || "").trim();
+    if (!ws) return "";
+    if (!/^(wrk_|org_)/.test(ws)) {
+        return "Workspace ID must start with 'wrk_' (or 'org_'). Copy it from the console URL: opencode.ai/console/wrk_XXXXXXXX/usage";
+    }
+    return "";
+}
+
+// Builds the curl shell command used to fetch Go status JSON. Qt's QML XMLHttpRequest strips the
+// Cookie header, so we shell out to curl which honors it; the executable Plasma dataengine runs it.
+// Endpoint: OpenCode Console API (the legacy /workspace/{id}/go HTML page no longer serves data).
 function buildCurlCommand(workspaceId, authCookie) {
     var ws = String(workspaceId || "").trim();
     var cookie = buildCookieHeader(authCookie);
-    var url = "https://opencode.ai/workspace/" + encodeURIComponent(ws) + "/go";
-    // -sSL: silent + show errors + follow redirects (so an invalid cookie lands on the OpenAuth login page)
+    var url = "https://opencode.ai/console/api/internal/orgs/" + encodeURIComponent(ws) + "/go/status";
+    // -sSL: silent + show errors + follow redirects (so a dead session surfaces as JSON 401)
     // --max-time: bound the request so the widget never hangs
     var parts = [
         "curl", "-sSL", "--max-time", "15",
         "-H", shellQuote("Cookie: " + cookie),
-        "-H", shellQuote("User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"),
-        "-H", shellQuote("Accept: text/html,application/xhtml+xml,application/xml;q=0.9,application/json,*/*;q=0.8"),
-        "-H", shellQuote("X-Workspace-Id: " + ws),
+        "-H", shellQuote("User-Agent: " + USER_AGENT),
+        "-H", shellQuote("Accept: application/json"),
+        // x-org-id is the console's own workspace selector header
+        "-H", shellQuote("x-org-id: " + ws),
+        "-H", shellQuote("Referer: https://opencode.ai/console/" + ws + "/go"),
         shellQuote(url)
     ];
     return parts.join(" ");
 }
 
-// Parses the captured curl output (stdout HTML, stderr text, exit code) into the widget model
+// Parses the captured curl output (stdout JSON, stderr text, exit code) into the widget model
 function parseCurlOutput(stdout, stderr, exitCode) {
     // curl exit 28 = timeout, 6 = DNS, 7 = connection refused, etc.
     if (exitCode && parseInt(exitCode, 10) !== 0) {
@@ -110,7 +126,7 @@ function parseCurlOutput(stdout, stderr, exitCode) {
         var code = parseInt(exitCode, 10);
         if (code === 28) return { error: "Request timed out. Server did not respond within 15s.", data: null };
         if (code === 6 || code === 7) return { error: "Network unreachable. Please check your internet connection.", data: null };
-        // Other codes still may have produced useful HTML on stdout (e.g. 200 body followed by a redirect chain error) — try parsing it
+        // Other codes still may have produced a useful body on stdout — try parsing it
     }
     var body = stdout || "";
     if (!body && stderr) {
@@ -134,6 +150,12 @@ function isOpenAuthLoginPage(text) {
            text.indexOf("Continue with Google") !== -1;
 }
 
+// Detects the OpenCode Console SPA shell, which is HTML and therefore never carries usage data
+function isConsoleShell(text) {
+    return text.indexOf("<title>OpenCode Console</title>") !== -1 ||
+           text.indexOf("/console/assets/index-") !== -1;
+}
+
 // Formats a seconds countdown into a natural multi-unit label (e.g. "3 hours 45 minutes")
 function formatResetFull(sec) {
     sec = Math.max(0, Math.floor(Number(sec) || 0));
@@ -151,9 +173,39 @@ function formatResetFull(sec) {
     return parts.join(" ");
 }
 
-// Extracts usage windows from the authenticated SolidJS Go page's inlined store state
+// Coerces the API's micro-cents values (BigInt serialized as a string, e.g. "125000000") into a Number
+function toMicroCents(value) {
+    if (value === undefined || value === null || value === "") return 0;
+    var n = Number(String(value).replace(/n$/, ""));
+    return isNaN(n) ? 0 : n;
+}
+
+// Mirrors the console's own round-half-up percentage so widget and website always agree
+function meterPercent(usedMicroCents, limitMicroCents) {
+    if (!(limitMicroCents > 0)) return 0;
+    var pct = Math.floor((usedMicroCents * 200 + limitMicroCents) / (limitMicroCents * 2));
+    return Math.min(100, Math.max(0, pct));
+}
+
+// Converts an ISO date (or epoch seconds/milliseconds) into seconds remaining from now, 0 when unknown
+function secondsUntil(value) {
+    if (value === undefined || value === null || value === "") return 0;
+    var raw = String(value).trim();
+    var numeric = Number(raw);
+    var ms;
+    if (raw !== "" && !isNaN(numeric) && /^[0-9.]+$/.test(raw)) {
+        // Values below 1e11 are epoch seconds, above are epoch milliseconds
+        ms = numeric < 1e11 ? numeric * 1000 : numeric;
+    } else {
+        ms = new Date(raw).getTime();
+    }
+    if (isNaN(ms)) return 0;
+    return Math.max(0, Math.round((ms - Date.now()) / 1000));
+}
+
+// Extracts the usage windows from the authenticated SolidJS Go page's inlined store state (legacy HTML)
 function parseSolidUsageStore(responseText) {
-    // The three rolling usage windows the OpenCode Go page exposes
+    // The three rolling usage windows the legacy OpenCode Go page exposed
     var windows = ["rollingUsage", "weeklyUsage", "monthlyUsage"];
     var results = {};
     var found = false;
@@ -201,16 +253,66 @@ function parseSolidUsageStore(responseText) {
     };
 }
 
-// Smart parser capable of extracting usage data from JSON responses, Next.js HTML payloads, or page text
+// Parses the OpenCode Console go/status JSON (access.meters.fiveHour/week/month) into the widget model.
+// Returns null when the payload is not the console shape so other parsers can try.
+function parseConsoleGoStatus(data) {
+    if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+    var access = data.access;
+    if (!access || typeof access !== "object" || !access.meters) return null;
+    var meters = access.meters || {};
+
+    // Each meter reports micro-cents spent against its own limit, so percentages are derived locally
+    var fiveHour = meters.fiveHour;
+    var week = meters.week;
+    var month = meters.month;
+    if (!fiveHour && !week && !month) return null;
+
+    var fiveHourPct = fiveHour ? meterPercent(toMicroCents(fiveHour.usedMicroCents), toMicroCents(fiveHour.limitMicroCents)) : 0;
+    var weekPct = week ? meterPercent(toMicroCents(week.usedMicroCents), toMicroCents(week.limitMicroCents)) : 0;
+    var monthPct = month ? meterPercent(toMicroCents(month.usedMicroCents), toMicroCents(month.limitMicroCents)) : 0;
+
+    return {
+        isMock: false,
+        planName: "OpenCode Go Usage Tracker",
+        billingPeriod: "Rolling / Weekly / Monthly",
+        // Headline badge keeps the widget's weekly-quota convention
+        usagePercent: week ? weekPct : (month ? monthPct : fiveHourPct),
+        // Per-window reset countdowns in seconds; the month window resets when the paid period ends
+        resetSeconds: {
+            hourly: fiveHour ? secondsUntil(fiveHour.resetsAt) : 0,
+            weekly: week ? secondsUntil(week.resetsAt) : 0,
+            monthly: secondsUntil(access.endsAt)
+        },
+        hourly: fiveHour ? [{ label: "Rolling", value: fiveHourPct, maxValue: 100 }] : [],
+        weekly: week ? [{ label: "Weekly", value: weekPct, maxValue: 100 }] : [],
+        monthly: month ? [{ label: "Monthly", value: monthPct, maxValue: 100 }] : [],
+        lastRefreshed: new Date().toLocaleTimeString()
+    };
+}
+
+// Smart parser capable of extracting usage data from console JSON, legacy Next.js HTML, or page text
 function parseAnyResponse(responseText) {
     var trimmed = responseText.trim();
-    
-    // Case 1: Direct JSON payload
+
+    // Case 1: Direct JSON payload (the console API path)
     if (trimmed.startsWith("{") || trimmed.startsWith("[")) {
+        var json = null;
         try {
-            var json = JSON.parse(trimmed);
-            return parseUsageResponse(json);
+            json = JSON.parse(trimmed);
         } catch (e) {}
+        if (json !== null) {
+            // The console rejects a stale session with a tagged error object instead of an HTTP page
+            if (json._tag === "Unauthorized" || json._tag === "Forbidden") {
+                throw new Error("Auth Cookie is invalid or expired. Please update Auth Cookie in settings.");
+            }
+            var consoleModel = parseConsoleGoStatus(json);
+            if (consoleModel) return consoleModel;
+            // No Go subscription attached to this workspace
+            if (json.access === null || json.access === undefined) {
+                throw new Error("This workspace has no active OpenCode Go subscription.");
+            }
+            return parseUsageResponse(json);
+        }
     }
 
     // Case 2: OpenAuth login page returned (auth cookie invalid/expired)
@@ -218,7 +320,12 @@ function parseAnyResponse(responseText) {
         throw new Error("Auth Cookie is invalid or expired. Please update Auth Cookie in settings.");
     }
 
-    // Case 3: Embedded __NEXT_DATA__ JSON in HTML
+    // Case 3: Console SPA shell returned instead of JSON — the widget is pointed at an HTML route
+    if (isConsoleShell(trimmed)) {
+        throw new Error("Console returned HTML instead of JSON. Update the widget, or re-check the Workspace ID.");
+    }
+
+    // Case 4: Embedded __NEXT_DATA__ JSON in HTML (legacy site)
     var nextDataMatch = responseText.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/i);
     if (nextDataMatch && nextDataMatch[1]) {
         try {
@@ -230,19 +337,19 @@ function parseAnyResponse(responseText) {
         } catch (e) {}
     }
 
-    // Case 4: SolidJS store state inlined on the authenticated Go page (rollingUsage/weeklyUsage/monthlyUsage)
+    // Case 5: Legacy SolidJS store state inlined on the authenticated Go page
     var solidModel = parseSolidUsageStore(responseText);
     if (solidModel) {
         return solidModel;
     }
 
-    // Case 5: Regex pattern extraction for usagePercent values embedded in the page text
+    // Case 6: Regex pattern extraction for usagePercent values embedded in the page text
     var usagePercentMatch = responseText.match(/usagePercent[^\d]*(\d+)/i);
     if (usagePercentMatch) {
         var windowPct = parseInt(usagePercentMatch[1], 10);
         return {
             isMock: false,
-        planName: "OpenCode Go Usage Tracker",
+            planName: "OpenCode Go Usage Tracker",
             billingPeriod: "Current Cycle",
             usagePercent: windowPct,
             resetSeconds: {},
@@ -253,7 +360,7 @@ function parseAnyResponse(responseText) {
         };
     }
 
-    throw new Error("Could not parse usage metrics. Server returned HTML instead of JSON.");
+    throw new Error("Could not parse usage metrics. Server returned an unexpected response.");
 }
 
 // Parses raw JSON response from OpenCode API into widget consumption model
@@ -277,7 +384,7 @@ function generateCSV(data) {
     if (!data) return "";
     var lines = [];
     lines.push("Category,Label,Used,MaxLimit,Percentage");
-    
+
     var weekly = data.weekly || [];
     for (var i = 0; i < weekly.length; i++) {
         var w = weekly[i];

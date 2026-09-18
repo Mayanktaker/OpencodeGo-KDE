@@ -10,25 +10,20 @@ import argparse
 import configparser
 import subprocess
 import urllib.parse
-from datetime import datetime
+from datetime import datetime, timezone
 
-# Regexes used to lift the three usage windows out of the inlined SolidJS store
-_WINDOW_RE = {
-    "rolling": re.compile(r'rollingUsage:\$R\[\d+\]=\{[^}]*?usagePercent:(\d+)'),
-    "weekly": re.compile(r'weeklyUsage:\$R\[\d+\]=\{[^}]*?usagePercent:(\d+)'),
-    "monthly": re.compile(r'monthlyUsage:\$R\[\d+\]=\{[^}]*?usagePercent:(\d+)'),
-}
-_RESET_RE = {
-    "rolling": re.compile(r'rollingUsage:\$R\[\d+\]=\{[^}]*?resetInSec:(\d+)'),
-    "weekly": re.compile(r'weeklyUsage:\$R\[\d+\]=\{[^}]*?resetInSec:(\d+)'),
-    "monthly": re.compile(r'monthlyUsage:\$R\[\d+\]=\{[^}]*?resetInSec:(\d+)'),
-}
+# Console endpoint for the authenticated Go status JSON (the legacy workspace Go page is gone)
+_CONSOLE_STATUS_URL = "https://opencode.ai/console/api/internal/orgs/{org}/go/status"
+_CONSOLE_REFERER_URL = "https://opencode.ai/console/{org}/go"
+# Workspace/org ids are validated by the console as `org_...` or `wrk_...`
+_WORKSPACE_ID_RE = re.compile(r"^(org_|wrk_)")
+# Markers that identify an OpenAuth login page returned instead of JSON
 _OPENAUTH_MARKERS = ("<title>OpenAuth</title>", "openauth.js.org", "/github/authorize", "/google/authorize")
 
 # Parses command line flags and arguments
 def parse_args():
     parser = argparse.ArgumentParser(description="OpenCode Go CLI Usage Tracker")
-    parser.add_argument("--workspace-id", "-w", help="OpenCode Workspace ID")
+    parser.add_argument("--workspace-id", "-w", help="OpenCode Console workspace/org ID (wrk_... or org_...)")
     parser.add_argument("--cookie", "-c", help="OpenCode Auth Cookie")
     parser.add_argument("--json", "-j", action="store_true", help="Output raw JSON format")
     parser.add_argument("--export", "-e", nargs="?", const="~/opencode-usage.csv", help="Export usage statistics to CSV file")
@@ -64,6 +59,8 @@ def get_mock_data():
         "usagePercent": 73,
         "currentUsed": 3650,
         "currentLimit": 5000,
+        "resetLabel": format_reset(370800),
+        "resetSeconds": {"hourly": 13500, "weekly": 370800, "monthly": 1659600},
         "weekly": [
             {"label": "Mon", "value": 420, "maxValue": 1000},
             {"label": "Tue", "value": 550, "maxValue": 1000},
@@ -101,69 +98,195 @@ def format_reset(sec):
         return f"{round(sec / 3600)}h"
     return f"{round(sec / 86400)}d"
 
-# Extracts the rolling/weekly/monthly usage windows from the Go page HTML
-def parse_go_page(html):
-    windows = {}
-    resets = {}
-    for key, rx in _WINDOW_RE.items():
-        m = rx.search(html)
-        if m:
-            windows[key] = int(m.group(1))
-    for key, rx in _RESET_RE.items():
-        m = rx.search(html)
-        if m:
-            resets[key] = int(m.group(1))
-    if not windows:
+# Coerces string or numeric money fields (BigInt serialized as string) into int
+def to_int(value):
+    if isinstance(value, bool) or value is None:
+        return 0
+    if isinstance(value, int):
+        return value
+    if isinstance(value, float):
+        return int(value)
+    if isinstance(value, str):
+        try:
+            return int(float(value.strip()))
+        except (TypeError, ValueError):
+            return 0
+    return 0
+
+# Replicates the console's round-half-up integer percentage, clamped to 0..100
+def meter_percent(used_micro_cents, limit_micro_cents):
+    used = to_int(used_micro_cents)
+    limit = to_int(limit_micro_cents)
+    if limit <= 0:
+        return 0
+    pct = (used * 200 + limit) // (limit * 2)
+    return max(0, min(100, pct))
+
+# Converts an ISO-8601 (or epoch seconds/milliseconds) timestamp into seconds from now
+def seconds_until(value):
+    if value is None or isinstance(value, bool):
         return None
-    headline = windows.get("weekly", windows.get("monthly", windows.get("rolling", 0)))
-    reset_sec = resets.get("weekly", resets.get("monthly", resets.get("rolling", 0)))
-    bars = []
-    for label, key in (("Rolling", "rolling"), ("Weekly", "weekly"), ("Monthly", "monthly")):
-        if key in windows:
-            bars.append({"label": label, "value": windows[key], "maxValue": 100, "resetLabel": format_reset(resets.get(key))})
+    now = datetime.now(timezone.utc)
+    target = None
+    if isinstance(value, (int, float)):
+        target = _from_epoch(float(value))
+    elif isinstance(value, str):
+        raw = value.strip()
+        if not raw:
+            return None
+        # Numeric strings are treated as epoch seconds/milliseconds
+        if raw.lstrip("+-").replace(".", "", 1).isdigit():
+            target = _from_epoch(float(raw))
+        else:
+            try:
+                target = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except ValueError:
+                return None
+            if target.tzinfo is None:
+                target = target.replace(tzinfo=timezone.utc)
+    if target is None:
+        return None
+    return max(0, int((target - now).total_seconds()))
+
+# Converts epoch seconds or milliseconds into an aware UTC datetime
+def _from_epoch(value):
+    if value > 1e11:
+        value = value / 1000.0
+    try:
+        return datetime.fromtimestamp(value, timezone.utc)
+    except (OverflowError, OSError, ValueError):
+        return None
+
+# Builds the internal model for a demo/error state with a single explanatory plan name
+def error_model(reason):
     return {
+        "isMock": True,
+        "planName": f"OpenCode Go ({reason})",
+        "billingPeriod": "N/A",
+        "usagePercent": 0,
+        "resetLabel": "",
+        "resetSeconds": {},
+        "hourly": [],
+        "weekly": [],
+        "monthly": []
+    }
+
+# Maps the console /go/status JSON (access.meters) onto the CLI's internal usage model
+def parse_console_go_status(payload):
+    if not isinstance(payload, dict):
+        return None
+    access = payload.get("access")
+    if not isinstance(access, dict):
+        return None
+    meters = access.get("meters")
+    if not isinstance(meters, dict):
+        meters = {}
+
+    model = {
         "isMock": False,
         "planName": "OpenCode Go",
         "billingPeriod": "Rolling / Weekly / Monthly",
-        "usagePercent": headline,
-        "resetLabel": format_reset(reset_sec),
-        "hourly": [b for b in bars if b["label"] == "Rolling"],
-        "weekly": [b for b in bars if b["label"] == "Weekly"],
-        "monthly": [b for b in bars if b["label"] == "Monthly"],
+        "usagePercent": 0,
+        "resetLabel": "",
+        "resetSeconds": {},
+        "startsAt": access.get("startsAt"),
+        "endsAt": access.get("endsAt"),
+        "cancelAtPeriodEnd": bool(access.get("cancelAtPeriodEnd")),
+        "hourly": [],
+        "weekly": [],
+        "monthly": []
     }
 
-# Fetches the Go page via curl (Qt's QML XHR strips the Cookie header, so the plasmoid uses curl too)
+    # fiveHour -> Rolling, week -> Weekly, month -> Monthly (month resets at access.endsAt)
+    windows = (
+        ("hourly", "Rolling", meters.get("fiveHour"), None),
+        ("weekly", "Weekly", meters.get("week"), None),
+        ("monthly", "Monthly", meters.get("month"), access.get("endsAt")),
+    )
+    for key, label, meter, fallback_reset in windows:
+        if not isinstance(meter, dict):
+            continue
+        used = to_int(meter.get("usedMicroCents"))
+        limit = to_int(meter.get("limitMicroCents"))
+        pct = meter_percent(used, limit)
+        reset_at = meter.get("resetsAt") or fallback_reset
+        reset_sec = seconds_until(reset_at)
+        # Normalize an unknown countdown to 0 so --json matches the plasmoid's model contract
+        model["resetSeconds"][key] = reset_sec if reset_sec is not None else 0
+        model[key] = [{
+            "label": label,
+            "value": pct,
+            "maxValue": 100,
+            "usedMicroCents": used,
+            "limitMicroCents": limit,
+            "resetLabel": format_reset(reset_sec)
+        }]
+
+    if not any(model[key] for key in ("hourly", "weekly", "monthly")):
+        return None
+
+    # Headline percentage follows the weekly-first convention
+    headline_key = next(key for key in ("weekly", "monthly", "hourly") if model[key])
+    model["usagePercent"] = model[headline_key][0]["value"]
+    model["resetLabel"] = model[headline_key][0]["resetLabel"]
+    return model
+
+# Extracts the console JSON payload from a curl stdout, reporting the failure reason when unusable
+def parse_curl_payload(stdout):
+    text = (stdout or "").strip()
+    if not text:
+        return None, "empty response from server"
+    try:
+        payload = json.loads(text)
+    except ValueError:
+        if any(marker in text for marker in _OPENAUTH_MARKERS):
+            return None, "auth cookie invalid or expired"
+        return None, "could not parse server response"
+    if isinstance(payload, dict) and payload.get("_tag") == "Unauthorized":
+        return None, "session expired or unauthorized (HTTP 401) — copy a fresh auth cookie"
+    parsed = parse_console_go_status(payload)
+    if parsed is None:
+        return None, "no active OpenCode Go subscription on this workspace"
+    return parsed, None
+
+# Fetches the console Go status JSON via curl (Qt's QML XHR strips the Cookie header, so the plasmoid uses curl too)
 def fetch_usage(workspace_id, auth_cookie):
     if not workspace_id or not auth_cookie:
         return get_mock_data()
 
+    workspace_id = workspace_id.strip()
+    if not _WORKSPACE_ID_RE.match(workspace_id):
+        return error_model("workspace ID must start with wrk_ or org_")
+
     cookie = normalize_cookie(auth_cookie)
     if "..." in cookie or len(cookie) < 150:
-        return {"isMock": True, "planName": "OpenCode Go (auth cookie looks truncated)", "usagePercent": 0, "weekly": []}
+        return error_model("auth cookie looks truncated")
 
-    url = f"https://opencode.ai/workspace/{urllib.parse.quote(workspace_id)}/go"
+    url = _CONSOLE_STATUS_URL.format(org=urllib.parse.quote(workspace_id, safe=""))
+    referer = _CONSOLE_REFERER_URL.format(org=urllib.parse.quote(workspace_id, safe=""))
     try:
         result = subprocess.run(
             ["curl", "-sSL", "--max-time", "15",
              "-H", f"Cookie: {cookie}",
              "-H", "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-             "-H", "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,application/json,*/*;q=0.8",
-             "-H", f"X-Workspace-Id: {workspace_id}",
+             "-H", "Accept: application/json",
+             "-H", f"x-org-id: {workspace_id}",
+             "-H", f"Referer: {referer}",
              url],
             capture_output=True, text=True, timeout=20,
         )
     except FileNotFoundError:
-        return {"isMock": True, "planName": "OpenCode Go (curl not installed)", "usagePercent": 0, "weekly": []}
+        return error_model("curl not installed")
     except subprocess.TimeoutExpired:
-        return {"isMock": True, "planName": "OpenCode Go (request timed out)", "usagePercent": 0, "weekly": []}
+        return error_model("request timed out")
 
-    html = result.stdout or ""
-    if any(marker in html for marker in _OPENAUTH_MARKERS):
-        return {"isMock": True, "planName": "OpenCode Go (auth cookie invalid or expired)", "usagePercent": 0, "weekly": []}
-    parsed = parse_go_page(html)
+    parsed, reason = parse_curl_payload(result.stdout)
     if parsed:
         return parsed
-    return {"isMock": True, "planName": "OpenCode Go (could not parse server response)", "usagePercent": 0, "weekly": []}
+    if result.returncode != 0 and not (result.stdout or "").strip():
+        detail = (result.stderr or "").strip().splitlines()
+        reason = f"curl error: {detail[-1]}" if detail else "network request failed"
+    return error_model(reason)
 
 # Renders progress bar visualization for terminal output
 def render_progress_bar(percent, width=30):

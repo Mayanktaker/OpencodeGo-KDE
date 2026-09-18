@@ -27,6 +27,12 @@ Item {
             callback(cookieErr, null);
             return;
         }
+        // The console only accepts wrk_/org_ workspace ids, so catch bad values before spending a request
+        var wsErr = Api.checkWorkspaceIdError(workspaceId);
+        if (wsErr) {
+            callback(wsErr, null);
+            return;
+        }
 
         var cmd = Api.buildCurlCommand(workspaceId, authCookie);
         // Stash the callback keyed by command so onNewData can route the result back to the caller
