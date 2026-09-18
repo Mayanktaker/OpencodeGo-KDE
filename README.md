@@ -20,7 +20,7 @@ A compact **KDE Plasma 6** widget and companion command-line utility for trackin
 ## 🌟 Key Features
 
 - 🎨 **Redesigned Brand Logo (`<O✦>`)**: Custom cyan-teal vector logo combining code brackets `< >`, central ring `O`, and glowing spark `✦`, integrated seamlessly across panel icons, header containers, SVGs, and system theme icon sizes (16px–128px).
-- 📊 **Real-Time Usage Tracking**: Fetches live data from the OpenCode Console JSON API `opencode.ai/console/api/internal/orgs/{orgId}/go/status` via `curl` (Qt's QML XHR strips the Cookie header). Shows Rolling (5h)/Weekly/Monthly usage percentages with reset countdowns. The fetch walks a candidate route list and retries the next path whenever a route answers HTTP 404 (empty body = route moved), so a future server-side rename costs one retry instead of a hard failure; if every candidate 404s it reports "OpenCode Console API route not found — check for a widget update", while a 401 still means the auth session expired.
+- 📊 **Real-Time Usage Tracking**: Fetches live data from the OpenCode Console JSON API `opencode.ai/console/api/go/status` via `curl` (Qt's QML XHR strips the Cookie header). The workspace ID travels in the required `x-org-id` header — it is **not** part of the path. Shows Rolling (5h)/Weekly/Monthly usage percentages with reset countdowns. The fetch walks a candidate route list and retries the next path whenever a route answers HTTP 404 (empty body = route moved), so a future server-side rename costs one retry instead of a hard failure; a transient HTTP 5xx is retried up to 3 times on the same route (the endpoint is currently intermittent) and then reports "Console API temporarily unavailable (HTTP 5xx) — retry shortly"; if every candidate 404s it reports "OpenCode Console API route not found — check for a widget update", while a 401 still means the auth session expired.
 - ⏱️ **Per-Window Reset Countdowns**: Natural-language `(reset in 3 hours 45 minutes)` brackets next to Rolling (5h)/Weekly/Monthly labels — toggleable from settings, shown with real API reset data (demo data included).
 - 📐 **Horizontal Progress Bars**: Compact horizontal bars with animated cyan fills, percentage highlights, and hover tooltips showing detailed stats.
 - 🖼️ **Full-Bleed Header**: Distinct header title section spanning the widget's full width with configurable `headerBackgroundColor`, top corners matched to the card radius, and a 1px hairline divider.
@@ -77,10 +77,10 @@ kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v2.3.0.plasmo
 ## 🔑 How to Get Your Workspace ID & Auth Cookie
 
 1. Open the OpenCode Console Go page: `https://opencode.ai/console/wrk_XXXXXXXX/go` (sign in if prompted). Use the console — `/usage` is a separate cost dashboard, not the Go usage page.
-2. Copy the workspace ID from the browser URL bar (it starts with `wrk_`, e.g. `wrk_01KE20AQRQ9QR7N15TWGJBE2V9`; `org_...` ids work too).
+2. Copy the workspace ID from the browser URL bar (it starts with `wrk_`, e.g. `wrk_01KE20AQRQ9QR7N15TWGJBE2V9`; `org_...` ids work too). It is sent in the `x-org-id` header on every request.
 3. Press `F12` → **Application** → **Cookies** → `opencode.ai`.
-4. Copy the `auth` cookie value (starts with `Fe26.2**`, 500+ characters).
-5. Right-click the widget → **Configure** → paste **Workspace ID** and **Auth Cookie**.
+4. Copy the **`__Host-console_session`** cookie value (a short opaque token, ~39 characters, e.g. `st_...`) — **not** `auth`. The old iron-session `auth=Fe26.2**` cookie no longer authenticates the console.
+5. Right-click the widget → **Configure** → paste **Workspace ID** and the cookie value.
 6. Click **Apply** or **OK**.
 ---
 
@@ -100,7 +100,7 @@ opencode-usage --export /tmp/usage.csv
 opencode-usage --demo
 
 # Custom credentials
-opencode-usage -w "wrk_01KE20AQRQ9QR7N15TWGJBE2V9" -c "auth_token"
+opencode-usage -w "wrk_01KE20AQRQ9QR7N15TWGJBE2V9" -c "__Host-console_session=st_..."
 ```
 
 ---

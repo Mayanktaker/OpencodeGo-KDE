@@ -15,12 +15,14 @@ from datetime import datetime, timezone
 # Base origin every candidate console API route is resolved against
 _CONSOLE_BASE_URL = "https://opencode.ai"
 # Candidate console API paths for the Go status payload, tried in order so a server-side path
-# rename costs one retry instead of a hard failure. The first entry is the verified one.
+# rename costs one retry instead of a hard failure. Entry 0 is the verified console route — the
+# workspace id travels in the x-org-id header only; `{org}` placeholders are filled per request.
 _CONSOLE_STATUS_ROUTES = (
-    "/console/api/internal/orgs/",
-    "/console/api/orgs/",
-    "/console/api/v2/orgs/",
-    "/console/api/v1/orgs/",
+    "/console/api",
+    "/console/api/internal/orgs/{org}",
+    "/console/api/orgs/{org}",
+    "/console/api/v2/orgs/{org}",
+    "/console/api/v1/orgs/{org}",
 )
 # Every candidate route ends with this suffix
 _CONSOLE_STATUS_SUFFIX = "/go/status"
@@ -28,8 +30,23 @@ _CONSOLE_STATUS_SUFFIX = "/go/status"
 _HTTP_STATUS_MARKER = "HTTPSTATUS:"
 # Console page sent as the Referer header so the request looks same-origin
 _CONSOLE_REFERER_URL = _CONSOLE_BASE_URL + "/console/{org}/go"
+# Current console session cookie name; the legacy iron-session `auth` seal no longer authenticates
+_SESSION_COOKIE_NAME = "__Host-console_session"
+# Legacy cookie name kept for bare `Fe26.2**` seals pasted from the retired console build
+_LEGACY_COOKIE_NAME = "auth"
+# Minimum length of a pasted cookie VALUE (the current session token is ~39 chars)
+_MIN_COOKIE_VALUE_LEN = 16
+# How many times one candidate route is attempted before a 5xx is reported as unavailable
+_MAX_STATUS_ATTEMPTS = 3
+# HTTP 5xx band treated as transient (the live console endpoint is currently intermittent)
+_SERVER_ERROR_MIN = 500
+_SERVER_ERROR_MAX = 600
 # Reported when every candidate console route answered 404 (the API path moved again)
 _ROUTE_NOT_FOUND_REASON = "OpenCode Console API route not found — check for a widget update"
+# Reported when a route kept answering 5xx after every retry
+_SERVER_UNAVAILABLE_REASON = "Console API temporarily unavailable (HTTP 5xx) — retry shortly"
+# Reported when the pasted cookie value is missing, truncated or too short to be a session token
+_COOKIE_INVALID_REASON = "auth cookie value is truncated or too short — copy the __Host-console_session cookie value from opencode.ai"
 # Workspace/org ids are validated by the console as `org_...` or `wrk_...`
 _WORKSPACE_ID_RE = re.compile(r"^(org_|wrk_)")
 # Markers that identify an OpenAuth login page returned instead of JSON
@@ -39,7 +56,7 @@ _OPENAUTH_MARKERS = ("<title>OpenAuth</title>", "openauth.js.org", "/github/auth
 def parse_args():
     parser = argparse.ArgumentParser(description="OpenCode Go CLI Usage Tracker")
     parser.add_argument("--workspace-id", "-w", help="OpenCode Console workspace/org ID (wrk_... or org_...)")
-    parser.add_argument("--cookie", "-c", help="OpenCode Auth Cookie")
+    parser.add_argument("--cookie", "-c", help="OpenCode Console cookie: the __Host-console_session value or a full Cookie header")
     parser.add_argument("--json", "-j", action="store_true", help="Output raw JSON format")
     parser.add_argument("--export", "-e", nargs="?", const="~/opencode-usage.csv", help="Export usage statistics to CSV file")
     parser.add_argument("--demo", "-d", action="store_true", help="Force demo mock data")
@@ -87,15 +104,24 @@ def get_mock_data():
         ]
     }
 
-# Normalizes a pasted auth credential into a valid Cookie header value
+# Normalizes a pasted console credential into a valid Cookie header value
 def normalize_cookie(raw):
     val = (raw or "").strip()
     if not val:
         return ""
-    # Bare iron-session seal (no cookie name) -> prefix with auth=
+    # Bare legacy iron-session seal (no cookie name) -> keep the old auth cookie name
     if val.startswith("Fe26"):
-        return "auth=" + val
-    return val
+        return _LEGACY_COOKIE_NAME + "=" + val
+    # A whole Cookie header or a name=value pair is already usable as-is
+    if "=" in val:
+        return val
+    # Any other bare token is the current console session cookie value
+    return _SESSION_COOKIE_NAME + "=" + val
+
+# Extracts the credential value from a Cookie header for the length sanity check
+def cookie_value(cookie):
+    head = (cookie or "").split(";")[0].strip()
+    return head.split("=", 1)[1].strip() if "=" in head else head
 
 # Formats a seconds countdown into a compact human-readable reset label
 def format_reset(sec):
@@ -255,21 +281,29 @@ def parse_curl_payload(stdout):
         payload = json.loads(text)
     except ValueError:
         if any(marker in text for marker in _OPENAUTH_MARKERS):
-            return None, "auth cookie invalid or expired"
+            return None, "auth cookie invalid or expired — copy a fresh __Host-console_session cookie value"
         return None, "could not parse server response"
-    if isinstance(payload, dict) and payload.get("_tag") == "Unauthorized":
-        return None, "session expired or unauthorized (HTTP 401) — copy a fresh auth cookie"
+    if isinstance(payload, dict):
+        tag = payload.get("_tag")
+        # Map the console's error tags onto the verified HTTP status semantics
+        if tag == "Unauthorized":
+            return None, "session expired or unauthorized (HTTP 401) — copy a fresh __Host-console_session cookie value"
+        if tag == "Forbidden":
+            return None, "access denied (HTTP 403) — this route is restricted to console support staff"
+        if tag == "BadRequest":
+            return None, "bad request (HTTP 400) — the workspace ID must be sent as the x-org-id header"
     parsed = parse_console_go_status(payload)
     if parsed is None:
         return None, "no active OpenCode Go subscription on this workspace"
     return parsed, None
 
-# Builds the console Go status URL for a candidate route index, clamped into the supported range
+# Builds the console Go status URL for a candidate route index, filling in the org placeholder
 def build_status_url(workspace_id, route_index):
     org = urllib.parse.quote(workspace_id, safe="")
     # Clamp into range so both front-ends resolve a bogus index identically
     idx = min(max(route_index, 0), len(_CONSOLE_STATUS_ROUTES) - 1)
-    return f"{_CONSOLE_BASE_URL}{_CONSOLE_STATUS_ROUTES[idx]}{org}{_CONSOLE_STATUS_SUFFIX}"
+    route = _CONSOLE_STATUS_ROUTES[idx].replace("{org}", org)
+    return f"{_CONSOLE_BASE_URL}{route}{_CONSOLE_STATUS_SUFFIX}"
 
 # Splits the curl -w status marker off the captured stdout into (body, http_status)
 def split_http_status(stdout):
@@ -283,8 +317,8 @@ def split_http_status(stdout):
         status = 0
     return raw[:idx], status
 
-# Fetches the console Go status JSON via curl, walking the candidate routes while they 404
-# (Qt's QML XHR strips the Cookie header, so the plasmoid uses curl too)
+# Fetches the console Go status JSON via curl, retrying transient 5xx on the same route and
+# walking the candidate routes while they 404 (Qt's QML XHR strips the Cookie header, so the plasmoid uses curl too)
 def fetch_usage(workspace_id, auth_cookie):
     if not workspace_id or not auth_cookie:
         return get_mock_data()
@@ -294,41 +328,50 @@ def fetch_usage(workspace_id, auth_cookie):
         return error_model("workspace ID must start with wrk_ or org_")
 
     cookie = normalize_cookie(auth_cookie)
-    if "..." in cookie or len(cookie) < 150:
-        return error_model("auth cookie looks truncated")
+    # The credential VALUE (not the whole Cookie header) must look like a real token
+    if "..." in cookie or len(cookie_value(cookie)) < _MIN_COOKIE_VALUE_LEN:
+        return error_model(_COOKIE_INVALID_REASON)
 
     referer = _CONSOLE_REFERER_URL.format(org=urllib.parse.quote(workspace_id, safe=""))
-    # Only a 404 (path no longer served) advances to the next candidate; 401/200/network errors are final
+    # Only a 404 (path no longer served) advances to the next candidate; 5xx retries in place,
+    # while 401/403/400 and network errors are final
     for index in range(len(_CONSOLE_STATUS_ROUTES)):
         url = build_status_url(workspace_id, index)
-        try:
-            result = subprocess.run(
-                ["curl", "-sSL", "--max-time", "15",
-                 "-H", f"Cookie: {cookie}",
-                 "-H", "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                 "-H", "Accept: application/json",
-                 "-H", f"x-org-id: {workspace_id}",
-                 "-H", f"Referer: {referer}",
-                 "-w", _HTTP_STATUS_MARKER + "%{http_code}",
-                 url],
-                capture_output=True, text=True, timeout=20,
-            )
-        except FileNotFoundError:
-            return error_model("curl not installed")
-        except subprocess.TimeoutExpired:
-            return error_model("request timed out")
+        for attempt in range(1, _MAX_STATUS_ATTEMPTS + 1):
+            try:
+                result = subprocess.run(
+                    ["curl", "-sSL", "--max-time", "15",
+                     "-H", f"Cookie: {cookie}",
+                     "-H", "User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                     "-H", "Accept: application/json",
+                     "-H", f"x-org-id: {workspace_id}",
+                     "-H", f"Referer: {referer}",
+                     "-w", _HTTP_STATUS_MARKER + "%{http_code}",
+                     url],
+                    capture_output=True, text=True, timeout=20,
+                )
+            except FileNotFoundError:
+                return error_model("curl not installed")
+            except subprocess.TimeoutExpired:
+                return error_model("request timed out")
 
-        body, http_status = split_http_status(result.stdout)
-        if http_status == 404:
-            continue
+            body, http_status = split_http_status(result.stdout)
+            # Transient server error: retry the same route, then give up with a retry hint
+            if _SERVER_ERROR_MIN <= http_status < _SERVER_ERROR_MAX:
+                if attempt < _MAX_STATUS_ATTEMPTS:
+                    continue
+                return error_model(_SERVER_UNAVAILABLE_REASON)
+            # Route moved: this candidate carries no status payload, so try the next one
+            if http_status == 404:
+                break
 
-        parsed, reason = parse_curl_payload(body)
-        if parsed:
-            return parsed
-        if result.returncode != 0 and not body.strip():
-            detail = (result.stderr or "").strip().splitlines()
-            reason = f"curl error: {detail[-1]}" if detail else "network request failed"
-        return error_model(reason)
+            parsed, reason = parse_curl_payload(body)
+            if parsed:
+                return parsed
+            if result.returncode != 0 and not body.strip():
+                detail = (result.stderr or "").strip().splitlines()
+                reason = f"curl error: {detail[-1]}" if detail else "network request failed"
+            return error_model(reason)
 
     return error_model(_ROUTE_NOT_FOUND_REASON)
 

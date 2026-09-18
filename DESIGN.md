@@ -107,14 +107,14 @@ UsageFetcher.qml
 ### Endpoints
 | Provider | Endpoint | Auth |
 |----------|----------|------|
-| OpenCode Go | `https://opencode.ai` + candidate route (`/console/api/internal/orgs/`, `/console/api/orgs/`, `/console/api/v2/orgs/`, `/console/api/v1/orgs/`) + `{orgId}/go/status` | Cookie: `auth=<token>` (+ `Accept: application/json`, `x-org-id`, `Referer`) |
+| OpenCode Go | Primary: `GET https://opencode.ai/console/api/go/status` (no org in path). Fallback candidates: `https://opencode.ai/console/api/internal/orgs/{orgId}/go/status` (**support-staff only** — HTTP 403 for a regular account), then `/console/api/orgs/{orgId}/go/status`, `/console/api/v2/orgs/{orgId}/go/status`, `/console/api/v1/orgs/{orgId}/go/status` | Cookie: `__Host-console_session=<token>` — **required** header `x-org-id: {orgId}` (+ `Accept: application/json`, `Referer`) |
 | z.ai | `https://z.ai/workspace/<id>/go` | Cookie: `auth=<token>` (TBD) |
 
-### Response Parsing
-1. **Console JSON** (OpenCode Go): parse `access.meters.fiveHour` / `week` / `month` → Rolling (5h) / Weekly / Monthly window; percent = `floor((used*200 + limit) / (limit*2))`, clamped to 0..100; `month` resets at `access.endsAt`.
-2. **`{"_tag":"Unauthorized"}`** (HTTP 401): session expired → ask for a fresh `auth` cookie. Final — no route retry.
-3. **HTTP 404 (empty body)**: this candidate route is no longer served → advance to the next candidate route (curl is called with `-w 'HTTPSTATUS:%{http_code}'` and the marker is split off the LAST occurrence in stdout). When every candidate 404s, report "OpenCode Console API route not found. The endpoint may have moved — check for a widget update."
-4. **HTML fallback**: OpenAuth login page or any non-JSON body → clear "cookie invalid/expired" message instead of a parse error.
+1. **Console JSON** (OpenCode Go): the primary route takes **no org in the path** — the workspace id must be sent in the `x-org-id` header or the server answers HTTP 400 `{"_tag":"BadRequest"}`; the `/console/api/internal/orgs/{orgId}/go/status` variant is support-staff-only and 403s for a regular account. Parse `access.meters.fiveHour` / `week` / `month` → Rolling (5h) / Weekly / Monthly window; percent = `floor((used*200 + limit) / (limit*2))`, clamped to 0..100; `month` resets at `access.endsAt`.
+2. **`{"_tag":"Unauthorized"}`** (HTTP 401): session expired → ask for a fresh `__Host-console_session` cookie value (the legacy `auth=Fe26.2**` seal no longer authenticates). Final — no route retry. HTTP 403 `{"_tag":"Forbidden"}` = restricted/support-only route (final); HTTP 400 `{"_tag":"BadRequest"}` = missing or bad `x-org-id` (final).
+3. **HTTP 5xx** (usually `{"_tag":"InternalServerError"}`): transient — the endpoint is currently intermittent, so the SAME route is retried up to 3 attempts total and then reported as "Console API temporarily unavailable (HTTP 5xx) — retry shortly".
+4. **HTTP 404 (empty body)**: this candidate route is no longer served → advance to the next candidate route (curl is called with `-w 'HTTPSTATUS:%{http_code}'` and the marker is split off the LAST occurrence in stdout). When every candidate 404s, report "OpenCode Console API route not found. The endpoint may have moved — check for a widget update."
+5. **HTML fallback**: OpenAuth login page or any non-JSON body → clear "cookie invalid/expired" message instead of a parse error.
 
 ---
 

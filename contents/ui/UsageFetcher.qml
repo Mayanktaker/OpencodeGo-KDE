@@ -17,6 +17,7 @@ Item {
 
     // Request context kept across a candidate-route retry
     property int activeRoute: 0
+    property int routeAttempt: 0
     property string activeWorkspaceId: ""
     property string activeCookie: ""
     property var activeCallback: null
@@ -56,6 +57,7 @@ Item {
         fetcher.activeCookie = authCookie;
         fetcher.activeCallback = callback;
         fetcher.activeRoute = 0;
+        fetcher.routeAttempt = 0;
         fetcher.attemptRoute();
     }
 
@@ -82,10 +84,17 @@ Item {
             if (!result.error && !result.data && result.httpStatus === 404) {
                 if (fetcher.activeRoute + 1 < Api.consoleRouteCount()) {
                     fetcher.activeRoute = fetcher.activeRoute + 1;
+                    fetcher.routeAttempt = 0;
                     fetcher.attemptRoute();
                     return;
                 }
                 cb(Api.noRouteError(), null);
+                return;
+            }
+            // The console API returns sporadic 5xx, so a transient failure is retried in place
+            if (result.httpStatus >= 500 && fetcher.routeAttempt + 1 < Api.maxAttemptsPerRoute()) {
+                fetcher.routeAttempt = fetcher.routeAttempt + 1;
+                fetcher.attemptRoute();
                 return;
             }
             cb(result.error, result.data);

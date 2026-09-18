@@ -4,16 +4,16 @@
 // Browser-like User-Agent reused by every curl call so the console accepts the request
 var USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-// Candidate console API paths for the Go status payload, tried in order so a server-side path
-// rename costs one retry instead of a hard failure. The first entry is the verified one (2026-09).
+// OpenCode Console session cookie name; a bare pasted token is assumed to be this cookie
+var CONSOLE_SESSION_COOKIE = "__Host-console_session";
+// Candidate console API routes for the Go status payload, tried in order so a server-side rename
+// costs one retry instead of a hard failure. %ORG% is replaced with the workspace/org id.
+// Route 0 is what the console itself calls for a normal account (verified 2026-09); route 1 is
+// the support-staff variant, which answers 403 for regular accounts.
 var CONSOLE_STATUS_ROUTES = [
-    "/console/api/internal/orgs/",
-    "/console/api/orgs/",
-    "/console/api/v2/orgs/",
-    "/console/api/v1/orgs/"
+    "https://opencode.ai/console/api/go/status",
+    "https://opencode.ai/console/api/internal/orgs/%ORG%/go/status"
 ];
-// Every candidate route ends with this suffix
-var CONSOLE_STATUS_SUFFIX = "/go/status";
 // curl -w marker carrying the HTTP status code after the response body
 var HTTP_STATUS_MARKER = "HTTPSTATUS:";
 
@@ -23,16 +23,21 @@ function calculatePercentage(used, total) {
     return Math.min(100, Math.max(0, Math.round((used / total) * 100)));
 }
 
-// Normalizes a user-pasted auth credential into a valid HTTP Cookie header value
+// Normalizes a user-pasted credential into a valid HTTP Cookie header value
 function buildCookieHeader(authCookie) {
     var val = (authCookie || "").trim();
     if (!val) return "";
-    // Bare iron-session seal pasted without its cookie name (all opencode seals start with Fe26.2**)
+    // A full Cookie header or a name=value pair is passed through untouched, e.g.
+    // "__Host-console_session=st_..." (current console) or "auth=Fe26.2**..." (legacy site)
+    if (val.indexOf("=") !== -1) {
+        return val;
+    }
+    // Bare legacy iron-session seal pasted without its cookie name
     if (val.indexOf("Fe26") === 0) {
         return "auth=" + val;
     }
-    // Already a name=value pair or a full Cookie header string (e.g. auth=...; __cf_bm=...)
-    return val;
+    // Bare console session token (short and opaque) — supply the cookie name the console expects
+    return CONSOLE_SESSION_COOKIE + "=" + val;
 }
 
 // Generates realistic mock usage data when no workspace credentials are provided
@@ -92,9 +97,10 @@ function checkCookieError(authCookie) {
     if (finalCookie.indexOf("...") !== -1) {
         return "Auth Cookie is truncated (...). Double-click the cell in DevTools to copy the entire value, or copy the full Cookie header from the Network tab.";
     }
-    // Real iron-session seals are several hundred characters long; shorter values are incomplete or bogus
-    if (finalCookie.length < 150) {
-        return "Auth Cookie looks incomplete or invalid. Paste the full 'auth' cookie for opencode.ai (starts with Fe26..., 500+ characters).";
+    // Console session tokens are short and opaque, so only an implausibly short value is rejected
+    var value = finalCookie.slice(finalCookie.indexOf("=") + 1);
+    if (value.length < 16) {
+        return "Auth Cookie looks incomplete. Copy the whole '__Host-console_session' cookie value from opencode.ai (DevTools -> Application -> Cookies).";
     }
     return "";
 }
@@ -119,13 +125,19 @@ function consoleRouteCount() {
     return CONSOLE_STATUS_ROUTES.length;
 }
 
-// Builds the Go status URL for a candidate route index, clamped into the supported range
+// Attempts allowed per route before a transient server error (5xx) is reported to the user
+function maxAttemptsPerRoute() {
+    return 4;
+}
+
+// Builds the Go status URL for a candidate route index, clamping the index into range
 function buildStatusUrl(workspaceId, routeIndex) {
     var ws = String(workspaceId || "").trim();
     var idx = parseInt(routeIndex, 10);
     if (isNaN(idx) || idx < 0) idx = 0;
     if (idx > CONSOLE_STATUS_ROUTES.length - 1) idx = CONSOLE_STATUS_ROUTES.length - 1;
-    return "https://opencode.ai" + CONSOLE_STATUS_ROUTES[idx] + encodeURIComponent(ws) + CONSOLE_STATUS_SUFFIX;
+    // %ORG% carries the workspace id in the path for the support-staff route variant
+    return CONSOLE_STATUS_ROUTES[idx].replace("%ORG%", encodeURIComponent(ws));
 }
 
 // Builds the curl shell command used to fetch Go status JSON. Qt's QML XMLHttpRequest strips the
@@ -175,6 +187,14 @@ function parseCurlOutput(stdout, stderr, exitCode) {
     // 404 means this candidate path is not served at all — the caller retries instead of reporting
     if (split.httpStatus === 404) {
         return { error: null, data: null, httpStatus: 404 };
+    }
+    // The console requires the workspace id in its own header, so a 400 signals a widget bug
+    if (split.httpStatus === 400) {
+        return { error: "Console API rejected the request (400) — check the Workspace ID.", data: null, httpStatus: 400 };
+    }
+    // Transient backend failures (seen during a console deploy) clear on the next refresh tick
+    if (split.httpStatus >= 500) {
+        return { error: "OpenCode Console is temporarily unavailable (HTTP " + split.httpStatus + "). Retrying on the next refresh.", data: null, httpStatus: split.httpStatus };
     }
     var body = split.body;
     if (!body.trim()) {
@@ -350,9 +370,18 @@ function parseAnyResponse(responseText) {
             json = JSON.parse(trimmed);
         } catch (e) {}
         if (json !== null) {
-            // The console rejects a stale session with a tagged error object instead of an HTTP page
-            if (json._tag === "Unauthorized" || json._tag === "Forbidden") {
+            // The console reports auth/permission problems as a tagged error object
+            if (json._tag === "Unauthorized") {
                 throw new Error("Auth Cookie is invalid or expired. Please update Auth Cookie in settings.");
+            }
+            if (json._tag === "Forbidden") {
+                throw new Error("Console API denied access (403). If this keeps happening, check for a widget update.");
+            }
+            if (json._tag === "BadRequest") {
+                throw new Error("Console API rejected the request (400) — check the Workspace ID.");
+            }
+            if (json._tag === "InternalServerError") {
+                throw new Error("OpenCode Console is temporarily unavailable (500). Retrying on the next refresh.");
             }
             var consoleModel = parseConsoleGoStatus(json);
             if (consoleModel) return consoleModel;
