@@ -57,8 +57,11 @@ let authBody = JSON.stringify({ _tag: 'Unauthorized' });
 eq(Api.parseCurlOutput(authBody, '', 0).error, 'Auth Cookie is invalid or expired. Please update Auth Cookie in settings.', '401 tag message');
 eq(Api.parseCurlOutput('{"_tag":"BadRequest"}', '', 0).error, 'Console API rejected the request (400) — check the Workspace ID.', '400 tag message');
 
-// --- 404 route walk signal and 5xx retry signal ---
-eq(Api.parseCurlOutput('', '', 0).httpStatus, 404, 'empty body treated as 404 route-moved');
+// --- literal 404 route walk signal and 5xx retry signal ---
+let emptyResult = Api.parseCurlOutput('', '', 0);
+eq(emptyResult.httpStatus, 0, 'empty output keeps HTTP 0');
+eq(emptyResult.error, 'Console API returned an empty response (HTTP 0).', 'empty output reports empty response');
+eq(Api.parseCurlOutput('HTTPSTATUS:404', '', 0).httpStatus, 404, 'literal 404 signals route-moved');
 eq(Api.parseCurlOutput('HTTPSTATUS:500', '', 0).httpStatus, 500, '5xx surfaced for in-place retry');
 
 // --- curl command shape ---

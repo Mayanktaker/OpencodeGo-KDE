@@ -215,11 +215,6 @@ export function parseCurlOutput(stdout, stderr, exitCode) {
         // Other codes still may have produced a useful body on stdout — try parsing it
     }
     const split = splitHttpStatus(stdout);
-    // No status marker and no body at all means the request produced nothing usable — signal
-    // the caller to walk to the next candidate route (404) instead of reporting an empty response
-    if (!stderr && split.httpStatus === 0 && !split.body.trim()) {
-        return { error: null, data: null, httpStatus: 404 };
-    }
     // 404 means this candidate path is not served at all — the caller retries instead of reporting
     if (split.httpStatus === 404) {
         return { error: null, data: null, httpStatus: 404 };
