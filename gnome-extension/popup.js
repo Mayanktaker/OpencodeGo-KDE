@@ -11,6 +11,11 @@ const RED_TINT_THRESHOLD = 90;
 // Fully opaque warning red for over-threshold fills (Cairo 0..1 channels)
 const RED_TINT_RGB = { red: 0.9, green: 0.2, blue: 0.2 };
 
+// Bar rendering constants: background/track and fill opacity, bar height in px
+const TRACK_ALPHA = 0.25;
+const FILL_ALPHA = 1.0;
+const BAR_HEIGHT_PX = 8;
+
 // Row definition shared by the three windows: popup label + model slot + reset key
 const WINDOWS = [
     { label: 'Rolling (5h)', slot: 'hourly', resetKey: 'hourly' },
@@ -33,10 +38,10 @@ function addUsageRow(menu, labelText, percent, resetSeconds) {
     const rowLabel = new St.BoxLayout({ vertical: false, x_expand: true });
     rowLabel.add_child(new St.Label({ text: labelText, x_expand: true }));
     rowLabel.add_child(new St.Label({ text: percent + '%' }));
-    menu.box.add(rowLabel);
+    menu.box.add_child(rowLabel);
 
     // Progress bar uses the theme accent; fill turns red above the quota-pressure threshold
-    const bar = new St.DrawingArea({ style_class: 'popup-menu-item', x_expand: true, height: 8 });
+    const bar = new St.DrawingArea({ style_class: 'popup-menu-item', x_expand: true, height: BAR_HEIGHT_PX });
     const fill = Math.max(0, Math.min(100, percent)) / 100;
     bar.connect('repaint', area => {
         const [w, h] = area.get_surface_size();
@@ -44,20 +49,20 @@ function addUsageRow(menu, labelText, percent, resetSeconds) {
         const themeNode = area.get_theme_node();
         const fg = themeNode.get_foreground_color();
         const useRedTint = percent > RED_TINT_THRESHOLD;
-        cr.setSourceRGBA(fg.red / 255, fg.green / 255, fg.blue / 255, 0.25);
+        cr.setSourceRGBA(fg.red / 255, fg.green / 255, fg.blue / 255, TRACK_ALPHA);
         cr.rectangle(0, h / 4, w, h / 2);
         cr.fill();
         if (useRedTint) cr.setSourceRGB(RED_TINT_RGB.red, RED_TINT_RGB.green, RED_TINT_RGB.blue);
-        else cr.setSourceRGBA(fg.red / 255, fg.green / 255, fg.blue / 255, 1.0);
+        else cr.setSourceRGBA(fg.red / 255, fg.green / 255, fg.blue / 255, FILL_ALPHA);
         cr.rectangle(0, h / 4, Math.round(w * fill), h / 2);
         cr.fill();
         cr.$dispose();
     });
-    menu.box.add(bar);
+    menu.box.add_child(bar);
 
     if (resetSeconds > 0) {
         const sub = new St.Label({ text: 'resets in ' + resetLabel(resetSeconds), style: 'font-size: 0.85em; opacity: 0.7;' });
-        menu.box.add(sub);
+        menu.box.add_child(sub);
     }
 }
 
@@ -68,7 +73,7 @@ function addFooter(menu, state) {
     else if (state.status === 'transient') text = 'Console API temporarily unavailable — showing last known figures';
     else if (state.status === 'error') text = String(state.error || 'Unknown error');
     const footer = new St.Label({ text: text, style: 'font-size: 0.85em; opacity: 0.75;' });
-    menu.box.add(footer);
+    menu.box.add_child(footer);
 }
 
 // Rebuilds the popup for the given state; safe to call on every open/refresh
@@ -77,7 +82,7 @@ export function buildMenuContent(menu, state) {
     const header = new St.BoxLayout({ vertical: false, x_expand: true });
     header.add_child(new St.Label({ text: 'OpenCode Go', x_expand: true, style: 'font-weight: bold;' }));
     header.add_child(new St.Label({ text: state.data ? String(state.data.usagePercent) + '%' : '—', style: 'font-weight: bold;' }));
-    menu.box.add(header);
+    menu.box.add_child(header);
     menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
     if (state.status === 'error') {
@@ -89,7 +94,8 @@ export function buildMenuContent(menu, state) {
 
     for (const w of WINDOWS) {
         const bars = data[w.slot] || [];
-        const pct = bars.length ? bars[0].value : 0;
+        // Percentage scaled against each bar's maxValue (identity for real data, correct for demo)
+        const pct = bars.length ? Api.calculatePercentage(bars[0].value, bars[0].maxValue) : 0;
         addUsageRow(menu, w.label, pct, (data.resetSeconds || {})[w.resetKey] || 0);
     }
     menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
