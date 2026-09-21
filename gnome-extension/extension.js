@@ -13,6 +13,9 @@ import * as Api from './api.js';
 import * as Settings from './settings.js';
 import * as Popup from './popup.js';
 
+// Decodes GLib's waitpid-encoded spawn status to the child exit code (gjs lacks the WEXITSTATUS macro)
+const exitCodeOf = status => (status & 0xff00) >> 8;
+
 // Panel indicator button; hover opens the popup, click toggles it
 const OpenCodeGoIndicator = GObject.registerClass(
 class OpenCodeGoIndicator extends PanelMenu.Button {
@@ -77,8 +80,8 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
         try {
             const [, stdout, stderr, exitStatus] = GLib.spawn_command_line_sync('sh -c ' + Api.shellQuote(cmd));
             // TextDecoder avoids deprecated Uint8Array.toString() (journal-warns today, garbage output in future gjs)
-            // WEXITSTATUS decodes the waitpid-encoded exit (curl 28 arrives as 7168)
-            this._handleOutput(new TextDecoder().decode(stdout), new TextDecoder().decode(stderr), GLib.WEXITSTATUS(exitStatus));
+            // exitCodeOf decodes the waitpid-encoded exit (curl 28 arrives as 7168)
+            this._handleOutput(new TextDecoder().decode(stdout), new TextDecoder().decode(stderr), exitCodeOf(exitStatus));
         } catch (e) {
             this._setState({ status: 'error', data: null, error: 'Network unreachable. Please check your internet connection.' });
             this._inFlight = false;
