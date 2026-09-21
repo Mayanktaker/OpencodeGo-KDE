@@ -75,8 +75,9 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
     _attemptRoute(ws, cookie) {
         const cmd = Api.buildCurlCommand(ws, cookie, this._route);
         try {
-            const [, stdout, stderr] = GLib.spawn_command_line_sync('sh -c ' + Api.shellQuote(cmd));
-            this._handleOutput(stdout.toString(), stderr.toString());
+            const [, stdout, stderr, exitStatus] = GLib.spawn_command_line_sync('sh -c ' + Api.shellQuote(cmd));
+            // TextDecoder avoids deprecated Uint8Array.toString() (journal-warns today, garbage output in future gjs)
+            this._handleOutput(new TextDecoder().decode(stdout), new TextDecoder().decode(stderr), exitStatus);
         } catch (e) {
             this._setState({ status: 'error', data: null, error: 'Network unreachable. Please check your internet connection.' });
             this._inFlight = false;
@@ -85,8 +86,8 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
     }
 
     // Applies parse rules: 404 walks routes, 5xx retries in place, otherwise finalize
-    _handleOutput(stdout, stderr) {
-        const result = Api.parseCurlOutput(stdout, stderr, 0);
+    _handleOutput(stdout, stderr, exitStatus) {
+        const result = Api.parseCurlOutput(stdout, stderr, exitStatus);
         if (!result.error && !result.data && result.httpStatus === 404) {
             if (this._route + 1 < Api.consoleRouteCount()) {
                 this._route += 1;
@@ -100,8 +101,8 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
             this._attemptRoute(this._workspaceId, this._authCookie);
             return;
         } else if (result.error) {
-            // Transient 5xx keeps the last known figures, mirroring the KDE widget
-            if (result.httpStatus >= 500 && this._state.data) {
+            // Transient 5xx keeps only real live figures; mock data must never pose as "last known figures"
+            if (result.httpStatus >= 500 && this._state.data && !this._state.data.isMock) {
                 this._setState({ status: 'transient', data: this._state.data, error: result.error });
             } else {
                 this._setState({ status: 'error', data: null, error: result.error });
@@ -156,6 +157,7 @@ export default class OpenCodeGoExtension extends Extension {
     disable() {
         if (this._unsub) { this._unsub(); this._unsub = null; }
         if (this._indicator) { this._indicator.destroy(); this._indicator = null; }
+        this._applySettings = null;
         this._settings = null;
     }
 }
