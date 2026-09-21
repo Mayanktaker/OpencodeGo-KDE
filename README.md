@@ -65,6 +65,22 @@ This automatically:
 
 ---
 
+## 🐧 GNOME Shell Extension
+
+The same usage tracker also ships as a GNOME Shell panel extension (UUID `com.mayanktaker.opencodego-usage`, GNOME Shell 45–50):
+
+```bash
+bash gnome-extension/install.sh
+```
+
+- Hover the panel icon to see Rolling (5h)/Weekly/Monthly usage; without credentials it shows demo data.
+- Open the extension's preferences (`gnome-extensions prefs com.mayanktaker.opencodego-usage`) and paste your Workspace ID + Auth Cookie to switch to live figures.
+- On Wayland, the first install may require logging out and back in before the panel icon appears.
+
+> **Note:** the custom panel icon (O✦ SVG) is installed at `gnome-extension/icons/opencodego-symbolic.svg`, but the panel currently shows the symbolic fallback (`applications-system-symbolic`) — wiring the custom icon is a follow-up.
+
+---
+
 ## 📦 Download & Releases
 
 Prefer a ready-made bundle? Grab the latest `.plasmoid` package or the shareable `.zip` (includes the installer + CLI) from the [GitHub Releases page](https://github.com/Mayanktaker/OpencodeGo-KDE/releases). Install a downloaded `.plasmoid` with:

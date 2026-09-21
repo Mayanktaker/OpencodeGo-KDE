@@ -77,7 +77,8 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
         try {
             const [, stdout, stderr, exitStatus] = GLib.spawn_command_line_sync('sh -c ' + Api.shellQuote(cmd));
             // TextDecoder avoids deprecated Uint8Array.toString() (journal-warns today, garbage output in future gjs)
-            this._handleOutput(new TextDecoder().decode(stdout), new TextDecoder().decode(stderr), exitStatus);
+            // WEXITSTATUS decodes the waitpid-encoded exit (curl 28 arrives as 7168)
+            this._handleOutput(new TextDecoder().decode(stdout), new TextDecoder().decode(stderr), GLib.WEXITSTATUS(exitStatus));
         } catch (e) {
             this._setState({ status: 'error', data: null, error: 'Network unreachable. Please check your internet connection.' });
             this._inFlight = false;

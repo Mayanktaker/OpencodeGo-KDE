@@ -15,6 +15,12 @@
 - **Branding & Assets:** Vector artwork uses the redesigned cyan-teal OpenCode Go logo SVG (`<O✦>` code brackets enclosing center ring and glowing spark) located in `assets/icon.svg` and `contents/icons/com.mayanktaker.opencodego-usage.svg`. `install.sh` generates PNG app icons across all system theme sizes (16px–128px) directly from this SVG.
 - **Release Notes:** end-user changelog lives in `CHANGELOG.md` (see also `README.md` "What's New"); `AGENTS.md` stays concise and points here instead of duplicating it. `.agents/AGENTS.md` is a symlink to this file — never recreate it as a duplicate copy.
 
+## GNOME Extension
+- `gnome-extension/` — GNOME Shell port of this plasmoid (panel icon + hover popup with Rolling/Weekly/Monthly usage). UUID `com.mayanktaker.opencodego-usage`, GNOME Shell 45–50.
+- Install/test: `bash gnome-extension/install.sh` (compiles schema, enables; first install on Wayland may need logout/login). Prefs: `gnome-extensions prefs com.mayanktaker.opencodego-usage`. Settings in gsettings `org.gnome.shell.extensions.opencodego-usage` (workspace-id, auth-cookie, refresh-minutes, default 5).
+- API logic is a port of `contents/code/api.js` — same routes, cookie rules, percentages, error mapping. When console API behavior changes, update BOTH `contents/code/api.js` and `gnome-extension/api.js`, then `gjs -m gnome-extension/tests/api-test.js`.
+- After edits: reinstall via install.sh; on Wayland, logout/login or `gnome-extensions disable/enable` may be needed. Check `journalctl --user -b | grep -i opencodego` for GJS errors.
+
 ## Testing Changes (MANDATORY after any QML/UI edit)
 Plasma caches compiled QML and the config dialog does **not** pick up edits to `contents/ui/*.qml` or `contents/config/*.qml` until caches are cleared and the shell restarts. After changing widget UI or config pages you MUST:
 1. Upgrade the installed plasmoid from the repo: `bash install.sh` (runs `kpackagetool6 -t Plasma/Applet -u .`, purges all Plasma QML bytecode caches, rebuilds the sycoca index, and restarts plasmashell).
