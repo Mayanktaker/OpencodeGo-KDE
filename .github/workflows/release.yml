@@ -26,6 +26,15 @@ jobs:
       - name: Validate QML & JS Syntax
         run: bash .github/workflows/validate.sh
 
+      - name: Install gjs for the GNOME extension suites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gjs libglib2.0-bin libadwaita-1-0 gir1.2-adw-1
+
+      - name: Validate GNOME Extension
+        run: bash gnome-extension/tests/run-tests.sh
+
   build-and-release:
     name: Build & Package Plasmoid Release
     runs-on: ubuntu-latest
@@ -41,7 +50,8 @@ jobs:
         run: |
           TAG="${GITHUB_REF#refs/tags/}"
           if [ -z "$TAG" ] || [ "$TAG" = "refs/heads/master" ]; then
-            TAG="v2.4.0"
+            # Fall back to the version in metadata.json so this can never go stale
+            TAG="v$(python3 -c "import json;print(json.load(open('metadata.json'))['KPlugin']['Version'])")"
           fi
           echo "VERSION=${TAG}" >> $GITHUB_ENV
           echo "Building release for version ${TAG}..."
@@ -66,6 +76,9 @@ jobs:
       - name: Package Shareable Release ZIP Archive
         run: |
           ZIP_NAME="opencode-go-usage-${{ env.VERSION }}.zip"
+          # gnome-extension/ ships in the shared bundle so GNOME users get it too;
+          # the repo-local dev artifacts and the compiled schema are left out
+          rm -rf gnome-extension/schemas/gschemas.compiled
           zip -r "${ZIP_NAME}" \
             "${{ env.PLASMOID_FILE }}" \
             install.sh \
@@ -74,9 +87,10 @@ jobs:
             contents/ \
             bin/ \
             assets/ \
+            gnome-extension/ \
             README.md \
             LICENSE \
-            -x "*.git*"
+            -x "*.git*" "*/tests/*" "*/__pycache__/*"
           echo "ZIP_FILE=${ZIP_NAME}" >> $GITHUB_ENV
 
       - name: Upload Release Artifacts to GitHub Release
