@@ -159,6 +159,7 @@ has "renders the weekly window" "Weekly" "$P"
 has "renders the monthly window" "Monthly" "$P"
 has "renders reset countdowns" "resets in" "$P"
 has "labels the demo state" "Demo mode" "$P"
+has "offers the refresh action" "Refresh" "$P"
 has "offers the console action" "Open OpenCode Console" "$P"
 has "offers the settings action" "Settings" "$P"
 ROWS=$(field "$P" menuRows)

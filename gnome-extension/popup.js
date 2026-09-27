@@ -27,18 +27,19 @@ const BAR_PILL_RADIUS = 3;
 // Background track opacity relative to the theme foreground
 const TRACK_ALPHA = 0.15;
 
-// Branded vector icon filename and fallback
-const BRANDED_ICON_FILE = 'opencodego-symbolic.svg';
+// Branded full-color vector icon filename for popup card header, with fallback
+const BRANDED_ICON_FILE = 'opencodego-brand.svg';
+const FALLBACK_SYMBOLIC_FILE = 'opencodego-symbolic.svg';
 const FALLBACK_ICON_NAME = 'applications-system-symbolic';
 
 // Path to this extension's directory on disk
 const EXTENSION_DIR = GLib.path_get_dirname(GLib.filename_from_uri(import.meta.url)[0]);
 
-// Row definition for the three quota windows with individual icons and accents
+// Row definition for the three quota windows with individual accents
 const WINDOWS = [
-    { label: 'Rolling (5h)', slot: 'hourly', resetKey: 'hourly', icon: 'document-open-recent-symbolic', color: COLOR_ACCENT_SKY },
-    { label: 'Weekly', slot: 'weekly', resetKey: 'weekly', icon: 'x-office-calendar-symbolic', color: COLOR_ACCENT_PRIMARY },
-    { label: 'Monthly', slot: 'monthly', resetKey: 'monthly', icon: 'x-office-calendar-symbolic', color: COLOR_ACCENT_TEAL }
+    { label: 'Rolling (5h)', slot: 'hourly', resetKey: 'hourly', color: COLOR_ACCENT_SKY },
+    { label: 'Weekly', slot: 'weekly', resetKey: 'weekly', color: COLOR_ACCENT_PRIMARY },
+    { label: 'Monthly', slot: 'monthly', resetKey: 'monthly', color: COLOR_ACCENT_TEAL }
 ];
 
 // Converts a hex color string (#rrggbb) to Cairo RGB channels (0..1)
@@ -69,7 +70,10 @@ function drawRoundedRect(cr, x, y, w, h, r) {
 
 // Builds the branded logo icon for the popup card header
 function createHeaderIcon() {
-    const iconPath = GLib.build_filenamev([EXTENSION_DIR, 'icons', BRANDED_ICON_FILE]);
+    let iconPath = GLib.build_filenamev([EXTENSION_DIR, 'icons', BRANDED_ICON_FILE]);
+    if (!GLib.file_test(iconPath, GLib.FileTest.EXISTS)) {
+        iconPath = GLib.build_filenamev([EXTENSION_DIR, 'icons', FALLBACK_SYMBOLIC_FILE]);
+    }
     if (!GLib.file_test(iconPath, GLib.FileTest.EXISTS)) {
         return new St.Icon({
             icon_name: FALLBACK_ICON_NAME,
@@ -103,20 +107,13 @@ function addUsageRow(menu, winDef, percent, resetSeconds, barData, compactMode =
         x_expand: true,
     });
 
-    // Title line holding icon, window label, and percentage
+    // Title line holding window label, limit numbers, and percentage
     const titleRow = new St.BoxLayout({
         vertical: false,
         style_class: 'opencodego-window-title-row',
         x_expand: true,
         y_align: Clutter.ActorAlign.CENTER,
     });
-
-    const rowIcon = new St.Icon({
-        icon_name: winDef.icon,
-        style_class: 'opencodego-row-icon',
-        y_align: Clutter.ActorAlign.CENTER,
-    });
-    titleRow.add_child(rowIcon);
 
     const label = new St.Label({
         text: winDef.label,
@@ -212,6 +209,11 @@ function addFooter(menu, state) {
 function addActions(menu, actions) {
     if (!actions) return;
     const run = cb => () => { menu.close(); cb(); };
+    if (actions.onRefresh) {
+        const refreshItem = new PopupMenu.PopupImageMenuItem('Refresh', 'view-refresh-symbolic');
+        refreshItem.connect('activate', () => actions.onRefresh());
+        menu.addMenuItem(refreshItem);
+    }
     if (actions.onOpenConsole) {
         const consoleItem = new PopupMenu.PopupImageMenuItem('Open OpenCode Console', 'web-browser-symbolic');
         consoleItem.connect('activate', run(actions.onOpenConsole));

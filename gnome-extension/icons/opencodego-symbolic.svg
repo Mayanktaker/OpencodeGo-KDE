@@ -1,44 +1,29 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
   <!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
-  <defs>
-    <!-- Vibrant OpenCode Go cyan-teal gradient -->
-    <linearGradient id="opencodeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38bdf8"/>
-      <stop offset="50%" stop-color="#22d3ee"/>
-      <stop offset="100%" stop-color="#06b6d4"/>
-    </linearGradient>
-    <!-- Glowing spark highlight gradient -->
-    <linearGradient id="sparkGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#ffffff"/>
-      <stop offset="100%" stop-color="#67e8f9"/>
-    </linearGradient>
-  </defs>
-  <g>
+  <!-- Pure monochrome symbolic icon for GNOME Shell top panel -->
+  <g fill="none">
     <!-- Left angle bracket '<' -->
     <path d="M 36 18 L 14 64 L 36 110" 
-          fill="none" 
-          stroke="url(#opencodeGrad)" 
+          stroke="#ffffff" 
           stroke-width="12" 
           stroke-linecap="round" 
           stroke-linejoin="round"/>
 
     <!-- Right angle bracket '>' -->
     <path d="M 92 18 L 114 64 L 92 110" 
-          fill="none" 
-          stroke="url(#opencodeGrad)" 
+          stroke="#ffffff" 
           stroke-width="12" 
           stroke-linecap="round" 
           stroke-linejoin="round"/>
 
     <!-- Center ring 'O' -->
     <circle cx="64" cy="64" r="28" 
-            fill="none" 
-            stroke="url(#opencodeGrad)" 
+            stroke="#ffffff" 
             stroke-width="12" 
             stroke-linecap="round"/>
 
-    <!-- Top-right glowing spark '✦' on center ring -->
+    <!-- Top-right spark '✦' on center ring -->
     <path d="M 88 8 Q 88 26 106 26 Q 88 26 88 44 Q 88 26 70 26 Q 88 26 88 8 Z" 
-          fill="url(#sparkGrad)"/>
+          fill="#ffffff"/>
   </g>
 </svg>

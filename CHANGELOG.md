@@ -1,6 +1,21 @@
 <!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
 # Changelog — OpenCode Go Usage Tracker
 
+## v2.6.0
+
+**What's new**
+- Clean monochrome tray icon for GNOME Shell top panel that renders crisply across light, dark, and custom system themes.
+- Original vibrant full-color OpenCode Go `<O✦>` brand artwork displayed proudly inside the popup card header.
+- Added an in-popup "Refresh" action button right before "Open OpenCode Console" that updates usage numbers instantly without closing the popup menu.
+- Streamlined popup card design with cleaner typography and removed row icons for a sleek, uncluttered presentation.
+- Interactive Session Cookie Guide built directly into the GNOME preferences window with step-by-step instructions.
+- Interactive terminal setup wizard (`opencode-usage --interactive` / `-i`) to test and save credentials for both KDE and GNOME in seconds.
+- Smarter cookie helper that immediately warns if an `auth` marketing token was copied instead of the required `__Host-console_session` token.
+
+**Bug fixes**
+- Fixed misleading authentication error messages by detecting marketing website cookies before testing connection.
+- Fixed tray icon scaling in custom GNOME Shell themes by utilizing standard monochrome symbolic geometry.
+
 ## v2.5.1
 
 **What's new**

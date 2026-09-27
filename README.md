@@ -138,6 +138,9 @@ kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v*.plasmoid
 # Display formatted usage stats
 opencode-usage
 
+# Interactive setup wizard to test and save credentials for KDE & GNOME
+opencode-usage --interactive   # or -i
+
 # Output raw JSON
 opencode-usage --json
 

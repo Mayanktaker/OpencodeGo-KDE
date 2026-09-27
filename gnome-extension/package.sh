@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_DIR="${SCRIPT_DIR}/build"
 UUID="com.mayanktaker.opencodego-usage"
-VERSION="2.5.1"
+VERSION="2.6.0"
 ZIP_NAME="${UUID}-v${VERSION}.shell-extension.zip"
 CANONICAL_ZIP="${UUID}.shell-extension.zip"
 
@@ -37,7 +37,7 @@ cp "${SCRIPT_DIR}/schemas/gschemas.compiled" "${BUILD_DIR}/package/schemas/"
 
 # Copy icons
 mkdir -p "${BUILD_DIR}/package/icons"
-cp "${SCRIPT_DIR}/icons/opencodego-symbolic.svg" "${BUILD_DIR}/package/icons/"
+cp "${SCRIPT_DIR}/icons/"*.svg "${BUILD_DIR}/package/icons/"
 
 # Create zip from inside package folder (EGO requires files at root of zip)
 cd "${BUILD_DIR}/package"

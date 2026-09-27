@@ -46,6 +46,38 @@ export default class OpenCodeGoPrefs {
         settings.bind('auth-cookie', cookieRow, 'text', Gio.SettingsBindFlags.DEFAULT);
         credentials.add(cookieRow);
 
+        // Expandable browser guide explaining how to retrieve __Host-console_session
+        const guideRow = new Adw.ExpanderRow({
+            title: 'How to find your Session Cookie',
+            subtitle: 'Step-by-step instructions for Chrome, Brave, Firefox & Edge',
+        });
+        const step1 = new Adw.ActionRow({
+            title: '1. Open OpenCode Console',
+            subtitle: 'Navigate to https://opencode.ai/console in your browser',
+        });
+        const step2 = new Adw.ActionRow({
+            title: '2. Open Developer Tools',
+            subtitle: 'Press F12 (or right-click → Inspect) to open the DevTools panel',
+        });
+        const step3 = new Adw.ActionRow({
+            title: '3. Find __Host-console_session',
+            subtitle: 'Go to Application tab (Storage in Firefox) → Cookies → https://opencode.ai',
+        });
+        const step4 = new Adw.ActionRow({
+            title: '4. Copy the Cookie Value',
+            subtitle: 'Copy the value of __Host-console_session (starts with st_...) and paste it above',
+        });
+        const stepNote = new Adw.ActionRow({
+            title: '⚠️ Avoid "auth" (Fe26...) Cookie',
+            subtitle: 'Do NOT copy "auth". That cookie belongs to the marketing site and causes HTTP 401.',
+        });
+        guideRow.add_row(step1);
+        guideRow.add_row(step2);
+        guideRow.add_row(step3);
+        guideRow.add_row(step4);
+        guideRow.add_row(stepNote);
+        credentials.add(guideRow);
+
         // One-shot connection check, mirroring the KDE config's Test button
         const testRow = new Adw.ActionRow({ title: 'Test Connection' });
         const testButton = new Gtk.Button({

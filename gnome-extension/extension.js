@@ -290,6 +290,7 @@ export default class OpenCodeGoExtension extends Extension {
     enable() {
         this._settings = Settings.getSettings();
         this._indicator = new OpenCodeGoIndicator(this.path, {
+            onRefresh: () => this._indicator.refresh(),
             onOpenConsole: () => this._openConsole(),
             onOpenSettings: () => this._openSettings(),
         });

@@ -60,6 +60,7 @@ def parse_args():
     parser.add_argument("--json", "-j", action="store_true", help="Output raw JSON format")
     parser.add_argument("--export", "-e", nargs="?", const="~/opencode-usage.csv", help="Export usage statistics to CSV file")
     parser.add_argument("--demo", "-d", action="store_true", help="Force demo mock data")
+    parser.add_argument("--interactive", "-i", action="store_true", help="Interactive credential setup for KDE and GNOME")
     return parser.parse_args()
 
 # Reads plasmoid settings from KDE config file if available
@@ -441,9 +442,56 @@ def export_csv(data, file_path):
         f.write("\n".join(lines) + "\n")
     return target_path
 
+# Runs interactive terminal setup to test and save credentials for GNOME and KDE
+def run_interactive_setup():
+    print("\033[1;36m===========================================\033[0m")
+    print("\033[1m⚙️  OpenCode Go Interactive Credential Setup\033[0m")
+    print("\033[1;36m===========================================\033[0m")
+    print("1. Workspace ID (starts with wrk_ or org_ from opencode.ai/console URL)")
+    ws = input("Enter Workspace ID: ").strip()
+    if not _WORKSPACE_ID_RE.match(ws):
+        print("\033[1;31m❌ Invalid Workspace ID. Must start with 'wrk_' or 'org_'.\033[0m")
+        return
+
+    print()
+    print("2. In browser DevTools (F12) → Application → Cookies → https://opencode.ai")
+    print("   Copy the '__Host-console_session' value (do NOT copy 'auth')")
+    cookie = input("Enter Session Cookie: ").strip()
+    if "Fe26" in cookie:
+        print("\033[1;31m❌ Warning: You entered the 'auth' cookie (Fe26...). The console API strictly requires '__Host-console_session'.\033[0m")
+        return
+    if len(cookie) < _MIN_COOKIE_VALUE_LEN:
+        print("\033[1;31m❌ Cookie value too short or truncated.\033[0m")
+        return
+
+    print()
+    print("Testing connection against console API...")
+    data = fetch_usage(ws, cookie)
+    if not data or data.get("isMock") or data.get("error"):
+        err = data.get("planName") if data else "Connection failed"
+        print(f"\033[1;31m❌ Connection test failed: {err}\033[0m")
+        return
+
+    pct = data.get("usagePercent", 0)
+    print(f"\033[1;32m✅ Connection verified successfully! Active usage: {pct}%\033[0m")
+
+    # Save to GNOME extension settings if schema is present
+    try:
+        subprocess.run(["gsettings", "set", "org.gnome.shell.extensions.opencodego-usage", "workspace-id", ws], check=True, capture_output=True)
+        subprocess.run(["gsettings", "set", "org.gnome.shell.extensions.opencodego-usage", "auth-cookie", cookie], check=True, capture_output=True)
+        print("✅ Saved to GNOME Shell extension settings.")
+    except Exception:
+        pass
+    print("\033[1;32m✅ Setup complete! Reload or reopen your widget/extension to see live usage.\033[0m")
+
 # Main entry point function
 def main():
     args = parse_args()
+
+    if args.interactive:
+        run_interactive_setup()
+        return
+
     ws_id, cookie = load_kde_config()
     if not ws_id or not cookie:
         g_ws, g_ck = load_gnome_config()
