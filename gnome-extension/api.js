@@ -122,6 +122,10 @@ export function shellQuote(s) {
 
 // Validates the pasted auth credential and returns a user-facing error message, or "" when usable
 export function checkCookieError(authCookie) {
+    const raw = String(authCookie || "").trim();
+    if (raw.indexOf("Fe26") === 0 || raw.indexOf("auth=Fe26") === 0 || (raw.indexOf("auth=") === 0 && raw.indexOf("Fe26") !== -1)) {
+        return "You pasted the 'auth' cookie (Fe26...). OpenCode Console requires the '__Host-console_session' cookie. In DevTools → Application → Cookies → opencode.ai, copy the value of '__Host-console_session' instead.";
+    }
     const finalCookie = buildCookieHeader(authCookie);
     if (!finalCookie) return "";
     // Detect truncated cookie values copied from browser DevTools table
@@ -131,7 +135,7 @@ export function checkCookieError(authCookie) {
     // Console session tokens are short and opaque, so only an implausibly short value is rejected
     const value = finalCookie.slice(finalCookie.indexOf("=") + 1);
     if (value.length < 16) {
-        return "Auth Cookie looks incomplete. Copy the whole '__Host-console_session' cookie value from opencode.ai (DevTools -> Application -> Cookies).";
+        return "Auth Cookie looks incomplete. Copy the whole '__Host-console_session' cookie value from opencode.ai (DevTools → Application → Cookies).";
     }
     return "";
 }
@@ -443,7 +447,7 @@ export function parseAnyResponse(responseText) {
         if (json !== null) {
             // The console reports auth/permission problems as a tagged error object
             if (json._tag === "Unauthorized") {
-                throw new Error("Auth Cookie is invalid or expired. Please update Auth Cookie in settings.");
+                throw new Error("Auth Cookie is invalid or expired. OpenCode Console requires the '__Host-console_session' cookie value from opencode.ai/console.");
             }
             if (json._tag === "Forbidden") {
                 throw new Error("Console API denied access (403). If this keeps happening, check for a widget update.");

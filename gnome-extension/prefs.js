@@ -32,7 +32,7 @@ export default class OpenCodeGoPrefs {
         const page = new Adw.PreferencesPage({ title: 'OpenCode Go', icon_name: 'applications-system-symbolic' });
         const credentials = new Adw.PreferencesGroup({
             title: 'Console Credentials',
-            description: 'Copy from opencode.ai/console → DevTools → Application → Cookies',
+            description: 'In DevTools (F12) → Application → Cookies → opencode.ai: copy "__Host-console_session" (NOT "auth")',
         });
         page.add(credentials);
 
@@ -41,8 +41,8 @@ export default class OpenCodeGoPrefs {
         settings.bind('workspace-id', wsRow, 'text', Gio.SettingsBindFlags.DEFAULT);
         credentials.add(wsRow);
 
-        // Auth cookie entry with password reveal so the token is not left readable
-        const cookieRow = new Adw.PasswordEntryRow({ title: 'Auth Cookie (__Host-console_session value)' });
+        // Session cookie entry with password reveal so the token is not left readable
+        const cookieRow = new Adw.PasswordEntryRow({ title: 'Session Cookie (__Host-console_session, NOT "auth")' });
         settings.bind('auth-cookie', cookieRow, 'text', Gio.SettingsBindFlags.DEFAULT);
         credentials.add(cookieRow);
 

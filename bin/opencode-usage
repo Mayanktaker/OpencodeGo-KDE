@@ -370,6 +370,8 @@ def fetch_usage(workspace_id, auth_cookie):
         return error_model("workspace ID must start with wrk_ or org_")
 
     cookie = normalize_cookie(auth_cookie)
+    if "Fe26" in cookie:
+        return error_model("you pasted the 'auth' cookie (Fe26...) — OpenCode Console requires the '__Host-console_session' cookie value from opencode.ai/console")
     # The credential VALUE (not the whole Cookie header) must look like a real token
     if "..." in cookie or len(cookie_value(cookie)) < _MIN_COOKIE_VALUE_LEN:
         return error_model(_COOKIE_INVALID_REASON)

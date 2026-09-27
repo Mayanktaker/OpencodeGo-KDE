@@ -20,6 +20,7 @@ eq(Api.buildCookieHeader('"__Host-console_session=x"'), '__Host-console_session=
 // --- validation ---
 ok(Api.checkCookieError('st_abcdefghijklmnopqrstuvwxyz') === '', 'valid cookie passes');
 ok(Api.checkCookieError('short') !== '', 'short cookie rejected');
+ok(Api.checkCookieError('Fe26.2**abcdefghijklmnop').indexOf('__Host-console_session') !== -1, 'Fe26 cookie detected with helpful error');
 ok(Api.checkWorkspaceIdError('wrk_abc') === '', 'wrk id valid');
 ok(Api.checkWorkspaceIdError('xyz') !== '', 'bad workspace rejected');
 
@@ -54,7 +55,7 @@ ok(model.data.resetSeconds.monthly > 0, 'monthly reset from access.endsAt');
 
 // --- tagged error responses ---
 let authBody = JSON.stringify({ _tag: 'Unauthorized' });
-eq(Api.parseCurlOutput(authBody, '', 0).error, 'Auth Cookie is invalid or expired. Please update Auth Cookie in settings.', '401 tag message');
+eq(Api.parseCurlOutput(authBody, '', 0).error, "Auth Cookie is invalid or expired. OpenCode Console requires the '__Host-console_session' cookie value from opencode.ai/console.", '401 tag message');
 eq(Api.parseCurlOutput('{"_tag":"BadRequest"}', '', 0).error, 'Console API rejected the request (400) — check the Workspace ID.', '400 tag message');
 
 // --- literal 404 route walk signal and 5xx retry signal ---

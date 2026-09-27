@@ -122,6 +122,10 @@ function shellQuote(s) {
 
 // Validates the pasted auth credential and returns a user-facing error message, or "" when usable
 function checkCookieError(authCookie) {
+    var raw = String(authCookie || "").trim();
+    if (raw.indexOf("Fe26") === 0 || raw.indexOf("auth=Fe26") === 0 || (raw.indexOf("auth=") === 0 && raw.indexOf("Fe26") !== -1)) {
+        return "You pasted the 'auth' cookie (Fe26...). OpenCode Console requires the '__Host-console_session' cookie. In DevTools → Application → Cookies → opencode.ai, copy the value of '__Host-console_session' instead.";
+    }
     var finalCookie = buildCookieHeader(authCookie);
     if (!finalCookie) return "";
     // Detect truncated cookie values copied from browser DevTools table
