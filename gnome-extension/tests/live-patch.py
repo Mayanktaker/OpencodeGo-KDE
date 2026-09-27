@@ -5,12 +5,14 @@
 #
 #   live-patch.py probe  <installed>/extension.js <probe snippet>
 #       Adds a `PROBE` reporter so shell tests can assert on runtime state.
+#       PROBE_TICK_SECONDS controls the injected reporter cadence (default 10).
 #
 #   live-patch.py routes <installed>/api.js <stub|refuse>
 #       Points CONSOLE_STATUS_ROUTES at a local stub server, or at a closed port
 #       so the network-failure path can be exercised. Any target other than
 #       "refuse" uses the stub URLs; the stub's own behaviour comes from the
 #       mode file the test runner writes.
+import os
 import sys
 
 # Stub base URL and a port nothing listens on (curl exits 7 -> network error)
@@ -22,9 +24,20 @@ STUB_URLS = [
 DEAD_URLS = ["http://127.0.0.1:9/go/status"]
 
 
+def probe_tick_seconds():
+    # QUICK mode only shortens the injected reporter cadence. Product refresh
+    # timing and every assertion remain unchanged.
+    try:
+        seconds = int(os.environ.get("PROBE_TICK_SECONDS", "10"))
+    except ValueError:
+        return 10
+    return seconds if seconds > 0 else 10
+
+
 def patch_probe(path, snippet_path):
     src = open(path).read()
     snippet = open(snippet_path).read()
+    tick_seconds = probe_tick_seconds()
     replacements = [
         # import the probe helpers alongside the other module imports
         ("import * as Popup from './popup.js';", "import * as Popup from './popup.js';\n" + snippet),
@@ -34,7 +47,7 @@ def patch_probe(path, snippet_path):
             "        this._indicator.refresh();\n"
             "        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 4, () => { probeState.call(this, 'enable'); return GLib.SOURCE_REMOVE; });\n"
             "        let tick = 0;\n"
-            "        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 10, () => {\n"
+            f"        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, {tick_seconds}, () => {{\n"
             "            tick++;\n"
             "            // flip the badge preference in-process so the change-signal path is covered\n"
             "            if (tick === 2) probeToggleBadge.call(this, false);\n"

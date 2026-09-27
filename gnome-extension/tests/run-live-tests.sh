@@ -3,6 +3,7 @@
 # End-to-end tests for the GNOME extension against a real (headless) GNOME Shell.
 #
 #   ./run-live-tests.sh
+#   QUICK=1 ./run-live-tests.sh                                   # same checks, shorter waits
 #   LIVE_TEST_WS=wrk_… LIVE_TEST_COOKIE=st_… ./run-live-tests.sh   # adds a live-data check
 #
 # A stub server stands in for the console API so the outage, route-move,
@@ -23,10 +24,35 @@ RIG="$HERE/live-test.sh"
 STUB_WS="wrk_01KE20AQRQ9QR7N15TWGJBE2V9"
 STUB_COOKIE="st_0000000000000000000000000000000000"
 
+# QUICK=1 compresses idle margins for routine checks. Every scenario and assertion
+# still runs; only waits and the injected probe cadence advance faster. Explicit
+# SETTLE, OUTAGE_WAIT, PROBE_TICK_SECONDS, or CONNTEST_WAIT values still win.
+QUICK="${QUICK:-0}"
+case "$QUICK" in
+    1|true|TRUE|yes|YES|on|ON) QUICK=1 ;;
+    *) QUICK=0 ;;
+esac
+if [ "$QUICK" = 1 ]; then
+    DEFAULT_SETTLE=7
+    DEFAULT_OUTAGE_WAIT=75
+    DEFAULT_PROBE_TICK_SECONDS=3
+    DEFAULT_CONNTEST_WAIT=15
+else
+    DEFAULT_SETTLE=16
+    DEFAULT_OUTAGE_WAIT=150
+    DEFAULT_PROBE_TICK_SECONDS=10
+    DEFAULT_CONNTEST_WAIT=30
+fi
+
 # Seconds allowed for a scenario to produce its first PROBE line
-SETTLE="${SETTLE:-16}"
+SETTLE="${SETTLE:-$DEFAULT_SETTLE}"
 # Longest wait for the outage scenario to observe the 5xx (needs a couple of polls)
-OUTAGE_WAIT="${OUTAGE_WAIT:-150}"
+OUTAGE_WAIT="${OUTAGE_WAIT:-$DEFAULT_OUTAGE_WAIT}"
+# Injected probe cadence in whole seconds; the badge toggle schedule uses ticks
+PROBE_TICK_SECONDS="${PROBE_TICK_SECONDS:-$DEFAULT_PROBE_TICK_SECONDS}"
+# Fixed wait after opening preferences before reading the Test Connection result
+CONNTEST_WAIT="${CONNTEST_WAIT:-$DEFAULT_CONNTEST_WAIT}"
+export PROBE_TICK_SECONDS
 STUB_PID=""
 
 PASS=0
@@ -159,8 +185,7 @@ ERRS=$("$RIG" errors 20)
 # expected timeline is deterministic: visible, hidden, hidden, visible, visible.
 # The rig's private bus has no dconf service, so an external `gsettings set` would
 # never reach the shell — writing in-process is what exercises the change signal.
-TICK_SECS=10
-sleep $((TICK_SECS * 5 + 12))
+sleep $((PROBE_TICK_SECONDS * 5 + 12))
 has "badge visible before the toggle" '"badgeVisible":true' "$(probe_tick 1)"
 has "badge hides when the preference is turned off" '"badgeVisible":false' "$(probe_tick 3)"
 has "badge returns when the preference is turned back on" '"badgeVisible":true' "$(probe_tick 5)"
@@ -228,8 +253,8 @@ PREFS_LOG=$("$RIG" log 300)
 hasnt "prefs window built a page" "did not provide any UI" "$PREFS_LOG"
 hasnt "prefs window raised no error" "Failed to open preferences" "$PREFS_LOG"
 
-# The probe drives the Test Connection button on its second tick (~20s in)
-sleep 30
+# The probe drives the Test Connection button on its second tick
+sleep "$CONNTEST_WAIT"
 CONN=$("$RIG" log 6000 | grep "PROBE conntest" | tail -1 | sed -E 's/^.*PROBE conntest //')
 has "Test Connection reports success" "Connected" "$CONN"
 has "Test Connection quotes the real percentage" "24%" "$CONN"
@@ -244,7 +269,7 @@ python3 "$HERE/live-patch.py" probe "$INSTALL_DIR/extension.js" "$HERE/live-prob
 "$RIG" up > /dev/null 2>&1
 sleep "$SETTLE"
 DBUS_SESSION_BUS_ADDRESS="$(cat /tmp/opencodego-rig/bus.addr)" gnome-extensions prefs "$UUID" > /dev/null 2>&1
-sleep 30
+sleep "$CONNTEST_WAIT"
 CONN=$("$RIG" log 6000 | grep "PROBE conntest" | tail -1 | sed -E 's/^.*PROBE conntest //')
 has "Test Connection surfaces the auth error" "Auth Cookie is invalid" "$CONN"
 
