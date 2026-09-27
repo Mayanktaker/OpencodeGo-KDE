@@ -5,8 +5,11 @@
 
 **What's new**
 - The usage tracker now runs on GNOME Shell too — a small panel icon that shows your Rolling (5h), Weekly, and Monthly usage when you hover it.
+- The GNOME panel icon now shows the same O✦ logo as the KDE widget.
+- The GNOME popup has "Open OpenCode Console" and "Settings…" entries, and both still work when your sign-in has expired.
 - On GNOME you get a simple settings window for your sign-in details and how often the numbers refresh.
 - Trying it on GNOME? No sign-in details yet? It shows sample numbers so you can see how it looks first.
+- The downloadable bundle now includes the GNOME extension, and new builds always pick up the current version number.
 
 **Bug fixes**
 - Fixed the GNOME panel icon not appearing at all after a fresh install.

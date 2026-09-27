@@ -74,8 +74,9 @@ bash gnome-extension/install.sh
 ```
 
 - Hover the panel icon to see Rolling (5h)/Weekly/Monthly usage; without credentials it shows demo data.
+- The popup ends with **Open OpenCode Console** and **Settings…** — both stay available even when your sign-in has expired.
+- The panel now shows the O✦ logo on GNOME too, not just on KDE.
 - Open the extension's preferences (`gnome-extensions prefs com.mayanktaker.opencodego-usage`) and paste your Workspace ID + Auth Cookie to switch to live figures.
-- The panel icon uses the stock symbolic fallback. The custom O✦ logo lives at `gnome-extension/icons/opencodego-symbolic.svg`, but GNOME Shell does not add an extension's `icons/` folder to the icon theme, so wiring the branded icon is a follow-up.
 - On Wayland, the first install needs a logout/login: a running shell never picks up a newly installed extension. The installer queues it so it comes up enabled automatically.
 
 ---
@@ -184,11 +185,14 @@ OpencodeGo-KDE/
 ## ✨ What's New in v2.5.0
 
 - **Now on GNOME Shell as well as KDE Plasma** — a panel icon that shows your Rolling (5h), Weekly, and Monthly usage on hover, with its own settings window.
+- The GNOME panel icon now uses the same O✦ logo as the KDE widget.
+- The GNOME popup has **Open OpenCode Console** and **Settings…** entries, and they still work when your sign-in has expired.
 - The GNOME panel icon shows up reliably after a fresh install instead of silently not appearing.
 - The GNOME settings window opens its contents properly.
 - During a brief OpenCode outage, GNOME keeps your last known figures instead of replacing them with an error.
 - The GNOME popup no longer duplicates itself after a refresh.
 - GNOME no longer waits on the network in the background, so the desktop stays responsive while usage is checked.
+- The download bundle now includes the GNOME extension, and builds always pick up the current version number.
 - Full release notes live in [CHANGELOG.md](CHANGELOG.md).
 
 ---
