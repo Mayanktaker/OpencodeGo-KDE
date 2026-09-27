@@ -287,6 +287,13 @@ function meterPercent(usedMicroCents, limitMicroCents) {
     return Math.min(100, Math.max(0, pct));
 }
 
+// Formats micro-cents into a human readable USD string e.g. $4.80 or $20.00
+function formatCurrency(microCents) {
+    if (microCents === undefined || microCents === null || isNaN(microCents)) return "$0.00";
+    var dollars = Number(microCents) / 100000000;
+    return "$" + dollars.toFixed(2);
+}
+
 // Converts an ISO date (or epoch seconds/milliseconds) into seconds remaining from now, 0 when unknown
 function secondsUntil(value) {
     if (value === undefined || value === null || value === "") return 0;
@@ -367,9 +374,16 @@ function parseConsoleGoStatus(data) {
     var month = meters.month;
     if (!fiveHour && !week && !month) return null;
 
-    var fiveHourPct = fiveHour ? meterPercent(toMicroCents(fiveHour.usedMicroCents), toMicroCents(fiveHour.limitMicroCents)) : 0;
-    var weekPct = week ? meterPercent(toMicroCents(week.usedMicroCents), toMicroCents(week.limitMicroCents)) : 0;
-    var monthPct = month ? meterPercent(toMicroCents(month.usedMicroCents), toMicroCents(month.limitMicroCents)) : 0;
+    var fiveHourUsed = fiveHour ? toMicroCents(fiveHour.usedMicroCents) : 0;
+    var fiveHourLimit = fiveHour ? toMicroCents(fiveHour.limitMicroCents) : 0;
+    var weekUsed = week ? toMicroCents(week.usedMicroCents) : 0;
+    var weekLimit = week ? toMicroCents(week.limitMicroCents) : 0;
+    var monthUsed = month ? toMicroCents(month.usedMicroCents) : 0;
+    var monthLimit = month ? toMicroCents(month.limitMicroCents) : 0;
+
+    var fiveHourPct = fiveHourLimit > 0 ? meterPercent(fiveHourUsed, fiveHourLimit) : 0;
+    var weekPct = weekLimit > 0 ? meterPercent(weekUsed, weekLimit) : 0;
+    var monthPct = monthLimit > 0 ? meterPercent(monthUsed, monthLimit) : 0;
 
     return {
         isMock: false,
@@ -383,9 +397,33 @@ function parseConsoleGoStatus(data) {
             weekly: week ? secondsUntil(week.resetsAt) : 0,
             monthly: secondsUntil(access.endsAt)
         },
-        hourly: fiveHour ? [{ label: "Rolling", value: fiveHourPct, maxValue: 100 }] : [],
-        weekly: week ? [{ label: "Weekly", value: weekPct, maxValue: 100 }] : [],
-        monthly: month ? [{ label: "Monthly", value: monthPct, maxValue: 100 }] : [],
+        hourly: fiveHour ? [{
+            label: "Rolling",
+            value: fiveHourPct,
+            maxValue: 100,
+            usedMicroCents: fiveHourUsed,
+            limitMicroCents: fiveHourLimit,
+            usedFormatted: formatCurrency(fiveHourUsed),
+            limitFormatted: formatCurrency(fiveHourLimit)
+        }] : [],
+        weekly: week ? [{
+            label: "Weekly",
+            value: weekPct,
+            maxValue: 100,
+            usedMicroCents: weekUsed,
+            limitMicroCents: weekLimit,
+            usedFormatted: formatCurrency(weekUsed),
+            limitFormatted: formatCurrency(weekLimit)
+        }] : [],
+        monthly: month ? [{
+            label: "Monthly",
+            value: monthPct,
+            maxValue: 100,
+            usedMicroCents: monthUsed,
+            limitMicroCents: monthLimit,
+            usedFormatted: formatCurrency(monthUsed),
+            limitFormatted: formatCurrency(monthLimit)
+        }] : [],
         lastRefreshed: new Date().toLocaleTimeString()
     };
 }

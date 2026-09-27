@@ -39,9 +39,13 @@ function createPanelIcon(extensionPath) {
     const iconPath = GLib.build_filenamev([extensionPath, 'icons', BRANDED_ICON_FILE]);
     if (!GLib.file_test(iconPath, GLib.FileTest.EXISTS)) {
         console.warn(`${BRANDED_ICON_FILE} missing from ${extensionPath}/icons — using ${FALLBACK_ICON_NAME}`);
-        return new St.Icon({ icon_name: FALLBACK_ICON_NAME, style_class: 'system-status-icon' });
+        return new St.Icon({ icon_name: FALLBACK_ICON_NAME, style_class: 'system-status-icon', y_align: Clutter.ActorAlign.CENTER });
     }
-    return new St.Icon({ gicon: new Gio.FileIcon({ file: Gio.File.new_for_path(iconPath) }), style_class: 'system-status-icon' });
+    return new St.Icon({
+        gicon: new Gio.FileIcon({ file: Gio.File.new_for_path(iconPath) }),
+        style_class: 'system-status-icon',
+        y_align: Clutter.ActorAlign.CENTER,
+    });
 }
 
 // Colour for a panel badge percentage, or null to keep the theme foreground
@@ -59,15 +63,33 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
         super._init(0.0, 'OpenCode Go Usage', false);
         this._actions = actions || {};
 
+        this.y_align = Clutter.ActorAlign.CENTER;
+        this.y_expand = true;
+
         // Icon plus the optional percentage badge, side by side in the panel
-        this._box = new St.BoxLayout({ style_class: 'opencodego-panel-box' });
-        this._box.add_child(createPanelIcon(extensionPath));
-        this._badge = new St.Label({ style_class: 'opencodego-panel-badge' });
+        this._box = new St.BoxLayout({
+            style_class: 'opencodego-panel-box',
+            y_align: Clutter.ActorAlign.CENTER,
+            y_expand: true,
+        });
+        const icon = createPanelIcon(extensionPath);
+        icon.set_y_align(Clutter.ActorAlign.CENTER);
+        icon.set_y_expand(true);
+        this._box.add_child(icon);
+
+        this._badge = new St.Label({
+            style_class: 'opencodego-panel-badge',
+            y_align: Clutter.ActorAlign.CENTER,
+            y_expand: true,
+        });
+        this._badge.clutter_text.y_align = Clutter.ActorAlign.CENTER;
+        this._badge.clutter_text.ellipsize = 0;
         this._box.add_child(this._badge);
         this.add_child(this._box);
 
         // Fetch state machine shared with popup.js
         this._state = { status: 'demo', data: null, error: null };
+        this._lastAlertedPercent = 0;
 
         // Hover opens the popup (GNOME tray tooltips do not exist, so the popup IS the tooltip)
         this.connect('enter-event', () => {
@@ -82,12 +104,45 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
     // Paints the panel badge, or hides it when the user turned it off
     _updateBadge() {
         const show = this._showBadge;
-        const percent = this._state.data ? Math.round(this._state.data.usagePercent) : null;
-        this._badge.visible = !!show && percent !== null;
-        if (!this._badge.visible) return;
-        this._badge.text = `${percent}%`;
-        const color = badgeColorFor(percent);
-        this._badge.style = color ? `color: ${color};` : '';
+        const mode = this._trayMode || 'weekly';
+        const data = this._state.data;
+
+        if (!show || mode === 'none' || !data) {
+            this._badge.visible = false;
+            return;
+        }
+
+        const hourlyBar = (data.hourly && data.hourly.length) ? data.hourly[0] : null;
+        const weeklyBar = (data.weekly && data.weekly.length) ? data.weekly[0] : null;
+        const monthlyBar = (data.monthly && data.monthly.length) ? data.monthly[0] : null;
+
+        const hPct = hourlyBar ? Math.round(Api.calculatePercentage(hourlyBar.value, hourlyBar.maxValue)) : 0;
+        const wPct = (data.usagePercent !== undefined && data.usagePercent !== null)
+            ? Math.round(data.usagePercent)
+            : (weeklyBar ? Math.round(Api.calculatePercentage(weeklyBar.value, weeklyBar.maxValue)) : 0);
+        const mPct = monthlyBar ? Math.round(Api.calculatePercentage(monthlyBar.value, monthlyBar.maxValue)) : 0;
+
+        let text = '';
+        let headlineColor = null;
+
+        if (mode === 'all') {
+            text = `⏱ ${hPct}%  📅 ${wPct}%  🗓 ${mPct}%`;
+            headlineColor = badgeColorFor(Math.max(hPct, wPct, mPct));
+        } else if (mode === 'fiveHour') {
+            text = `${hPct}%`;
+            headlineColor = badgeColorFor(hPct);
+        } else if (mode === 'monthly') {
+            text = `${mPct}%`;
+            headlineColor = badgeColorFor(mPct);
+        } else {
+            // Default: weekly headline percentage
+            text = `${wPct}%`;
+            headlineColor = badgeColorFor(wPct);
+        }
+
+        this._badge.visible = true;
+        this._badge.text = text;
+        this._badge.style = headlineColor ? `color: ${headlineColor};` : '';
     }
 
     // Rebuilds popup content from state
@@ -186,6 +241,22 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
         this._inFlight = false;
         this._setState(state);
         this._scheduleNext();
+        this._checkNotification(state);
+    }
+
+    // Displays a desktop notification when quota crosses the configured alert threshold
+    _checkNotification(state) {
+        if (!this._enableNotifications || !state.data || state.data.isMock) return;
+        const pct = Math.round(state.data.usagePercent || 0);
+        const threshold = this._notifyThreshold || 80;
+        if (pct >= threshold && (this._lastAlertedPercent || 0) < threshold) {
+            this._lastAlertedPercent = pct;
+            const resetSec = (state.data.resetSeconds && state.data.resetSeconds.weekly) || 0;
+            const resetMsg = resetSec > 0 ? ` Resets in ${Api.formatResetFull(resetSec)}.` : '';
+            Main.notify('OpenCode Go Quota Alert', `Weekly usage has reached ${pct}%.${resetMsg}`);
+        } else if (pct < threshold) {
+            this._lastAlertedPercent = 0;
+        }
     }
 
     // Aborts any in-flight curl so a settings change is not answered by stale credentials
@@ -220,7 +291,7 @@ export default class OpenCodeGoExtension extends Extension {
         this._settings = Settings.getSettings();
         this._indicator = new OpenCodeGoIndicator(this.path, {
             onOpenConsole: () => this._openConsole(),
-            onOpenSettings: () => this.openPreferences(),
+            onOpenSettings: () => this._openSettings(),
         });
         Main.panel.addToStatusArea(this.uuid, this._indicator, 0, 'right');
 
@@ -230,6 +301,9 @@ export default class OpenCodeGoExtension extends Extension {
             this._indicator._authCookie = Settings.getAuthCookie(this._settings);
             this._indicator._refreshSeconds = Settings.getRefreshSeconds(this._settings);
             this._indicator._showBadge = Settings.getShowPanelBadge(this._settings);
+            this._indicator._trayMode = Settings.getTrayDisplayMode(this._settings);
+            this._indicator._enableNotifications = Settings.getEnableNotifications(this._settings);
+            this._indicator._notifyThreshold = Settings.getNotificationThreshold(this._settings);
         };
         this._applySettings();
         this._unsub = Settings.connectChanged(this._settings, Settings.WATCHED_KEYS, () => {
@@ -249,6 +323,18 @@ export default class OpenCodeGoExtension extends Extension {
         if (this._indicator) { this._indicator.destroy(); this._indicator = null; }
         this._applySettings = null;
         this._settings = null;
+    }
+
+    // Opens extension preferences dialog with fallback if dbus is unavailable
+    _openSettings() {
+        try {
+            this.openPreferences();
+        } catch (e) {
+            console.warn('openPreferences failed, falling back to subprocess: ' + e.message);
+            try {
+                Gio.Subprocess.new(['gnome-extensions', 'prefs', this.uuid], Gio.SubprocessFlags.NONE);
+            } catch (err) {}
+        }
     }
 
     // Opens this workspace's Go page in the default browser; the plain console

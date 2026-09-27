@@ -24,7 +24,25 @@
     <key type="b" name="show-panel-badge">
       <default>true</default>
       <summary>Show the percentage badge in the panel</summary>
-      <description>Display the headline weekly percentage next to the panel icon, turning orange at 75% and red at 90%</description>
+      <description>Display the headline percentage next to the panel icon</description>
+    </key>
+    <!-- Tray display mode: weekly, fiveHour, monthly, all, none -->
+    <key type="s" name="tray-display-mode">
+      <default>'weekly'</default>
+      <summary>Tray display mode</summary>
+      <description>Which usage windows to display next to the panel icon: weekly, fiveHour, monthly, all, none</description>
+    </key>
+    <!-- Notification enabled toggle -->
+    <key type="b" name="enable-notifications">
+      <default>true</default>
+      <summary>Enable usage notifications</summary>
+      <description>Show desktop notification when usage exceeds threshold</description>
+    </key>
+    <!-- Notification percentage threshold -->
+    <key type="u" name="notification-threshold">
+      <default>80</default>
+      <summary>Notification threshold</summary>
+      <description>Percentage threshold to trigger desktop notification (50-95%)</description>
     </key>
   </schema>
 </schemalist>

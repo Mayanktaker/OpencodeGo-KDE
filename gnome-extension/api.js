@@ -107,9 +107,9 @@ export function getMockData() {
         usagePercent: usagePercent,
         // Demo reset countdowns so the per-window brackets are visible without real credentials
         resetSeconds: { hourly: 13500, weekly: 370800, monthly: 1659600 },
-        hourly: hourlyData,
-        weekly: weeklyData,
-        monthly: monthlyData,
+        hourly: hourlyData.map(h => ({ ...h, usedFormatted: '$' + (h.value * 0.1).toFixed(2), limitFormatted: '$' + (h.maxValue * 0.1).toFixed(2) })),
+        weekly: weeklyData.map(w => ({ ...w, usedFormatted: '$' + (w.value * 0.01).toFixed(2), limitFormatted: '$' + (w.maxValue * 0.01).toFixed(2) })),
+        monthly: monthlyData.map(m => ({ ...m, usedFormatted: '$' + (m.value * 0.02).toFixed(2), limitFormatted: '$' + (m.maxValue * 0.02).toFixed(2) })),
         lastRefreshed: new Date().toLocaleTimeString()
     };
 }
@@ -280,6 +280,15 @@ export function toMicroCents(value) {
     return isNaN(n) ? 0 : n;
 }
 
+// Formats micro-cents into a dollar currency string (e.g. $1.25, $50)
+export function formatCurrency(microCents) {
+    if (microCents === undefined || microCents === null || isNaN(microCents) || microCents < 0) return '';
+    const dollars = microCents / 100000000;
+    if (dollars >= 100) return '$' + Math.round(dollars);
+    if (dollars >= 10) return '$' + dollars.toFixed(2);
+    return '$' + dollars.toFixed(2);
+}
+
 // Mirrors the console's own round-half-up percentage so widget and website always agree
 export function meterPercent(usedMicroCents, limitMicroCents) {
     if (!(limitMicroCents > 0)) return 0;
@@ -367,9 +376,16 @@ function parseConsoleGoStatus(data) {
     const month = meters.month;
     if (!fiveHour && !week && !month) return null;
 
-    const fiveHourPct = fiveHour ? meterPercent(toMicroCents(fiveHour.usedMicroCents), toMicroCents(fiveHour.limitMicroCents)) : 0;
-    const weekPct = week ? meterPercent(toMicroCents(week.usedMicroCents), toMicroCents(week.limitMicroCents)) : 0;
-    const monthPct = month ? meterPercent(toMicroCents(month.usedMicroCents), toMicroCents(month.limitMicroCents)) : 0;
+    const fiveHourUsed = fiveHour ? toMicroCents(fiveHour.usedMicroCents) : 0;
+    const fiveHourLimit = fiveHour ? toMicroCents(fiveHour.limitMicroCents) : 0;
+    const weekUsed = week ? toMicroCents(week.usedMicroCents) : 0;
+    const weekLimit = week ? toMicroCents(week.limitMicroCents) : 0;
+    const monthUsed = month ? toMicroCents(month.usedMicroCents) : 0;
+    const monthLimit = month ? toMicroCents(month.limitMicroCents) : 0;
+
+    const fiveHourPct = fiveHourLimit > 0 ? meterPercent(fiveHourUsed, fiveHourLimit) : 0;
+    const weekPct = weekLimit > 0 ? meterPercent(weekUsed, weekLimit) : 0;
+    const monthPct = monthLimit > 0 ? meterPercent(monthUsed, monthLimit) : 0;
 
     return {
         isMock: false,
@@ -383,9 +399,33 @@ function parseConsoleGoStatus(data) {
             weekly: week ? secondsUntil(week.resetsAt) : 0,
             monthly: secondsUntil(access.endsAt)
         },
-        hourly: fiveHour ? [{ label: "Rolling", value: fiveHourPct, maxValue: 100 }] : [],
-        weekly: week ? [{ label: "Weekly", value: weekPct, maxValue: 100 }] : [],
-        monthly: month ? [{ label: "Monthly", value: monthPct, maxValue: 100 }] : [],
+        hourly: fiveHour ? [{
+            label: "Rolling",
+            value: fiveHourPct,
+            maxValue: 100,
+            usedMicroCents: fiveHourUsed,
+            limitMicroCents: fiveHourLimit,
+            usedFormatted: formatCurrency(fiveHourUsed),
+            limitFormatted: formatCurrency(fiveHourLimit)
+        }] : [],
+        weekly: week ? [{
+            label: "Weekly",
+            value: weekPct,
+            maxValue: 100,
+            usedMicroCents: weekUsed,
+            limitMicroCents: weekLimit,
+            usedFormatted: formatCurrency(weekUsed),
+            limitFormatted: formatCurrency(weekLimit)
+        }] : [],
+        monthly: month ? [{
+            label: "Monthly",
+            value: monthPct,
+            maxValue: 100,
+            usedMicroCents: monthUsed,
+            limitMicroCents: monthLimit,
+            usedFormatted: formatCurrency(monthUsed),
+            limitFormatted: formatCurrency(monthLimit)
+        }] : [],
         lastRefreshed: new Date().toLocaleTimeString()
     };
 }

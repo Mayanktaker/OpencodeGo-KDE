@@ -12,6 +12,9 @@ const KEY_WORKSPACE = 'workspace-id';
 const KEY_COOKIE = 'auth-cookie';
 const KEY_REFRESH = 'refresh-minutes';
 const KEY_PANEL_BADGE = 'show-panel-badge';
+const KEY_TRAY_MODE = 'tray-display-mode';
+const KEY_NOTIFICATIONS = 'enable-notifications';
+const KEY_THRESHOLD = 'notification-threshold';
 
 // Seconds per minute used to convert the refresh setting
 const SECONDS_PER_MINUTE = 60;
@@ -48,6 +51,12 @@ export function getRefreshSeconds(settings) {
 }
 // Whether the panel shows the headline percentage next to the icon
 export function getShowPanelBadge(settings) { return settings.get_boolean(KEY_PANEL_BADGE); }
+// Which quota window to display in the panel (weekly, fiveHour, monthly, all, none)
+export function getTrayDisplayMode(settings) { return settings.get_string(KEY_TRAY_MODE) || 'weekly'; }
+// Whether desktop notifications are enabled
+export function getEnableNotifications(settings) { return settings.get_boolean(KEY_NOTIFICATIONS); }
+// Usage percentage threshold triggering a notification
+export function getNotificationThreshold(settings) { return settings.get_uint(KEY_THRESHOLD); }
 
 // Subscribes to key changes; cb receives the changed key name
 export function connectChanged(settings, names, cb) {
@@ -56,4 +65,12 @@ export function connectChanged(settings, names, cb) {
 }
 
 // Key list watched by the runtime so a settings edit refreshes immediately
-export const WATCHED_KEYS = [KEY_WORKSPACE, KEY_COOKIE, KEY_REFRESH, KEY_PANEL_BADGE];
+export const WATCHED_KEYS = [
+    KEY_WORKSPACE,
+    KEY_COOKIE,
+    KEY_REFRESH,
+    KEY_PANEL_BADGE,
+    KEY_TRAY_MODE,
+    KEY_NOTIFICATIONS,
+    KEY_THRESHOLD
+];

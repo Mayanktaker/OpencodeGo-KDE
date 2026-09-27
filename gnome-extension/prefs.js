@@ -12,6 +12,10 @@ import { getSettings } from './settings.js';
 const REFRESH_MIN = 1;
 const REFRESH_MAX = 60;
 
+// Bounds for usage alert threshold percentage
+const NOTIFY_THRESHOLD_MIN = 50;
+const NOTIFY_THRESHOLD_MAX = 95;
+
 // Colours for the connection test result
 const RESULT_OK_COLOR = '#26a269';
 const RESULT_ERROR_COLOR = '#ff5555';
@@ -19,10 +23,9 @@ const RESULT_ERROR_COLOR = '#ff5555';
 // Decodes GLib's waitpid-encoded spawn status to the child exit code
 const exitCodeOf = status => (status & 0xff00) >> 8;
 
-// Preferences object built by the shell (new prefsModule.default({...metadata, dir, path}))
-// then asked to fill the Adw window it owns
+// Preferences object built by the shell then asked to fill the Adw window it owns
 export default class OpenCodeGoPrefs {
-    // Adds the credentials + refresh page to the shell-provided preferences window
+    // Adds credentials, panel appearance, and alert pages to preferences window
     fillPreferencesWindow(window) {
         const settings = getSettings();
 
@@ -55,16 +58,43 @@ export default class OpenCodeGoPrefs {
         testRow.activatable_widget = testButton;
         credentials.add(testRow);
 
-        const behaviour = new Adw.PreferencesGroup({ title: 'Panel & Refresh' });
+        const behaviour = new Adw.PreferencesGroup({ title: 'Panel and Refresh' });
         page.add(behaviour);
 
         // Panel percentage badge toggle, mirroring the KDE widget's panel badge
         const badgeRow = new Adw.SwitchRow({
             title: 'Show percentage in the panel',
-            subtitle: 'Weekly headline next to the icon; orange at 75%, red at 90%',
+            subtitle: 'Enable or disable numeric metric in the top panel bar',
         });
         settings.bind('show-panel-badge', badgeRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         behaviour.add(badgeRow);
+
+        // Tray icon display mode selector
+        const trayModes = [
+            { id: 'weekly', name: 'Weekly Limit (Default)' },
+            { id: 'fiveHour', name: '5-Hour Rolling Limit' },
+            { id: 'monthly', name: 'Monthly Limit' },
+            { id: 'all', name: 'All Three Limits (with icons)' },
+            { id: 'none', name: 'Icon Only' },
+        ];
+        const stringList = new Gtk.StringList();
+        trayModes.forEach(m => stringList.append(m.name));
+
+        const trayRow = new Adw.ComboRow({
+            title: 'Tray Icon Display',
+            subtitle: 'Choose which quota metrics to display in the panel bar',
+            model: stringList,
+        });
+
+        const currentMode = settings.get_string('tray-display-mode') || 'weekly';
+        const currentIndex = Math.max(0, trayModes.findIndex(m => m.id === currentMode));
+        trayRow.selected = currentIndex;
+
+        trayRow.connect('notify::selected', () => {
+            const selectedItem = trayModes[trayRow.selected];
+            if (selectedItem) settings.set_string('tray-display-mode', selectedItem.id);
+        });
+        behaviour.add(trayRow);
 
         // Refresh interval spin row, 1–60 minutes
         const refreshRow = new Adw.SpinRow({
@@ -77,6 +107,28 @@ export default class OpenCodeGoPrefs {
         });
         settings.bind('refresh-minutes', refreshRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         behaviour.add(refreshRow);
+
+        // Quota alerts group
+        const notifyGroup = new Adw.PreferencesGroup({ title: 'Usage Alerts' });
+        page.add(notifyGroup);
+
+        const notifyRow = new Adw.SwitchRow({
+            title: 'Enable quota notifications',
+            subtitle: 'Alert when quota window crosses threshold percentage',
+        });
+        settings.bind('enable-notifications', notifyRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        notifyGroup.add(notifyRow);
+
+        const thresholdRow = new Adw.SpinRow({
+            title: 'Alert threshold (%)',
+            subtitle: 'Trigger alert when usage reaches this percentage',
+            adjustment: new Gtk.Adjustment({
+                lower: NOTIFY_THRESHOLD_MIN, upper: NOTIFY_THRESHOLD_MAX, step_increment: 5,
+                value: settings.get_uint('notification-threshold'),
+            }),
+        });
+        settings.bind('notification-threshold', thresholdRow, 'value', Gio.SettingsBindFlags.DEFAULT);
+        notifyGroup.add(thresholdRow);
 
         window.add(page);
     }

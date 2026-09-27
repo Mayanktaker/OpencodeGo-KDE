@@ -1,16 +1,108 @@
 /* © Mayanktaker Computers & Web Development | https://mayanktaker.com */
 /* Panel icon and popup styles for the OpenCode Go usage extension */
 
-/* Percentage badge shown next to the panel icon */
-.opencodego-panel-badge {
-    font-size: 0.9em;
-    font-weight: bold;
-    padding-left: 4px;
+/* Panel icon and badge container in top bar */
+.opencodego-panel-box {
+    spacing: 5px;
+    margin: 0;
+    padding: 0;
+    y-align: center;
 }
 
-/* The icon and badge sit in one row with a small gap. Deliberately not
-   .panel-status-indicators-box: that class is shared with the shell's own
-   indicators, and restyling it would leak into other extensions. */
-.opencodego-panel-box {
+/* Percentage badge shown next to the panel icon */
+.opencodego-panel-badge {
+    font-weight: 700;
+    margin: 0;
+    padding: 0 1px;
+    y-align: center;
+}
+
+/* Header container in popup */
+.opencodego-header-box {
+    padding: 6px 6px 6px 6px;
+    spacing: 10px;
+}
+
+/* Header brand icon */
+.opencodego-header-icon {
+    icon-size: 22px;
+}
+
+/* Header title text */
+.opencodego-header-title {
+    font-weight: 700;
+    font-size: 1.05em;
+}
+
+/* Header subtitle text */
+.opencodego-header-subtitle {
+    font-size: 0.78em;
+    opacity: 0.65;
+}
+
+/* Header percentage pill badge */
+.opencodego-header-badge {
+    font-weight: 700;
+    font-size: 1.05em;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Usage item container for each window */
+.opencodego-usage-item {
+    padding: 3px 6px 3px 6px;
+    margin: 2px 0 2px 0;
     spacing: 2px;
+}
+
+/* Window title row holding icon, label and percentage */
+.opencodego-window-title-row {
+    spacing: 6px;
+}
+
+/* Window row symbolic icon */
+.opencodego-row-icon {
+    icon-size: 14px;
+    opacity: 0.85;
+}
+
+/* Window quota label */
+.opencodego-window-label {
+    font-size: 0.95em;
+    font-weight: 600;
+}
+
+/* Window limit numbers (e.g. $4.80 / $20.00) */
+.opencodego-window-limit {
+    font-size: 0.85em;
+    opacity: 0.7;
+    margin-right: 6px;
+}
+
+/* Window percentage label */
+.opencodego-window-percent {
+    font-size: 0.95em;
+    font-weight: 700;
+}
+
+/* Progress bar drawing canvas */
+.opencodego-progress-bar {
+    margin: 3px 0 3px 0;
+}
+
+/* Reset countdown label */
+.opencodego-reset-label {
+    font-size: 0.8em;
+    opacity: 0.65;
+    margin-top: 1px;
+    margin-bottom: 3px;
+    padding-left: 20px;
+}
+
+/* Footer note */
+.opencodego-footer-label {
+    font-size: 0.82em;
+    opacity: 0.7;
+    padding: 4px 6px;
 }

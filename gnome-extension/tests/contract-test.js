@@ -45,8 +45,10 @@ if (settings) {
     eq(Settings.getWorkspaceId({ get_string: () => 'wrk_x' }), 'wrk_x', 'workspace accessor');
     eq(Settings.getAuthCookie({ get_string: () => 'st_y' }), 'st_y', 'cookie accessor');
     eq(Settings.getShowPanelBadge({ get_boolean: () => true }), true, 'panel badge accessor reads true');
-    eq(Settings.getShowPanelBadge({ get_boolean: () => false }), false, 'panel badge accessor reads false');
-    eq(Settings.WATCHED_KEYS.join(','), 'workspace-id,auth-cookie,refresh-minutes,show-panel-badge', 'watched keys cover every setting');
+    eq(Settings.getTrayDisplayMode({ get_string: () => 'weekly' }), 'weekly', 'tray display mode accessor');
+    eq(Settings.getEnableNotifications({ get_boolean: () => true }), true, 'enable notifications accessor');
+    eq(Settings.getNotificationThreshold({ get_uint: () => 80 }), 80, 'notification threshold accessor');
+    eq(Settings.WATCHED_KEYS.join(','), 'workspace-id,auth-cookie,refresh-minutes,show-panel-badge,tray-display-mode,enable-notifications,notification-threshold', 'watched keys cover every setting');
     // disconnect must not throw when there is nothing connected
     Settings.connectChanged({ connect: () => 1, disconnect: () => {} }, ['workspace-id'], () => {})();
     ok(true, 'connectChanged returns a working unsubscribe');

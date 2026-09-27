@@ -1,6 +1,19 @@
 <!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
 # Changelog — OpenCode Go Usage Tracker
 
+## v2.5.1
+
+**What's new**
+- Redesigned GNOME panel icon with crisp, balanced proportions and vibrant brand colors that match standard desktop tray sizes.
+- Polished GNOME popup card with a branded header, distinct icons for Rolling, Weekly, and Monthly usage windows, and clear status badges.
+- Smooth rounded progress bars with custom color accents (sky, cyan, and teal) and automatic warning highlights as usage increases.
+- Added native symbolic icons to the console and settings shortcuts in the popup menu.
+
+**Bug fixes**
+- Fixed the GNOME panel tray icon appearing vertically squished and blurry.
+- Fixed the vertical misalignment between the tray icon and the usage percentage text.
+- Fixed invisible or faint progress bars in the GNOME popup card across light and dark desktop themes.
+
 ## v2.5.0
 
 **What's new**
