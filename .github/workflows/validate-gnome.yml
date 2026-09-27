@@ -33,6 +33,9 @@ jobs:
       - name: Run the gjs suites
         run: bash gnome-extension/tests/run-tests.sh
 
+      - name: Validate packaging script
+        run: bash gnome-extension/package.sh
+
   live:
     name: Headless shell end-to-end tests
     runs-on: ubuntu-latest

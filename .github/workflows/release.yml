@@ -93,6 +93,11 @@ jobs:
             -x "*.git*" "*/tests/*" "*/__pycache__/*"
           echo "ZIP_FILE=${ZIP_NAME}" >> $GITHUB_ENV
 
+      - name: Package GNOME Shell Extension Bundle
+        run: |
+          bash gnome-extension/package.sh
+          echo "GNOME_ZIP_FILE=gnome-extension/build/com.mayanktaker.opencodego-usage.shell-extension.zip" >> $GITHUB_ENV
+
       - name: Upload Release Artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -100,5 +105,6 @@ jobs:
           files: |
             ${{ env.PLASMOID_FILE }}
             ${{ env.ZIP_FILE }}
+            ${{ env.GNOME_ZIP_FILE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
