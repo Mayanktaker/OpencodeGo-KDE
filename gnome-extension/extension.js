@@ -26,6 +26,12 @@ const FALLBACK_ICON_NAME = 'applications-system-symbolic';
 // Console root; the workspace Go page is appended when a workspace id is known
 const CONSOLE_URL_BASE = 'https://opencode.ai/console';
 
+// Panel badge thresholds and colours, mirroring the KDE widget's panel badge
+const BADGE_WARN_PERCENT = 75;
+const BADGE_CRITICAL_PERCENT = 90;
+const BADGE_WARN_COLOR = '#ffb86c';
+const BADGE_CRITICAL_COLOR = '#ff5555';
+
 // Builds the panel icon from the extension's own icons/ folder. GNOME Shell never
 // adds an extension's icon directory to the icon theme, and StIconTheme only
 // resolves freedesktop theme trees, so the SVG is loaded straight off disk.
@@ -38,6 +44,13 @@ function createPanelIcon(extensionPath) {
     return new St.Icon({ gicon: new Gio.FileIcon({ file: Gio.File.new_for_path(iconPath) }), style_class: 'system-status-icon' });
 }
 
+// Colour for a panel badge percentage, or null to keep the theme foreground
+function badgeColorFor(percent) {
+    if (percent >= BADGE_CRITICAL_PERCENT) return BADGE_CRITICAL_COLOR;
+    if (percent >= BADGE_WARN_PERCENT) return BADGE_WARN_COLOR;
+    return null;
+}
+
 // Panel indicator button; hover opens the popup, click toggles it
 const OpenCodeGoIndicator = GObject.registerClass(
 class OpenCodeGoIndicator extends PanelMenu.Button {
@@ -45,7 +58,13 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
     _init(extensionPath, actions) {
         super._init(0.0, 'OpenCode Go Usage', false);
         this._actions = actions || {};
-        this.add_child(createPanelIcon(extensionPath));
+
+        // Icon plus the optional percentage badge, side by side in the panel
+        this._box = new St.BoxLayout({ style_class: 'opencodego-panel-box' });
+        this._box.add_child(createPanelIcon(extensionPath));
+        this._badge = new St.Label({ style_class: 'opencodego-panel-badge' });
+        this._box.add_child(this._badge);
+        this.add_child(this._box);
 
         // Fetch state machine shared with popup.js
         this._state = { status: 'demo', data: null, error: null };
@@ -60,9 +79,21 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
         this._setState({ status: 'demo', data: Api.getMockData(), error: null });
     }
 
+    // Paints the panel badge, or hides it when the user turned it off
+    _updateBadge() {
+        const show = this._showBadge;
+        const percent = this._state.data ? Math.round(this._state.data.usagePercent) : null;
+        this._badge.visible = !!show && percent !== null;
+        if (!this._badge.visible) return;
+        this._badge.text = `${percent}%`;
+        const color = badgeColorFor(percent);
+        this._badge.style = color ? `color: ${color};` : '';
+    }
+
     // Rebuilds popup content from state
     _setState(state) {
         this._state = state;
+        this._updateBadge();
         Popup.buildMenuContent(this.menu, state, this._actions);
     }
 
@@ -198,12 +229,15 @@ export default class OpenCodeGoExtension extends Extension {
             this._indicator._workspaceId = Settings.getWorkspaceId(this._settings);
             this._indicator._authCookie = Settings.getAuthCookie(this._settings);
             this._indicator._refreshSeconds = Settings.getRefreshSeconds(this._settings);
+            this._indicator._showBadge = Settings.getShowPanelBadge(this._settings);
         };
         this._applySettings();
         this._unsub = Settings.connectChanged(this._settings, Settings.WATCHED_KEYS, () => {
             this._applySettings();
             // Drop any in-flight request so new credentials take effect on the next poll
             this._indicator.cancelRequest();
+            // The badge can be toggled without re-fetching, so repaint straight away
+            this._indicator._updateBadge();
             this._indicator.refresh();
         });
         this._indicator.refresh();

@@ -11,6 +11,7 @@ const SCHEMA_ID = 'org.gnome.shell.extensions.opencodego-usage';
 const KEY_WORKSPACE = 'workspace-id';
 const KEY_COOKIE = 'auth-cookie';
 const KEY_REFRESH = 'refresh-minutes';
+const KEY_PANEL_BADGE = 'show-panel-badge';
 
 // Seconds per minute used to convert the refresh setting
 const SECONDS_PER_MINUTE = 60;
@@ -45,6 +46,8 @@ export function getAuthCookie(settings) { return settings.get_string(KEY_COOKIE)
 export function getRefreshSeconds(settings) {
     return Math.max(1, settings.get_uint(KEY_REFRESH)) * SECONDS_PER_MINUTE;
 }
+// Whether the panel shows the headline percentage next to the icon
+export function getShowPanelBadge(settings) { return settings.get_boolean(KEY_PANEL_BADGE); }
 
 // Subscribes to key changes; cb receives the changed key name
 export function connectChanged(settings, names, cb) {
@@ -53,4 +56,4 @@ export function connectChanged(settings, names, cb) {
 }
 
 // Key list watched by the runtime so a settings edit refreshes immediately
-export const WATCHED_KEYS = [KEY_WORKSPACE, KEY_COOKIE, KEY_REFRESH];
+export const WATCHED_KEYS = [KEY_WORKSPACE, KEY_COOKIE, KEY_REFRESH, KEY_PANEL_BADGE];

@@ -20,5 +20,11 @@
       <summary>Refresh interval (minutes)</summary>
       <description>How often usage is refreshed; minimum 1 minute</description>
     </key>
+    <!-- Panel badge mirroring the KDE widget's percentage badge on the taskbar icon -->
+    <key type="b" name="show-panel-badge">
+      <default>true</default>
+      <summary>Show the percentage badge in the panel</summary>
+      <description>Display the headline weekly percentage next to the panel icon, turning orange at 75% and red at 90%</description>
+    </key>
   </schema>
 </schemalist>

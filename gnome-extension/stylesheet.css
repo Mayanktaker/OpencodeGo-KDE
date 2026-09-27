@@ -1,2 +1,16 @@
 /* © Mayanktaker Computers & Web Development | https://mayanktaker.com */
 /* Panel icon and popup styles for the OpenCode Go usage extension */
+
+/* Percentage badge shown next to the panel icon */
+.opencodego-panel-badge {
+    font-size: 0.9em;
+    font-weight: bold;
+    padding-left: 4px;
+}
+
+/* The icon and badge sit in one row with a small gap. Deliberately not
+   .panel-status-indicators-box: that class is shared with the shell's own
+   indicators, and restyling it would leak into other extensions. */
+.opencodego-panel-box {
+    spacing: 2px;
+}
