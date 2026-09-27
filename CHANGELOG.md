@@ -1,6 +1,20 @@
 <!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
 # Changelog — OpenCode Go Usage Tracker
 
+## v2.5.0
+
+**What's new**
+- The usage tracker now runs on GNOME Shell too — a small panel icon that shows your Rolling (5h), Weekly, and Monthly usage when you hover it.
+- On GNOME you get a simple settings window for your sign-in details and how often the numbers refresh.
+- Trying it on GNOME? No sign-in details yet? It shows sample numbers so you can see how it looks first.
+
+**Bug fixes**
+- Fixed the GNOME panel icon not appearing at all after a fresh install.
+- Fixed the GNOME settings window not opening its contents.
+- Fixed your GNOME numbers being replaced by an error message during a brief OpenCode outage — it now keeps your last known figures, just like the KDE widget.
+- Fixed the GNOME popup showing its contents twice after a refresh.
+- Fixed GNOME waiting on the network in the background, which could make the desktop feel stuck while checking your usage.
+
 ## v2.4.0
 
 **What's new**

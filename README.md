@@ -67,7 +67,7 @@ This automatically:
 
 ## 🐧 GNOME Shell Extension
 
-The same usage tracker also ships as a GNOME Shell panel extension (UUID `com.mayanktaker.opencodego-usage`, GNOME Shell 45–50):
+The same usage tracker also ships as a GNOME Shell panel extension (UUID `com.mayanktaker.opencodego-usage`, GNOME Shell 46–50):
 
 ```bash
 bash gnome-extension/install.sh
@@ -75,9 +75,8 @@ bash gnome-extension/install.sh
 
 - Hover the panel icon to see Rolling (5h)/Weekly/Monthly usage; without credentials it shows demo data.
 - Open the extension's preferences (`gnome-extensions prefs com.mayanktaker.opencodego-usage`) and paste your Workspace ID + Auth Cookie to switch to live figures.
-- On Wayland, the first install may require logging out and back in before the panel icon appears.
-
-> **Note:** the custom panel icon (O✦ SVG) is installed at `gnome-extension/icons/opencodego-symbolic.svg`, but the panel currently shows the symbolic fallback (`applications-system-symbolic`) — wiring the custom icon is a follow-up.
+- The panel icon uses the stock symbolic fallback. The custom O✦ logo lives at `gnome-extension/icons/opencodego-symbolic.svg`, but GNOME Shell does not add an extension's `icons/` folder to the icon theme, so wiring the branded icon is a follow-up.
+- On Wayland, the first install needs a logout/login: a running shell never picks up a newly installed extension. The installer queues it so it comes up enabled automatically.
 
 ---
 
@@ -86,7 +85,7 @@ bash gnome-extension/install.sh
 Prefer a ready-made bundle? Grab the latest `.plasmoid` package or the shareable `.zip` (includes the installer + CLI) from the [GitHub Releases page](https://github.com/Mayanktaker/OpencodeGo-KDE/releases). Install a downloaded `.plasmoid` with:
 
 ```bash
-kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v2.4.0.plasmoid
+kpackagetool6 -t Plasma/Applet -i com.mayanktaker.opencodego-usage-v*.plasmoid
 ```
 
 ---
@@ -149,6 +148,17 @@ OpencodeGo-KDE/
 │   ├── opencode-usage               # Python CLI client
 │   ├── opencode-usage-completion.bash
 │   └── opencode-usage-completion.zsh
+├── gnome-extension/
+│   ├── metadata.json                # Extension manifest (GNOME Shell 46–50)
+│   ├── extension.js                 # Panel indicator, async curl transport, timer
+│   ├── popup.js                     # Hover popup: header, 3 usage bars, footer
+│   ├── settings.js                  # gsettings schema resolution + key names
+│   ├── prefs.js                     # libadwaita preferences page
+│   ├── api.js                       # GJS port of contents/code/api.js
+│   ├── schemas/                     # gsettings schema (compiled on install)
+│   ├── icons/                       # Branded O✦ logo (not yet wired to the panel)
+│   ├── tests/                       # gjs test suites + runner
+│   └── install.sh                   # Install, compile schema, enable or queue
 ├── assets/
 │   ├── icon.svg
 │   └── branding-icon.jpg
@@ -171,12 +181,14 @@ OpencodeGo-KDE/
 
 ---
 
-## ✨ What's New in v2.4.0
+## ✨ What's New in v2.5.0
 
-- Works again with the new OpenCode sign-in — just paste your current session cookie and the numbers load.
-- The first bar now reads Rolling (5h) so it's clear what time window it covers.
-- If OpenCode has a brief hiccup, the widget keeps your last numbers on screen instead of going blank.
-- Pasting your cookie is more forgiving: full cookie rows, quoted copies, and old formats are all accepted.
+- **Now on GNOME Shell as well as KDE Plasma** — a panel icon that shows your Rolling (5h), Weekly, and Monthly usage on hover, with its own settings window.
+- The GNOME panel icon shows up reliably after a fresh install instead of silently not appearing.
+- The GNOME settings window opens its contents properly.
+- During a brief OpenCode outage, GNOME keeps your last known figures instead of replacing them with an error.
+- The GNOME popup no longer duplicates itself after a refresh.
+- GNOME no longer waits on the network in the background, so the desktop stays responsive while usage is checked.
 - Full release notes live in [CHANGELOG.md](CHANGELOG.md).
 
 ---
