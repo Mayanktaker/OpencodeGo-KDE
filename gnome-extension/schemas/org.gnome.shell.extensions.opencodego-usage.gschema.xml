@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
+<schemalist>
+  <schema id="org.gnome.shell.extensions.opencodego-usage" path="/org/gnome/shell/extensions/opencodego-usage/">
+    <!-- OpenCode workspace/org id (wrk_… or org_…) copied from the console URL -->
+    <key type="s" name="workspace-id">
+      <default>''</default>
+      <summary>Workspace ID</summary>
+      <description>OpenCode workspace id, e.g. wrk_XXXXXXXX from the console URL</description>
+    </key>
+    <!-- __Host-console_session cookie value (or a full Cookie header) copied from the browser -->
+    <key type="s" name="auth-cookie">
+      <default>''</default>
+      <summary>Auth Cookie</summary>
+      <description>Session cookie value from opencode.ai console (DevTools → Application → Cookies)</description>
+    </key>
+    <!-- Polling interval; the console API is rate-sensitive so the floor is one minute -->
+    <key type="u" name="refresh-minutes">
+      <default>5</default>
+      <summary>Refresh interval (minutes)</summary>
+      <description>How often usage is refreshed; minimum 1 minute</description>
+    </key>
+  </schema>
+</schemalist>
