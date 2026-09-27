@@ -3,7 +3,7 @@
 
 import St from 'gi://St';
 import * as Api from './api.js';
-import PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
+import * as PopupMenu from 'resource:///org/gnome/shell/ui/popupMenu.js';
 
 // Percent above which the bar fill turns red to signal quota pressure
 const RED_TINT_THRESHOLD = 90;
@@ -23,9 +23,13 @@ const WINDOWS = [
     { label: 'Monthly', slot: 'monthly', resetKey: 'monthly' }
 ];
 
-// Empties the menu so a refresh can rebuild it without stacking items
+// Empties the menu so a refresh can rebuild it without stacking items.
+// removeAll() only reaches registered PopupBaseMenuItem actors, so the plain St
+// rows built here would survive every rebuild and duplicate the popup; the sweep
+// after it clears the strays (and removeAll() first keeps menu.length accurate).
 export function clearMenuContent(menu) {
     menu.removeAll();
+    menu.box.destroy_all_children();
 }
 
 // Formats a seconds countdown for the bar sub-label (falls back to full formatter)
