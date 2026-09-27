@@ -1,0 +1,68 @@
+# © Mayanktaker Computers & Web Development | https://mayanktaker.com
+# Validation for the GNOME Shell extension: fast gjs suites on every push, plus an
+# opt-in live rig that needs a GNOME new enough to run a headless shell.
+
+name: Validate GNOME Extension
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: GJS unit + contract tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install gjs, GLib tools and libadwaita
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gjs libglib2.0-bin libadwaita-1-0 gir1.2-adw-1
+
+      - name: Compile the gsettings schema
+        run: glib-compile-schemas --strict gnome-extension/schemas/
+
+      - name: Run the gjs suites
+        run: bash gnome-extension/tests/run-tests.sh
+
+  live:
+    name: Headless shell end-to-end tests
+    runs-on: ubuntu-latest
+    # The rig drives a real headless GNOME Shell, which only exists in newer
+    # versions than the runner image ships. Skips loudly instead of false-greening.
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Install GNOME Shell and the rig dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            gnome-shell gjs libglib2.0-bin libadwaita-1-0 gir1.2-adw-1 \
+            rsync python3 dbus-x11
+
+      - name: Check the shell can run headless
+        id: capable
+        run: |
+          if gnome-shell --help 2>&1 | grep -q -- '--headless'; then
+            echo "capable=true" >> "$GITHUB_OUTPUT"
+            echo "gnome-shell supports --headless"
+          else
+            echo "capable=false" >> "$GITHUB_OUTPUT"
+            echo "::notice title=Live tests skipped::This runner's gnome-shell has no --headless mode, so the end-to-end rig cannot start. The gjs unit and contract tests in the 'unit' job still cover the GNOME 46+ contracts. Run tests/run-live-tests.sh locally on GNOME 47+."
+          fi
+
+      - name: Run the end-to-end rig
+        if: steps.capable.outputs.capable == 'true'
+        run: |
+          sudo mkdir -p /usr/share/gnome-shell/extensions
+          sudo chown "$USER" /usr/share/gnome-shell/extensions
+          bash gnome-extension/tests/run-live-tests.sh
