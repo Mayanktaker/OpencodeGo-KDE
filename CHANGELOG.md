@@ -5,13 +5,18 @@
 
 **What's new**
 - Redesigned GNOME panel icon with crisp, balanced proportions and vibrant brand colors that match standard desktop tray sizes.
+- Added visible usage limit numbers (e.g. $4.80 / $20.00) directly beside your percentages in the popup card.
+- New tray display selector in Settings: choose whether the panel shows your Weekly Limit, 5-Hour Rolling Limit, Monthly Limit, All Three Limits with icons, or Icon Only.
+- Added a Compact View option in Settings to reduce popup height and spacing for smaller screens.
 - Polished GNOME popup card with a branded header, distinct icons for Rolling, Weekly, and Monthly usage windows, and clear status badges.
 - Smooth rounded progress bars with custom color accents (sky, cyan, and teal) and automatic warning highlights as usage increases.
-- Added native symbolic icons to the console and settings shortcuts in the popup menu.
+- Added optional desktop notifications when usage crosses a chosen percentage threshold.
+- Terminal CLI now displays formatted limit amounts and automatically detects GNOME extension settings.
 
 **Bug fixes**
+- Fixed the GNOME Settings link not opening when clicked from the popup menu.
 - Fixed the GNOME panel tray icon appearing vertically squished and blurry.
-- Fixed the vertical misalignment between the tray icon and the usage percentage text.
+- Fixed the vertical and horizontal center alignment between the tray icon and the usage percentage text.
 - Fixed invisible or faint progress bars in the GNOME popup card across light and dark desktop themes.
 
 ## v2.5.0

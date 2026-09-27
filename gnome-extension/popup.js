@@ -96,10 +96,10 @@ function resetLabel(seconds) {
 }
 
 // Builds one usage window row: icon, label, limit figures, percent, rounded progress bar, and reset countdown
-function addUsageRow(menu, winDef, percent, resetSeconds, barData) {
+function addUsageRow(menu, winDef, percent, resetSeconds, barData, compactMode = false) {
     const itemBox = new St.BoxLayout({
         vertical: true,
-        style_class: 'opencodego-usage-item',
+        style_class: compactMode ? 'opencodego-usage-item opencodego-compact-row' : 'opencodego-usage-item',
         x_expand: true,
     });
 
@@ -186,8 +186,8 @@ function addUsageRow(menu, winDef, percent, resetSeconds, barData) {
     });
     itemBox.add_child(bar);
 
-    // Optional countdown to quota reset
-    if (resetSeconds > 0) {
+    // Optional countdown to quota reset (hidden in compact mode)
+    if (!compactMode && resetSeconds > 0) {
         const resetSub = new St.Label({
             text: 'resets in ' + resetLabel(resetSeconds),
             style_class: 'opencodego-reset-label',
@@ -225,7 +225,7 @@ function addActions(menu, actions) {
 }
 
 // Rebuilds the entire popup card for the given state
-export function buildMenuContent(menu, state, actions) {
+export function buildMenuContent(menu, state, actions, compactMode = false) {
     clearMenuContent(menu);
 
     // Card header with brand icon, title, subtitle, and headline usage badge
@@ -274,7 +274,7 @@ export function buildMenuContent(menu, state, actions) {
             const bars = data[w.slot] || [];
             const barData = bars.length ? bars[0] : null;
             const pct = barData ? Api.calculatePercentage(barData.value, barData.maxValue) : 0;
-            addUsageRow(menu, w, pct, (data.resetSeconds || {})[w.resetKey] || 0, barData);
+            addUsageRow(menu, w, pct, (data.resetSeconds || {})[w.resetKey] || 0, barData, compactMode);
         }
         menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
         addFooter(menu, state);

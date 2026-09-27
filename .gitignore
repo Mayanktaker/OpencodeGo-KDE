@@ -16,6 +16,7 @@ __pycache__/
 # Generated release packages & archives
 *.plasmoid
 *.zip
+gnome-extension/build/
 
 # Docs are versioned now; only the duplicate .agents/ twin stays private
 .agents/

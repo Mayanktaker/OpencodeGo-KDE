@@ -149,7 +149,7 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
     _setState(state) {
         this._state = state;
         this._updateBadge();
-        Popup.buildMenuContent(this.menu, state, this._actions);
+        Popup.buildMenuContent(this.menu, state, this._actions, this._compactMode);
     }
 
     // Runs one curl request honoring the route-walk and retry rules from api.js
@@ -304,6 +304,7 @@ export default class OpenCodeGoExtension extends Extension {
             this._indicator._trayMode = Settings.getTrayDisplayMode(this._settings);
             this._indicator._enableNotifications = Settings.getEnableNotifications(this._settings);
             this._indicator._notifyThreshold = Settings.getNotificationThreshold(this._settings);
+            this._indicator._compactMode = Settings.getCompactMode(this._settings);
         };
         this._applySettings();
         this._unsub = Settings.connectChanged(this._settings, Settings.WATCHED_KEYS, () => {
@@ -312,6 +313,7 @@ export default class OpenCodeGoExtension extends Extension {
             this._indicator.cancelRequest();
             // The badge can be toggled without re-fetching, so repaint straight away
             this._indicator._updateBadge();
+            this._indicator._setState(this._indicator._state);
             this._indicator.refresh();
         });
         this._indicator.refresh();

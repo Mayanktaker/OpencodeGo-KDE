@@ -106,3 +106,14 @@
     opacity: 0.7;
     padding: 4px 6px;
 }
+
+/* Compact mode row styling */
+.opencodego-compact-row {
+    padding: 1px 4px 1px 4px;
+    margin: 1px 0 1px 0;
+    spacing: 1px;
+}
+
+.opencodego-compact-row .opencodego-progress-bar {
+    margin: 1px 0 1px 0;
+}

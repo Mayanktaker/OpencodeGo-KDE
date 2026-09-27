@@ -15,6 +15,7 @@ const KEY_PANEL_BADGE = 'show-panel-badge';
 const KEY_TRAY_MODE = 'tray-display-mode';
 const KEY_NOTIFICATIONS = 'enable-notifications';
 const KEY_THRESHOLD = 'notification-threshold';
+const KEY_COMPACT_MODE = 'compact-mode';
 
 // Seconds per minute used to convert the refresh setting
 const SECONDS_PER_MINUTE = 60;
@@ -57,6 +58,8 @@ export function getTrayDisplayMode(settings) { return settings.get_string(KEY_TR
 export function getEnableNotifications(settings) { return settings.get_boolean(KEY_NOTIFICATIONS); }
 // Usage percentage threshold triggering a notification
 export function getNotificationThreshold(settings) { return settings.get_uint(KEY_THRESHOLD); }
+// Whether compact view is enabled in the popup
+export function getCompactMode(settings) { return settings.get_boolean(KEY_COMPACT_MODE); }
 
 // Subscribes to key changes; cb receives the changed key name
 export function connectChanged(settings, names, cb) {
@@ -72,5 +75,7 @@ export const WATCHED_KEYS = [
     KEY_PANEL_BADGE,
     KEY_TRAY_MODE,
     KEY_NOTIFICATIONS,
-    KEY_THRESHOLD
+    KEY_THRESHOLD,
+    KEY_COMPACT_MODE
 ];
+export { KEY_WORKSPACE, KEY_COOKIE, KEY_REFRESH, KEY_PANEL_BADGE, KEY_TRAY_MODE, KEY_NOTIFICATIONS, KEY_THRESHOLD, KEY_COMPACT_MODE };

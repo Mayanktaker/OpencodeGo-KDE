@@ -44,5 +44,11 @@
       <summary>Notification threshold</summary>
       <description>Percentage threshold to trigger desktop notification (50-95%)</description>
     </key>
+    <!-- Compact popup view for minimal footprint -->
+    <key type="b" name="compact-mode">
+      <default>false</default>
+      <summary>Compact popup view</summary>
+      <description>Reduces padding and height in the hover popup menu for smaller screens or denser layout</description>
+    </key>
   </schema>
 </schemalist>

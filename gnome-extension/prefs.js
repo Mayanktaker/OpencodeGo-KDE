@@ -108,6 +108,14 @@ export default class OpenCodeGoPrefs {
         settings.bind('refresh-minutes', refreshRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         behaviour.add(refreshRow);
 
+        // Compact popup view toggle
+        const compactRow = new Adw.SwitchRow({
+            title: 'Compact popup view',
+            subtitle: 'Reduces padding and height for a smaller popup menu footprint',
+        });
+        settings.bind('compact-mode', compactRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        behaviour.add(compactRow);
+
         // Quota alerts group
         const notifyGroup = new Adw.PreferencesGroup({ title: 'Usage Alerts' });
         page.add(notifyGroup);

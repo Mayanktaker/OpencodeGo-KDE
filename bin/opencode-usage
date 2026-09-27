@@ -82,25 +82,43 @@ def load_kde_config():
         pass
     return ws_id, cookie
 
+# Reads settings from GNOME extension gsettings if available
+def load_gnome_config():
+    try:
+        res_ws = subprocess.run(["gsettings", "get", "org.gnome.shell.extensions.opencodego-usage", "workspace-id"], capture_output=True, text=True, timeout=2)
+        res_ck = subprocess.run(["gsettings", "get", "org.gnome.shell.extensions.opencodego-usage", "auth-cookie"], capture_output=True, text=True, timeout=2)
+        ws = res_ws.stdout.strip().strip("'\"") if res_ws.returncode == 0 else ""
+        ck = res_ck.stdout.strip().strip("'\"") if res_ck.returncode == 0 else ""
+        return ws, ck
+    except Exception:
+        return "", ""
+
+# Formats micro-cents into a human readable USD string e.g. $4.80
+def format_currency(micro_cents):
+    if micro_cents is None:
+        return "$0.00"
+    dollars = float(micro_cents) / 100000000.0
+    return f"${dollars:.2f}"
+
 # Generates mock data for demo mode
 def get_mock_data():
     return {
         "isMock": True,
         "planName": "OpenCode Go (Demo Mode)",
         "billingPeriod": "Current Month",
-        "usagePercent": 73,
-        "currentUsed": 3650,
-        "currentLimit": 5000,
+        "usagePercent": 68,
+        "currentUsed": 680,
+        "currentLimit": 1000,
         "resetLabel": format_reset(370800),
         "resetSeconds": {"hourly": 13500, "weekly": 370800, "monthly": 1659600},
+        "hourly": [
+            {"label": "Rolling", "value": 38, "maxValue": 100, "usedFormatted": "$3.80", "limitFormatted": "$10.00", "resetLabel": format_reset(13500)}
+        ],
         "weekly": [
-            {"label": "Mon", "value": 420, "maxValue": 1000},
-            {"label": "Tue", "value": 550, "maxValue": 1000},
-            {"label": "Wed", "value": 710, "maxValue": 1000},
-            {"label": "Thu", "value": 640, "maxValue": 1000},
-            {"label": "Fri", "value": 890, "maxValue": 1000},
-            {"label": "Sat", "value": 310, "maxValue": 1000},
-            {"label": "Sun", "value": 250, "maxValue": 1000}
+            {"label": "Weekly", "value": 68, "maxValue": 100, "usedFormatted": "$13.60", "limitFormatted": "$20.00", "resetLabel": format_reset(370800)}
+        ],
+        "monthly": [
+            {"label": "Monthly", "value": 34, "maxValue": 100, "usedFormatted": "$17.00", "limitFormatted": "$50.00", "resetLabel": format_reset(1659600)}
         ]
     }
 
@@ -282,6 +300,8 @@ def parse_console_go_status(payload):
             "maxValue": 100,
             "usedMicroCents": used,
             "limitMicroCents": limit,
+            "usedFormatted": format_currency(used),
+            "limitFormatted": format_currency(limit),
             "resetLabel": format_reset(reset_sec)
         }]
 
@@ -423,6 +443,12 @@ def export_csv(data, file_path):
 def main():
     args = parse_args()
     ws_id, cookie = load_kde_config()
+    if not ws_id or not cookie:
+        g_ws, g_ck = load_gnome_config()
+        if not ws_id:
+            ws_id = g_ws
+        if not cookie:
+            cookie = g_ck
 
     if args.workspace_id:
         ws_id = args.workspace_id
@@ -464,7 +490,8 @@ def main():
             p = int(val / max_v * 100) if max_v > 0 else 0
             mini_bar = "■" * int(p / 10) + " " * (10 - int(p / 10))
             reset_lbl = item.get("resetLabel", "")
-            print(f"  {item.get('label', 'N/A'):<8} [{mini_bar}] {p:>3}% / {max_v}" + (f"   resets in {reset_lbl}" if reset_lbl else ""))
+            limit_str = f" ({item['usedFormatted']} / {item['limitFormatted']})" if item.get("usedFormatted") and item.get("limitFormatted") else f" / {max_v}"
+            print(f"  {item.get('label', 'N/A'):<8} [{mini_bar}] {p:>3}%{limit_str}" + (f"   resets in {reset_lbl}" if reset_lbl else ""))
     print("\033[1;36m===========================================\033[0m")
 
 if __name__ == "__main__":
