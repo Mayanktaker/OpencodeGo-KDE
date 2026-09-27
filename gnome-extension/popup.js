@@ -80,8 +80,20 @@ function addFooter(menu, state) {
     menu.box.add_child(footer);
 }
 
+// Trailing action entries. They are real PopupMenuItems (not bare St rows) so the
+// menu keeps them keyboard-navigable and the pointer/hover styling stays native.
+function addActions(menu, actions) {
+    if (!actions) return;
+    // The popup closes first so the launched window is not covered by it
+    const run = cb => () => { menu.close(); cb(); };
+    if (actions.onOpenConsole)
+        menu.addMenuItem(new PopupMenu.PopupMenuItem('Open OpenCode Console', { activate: run(actions.onOpenConsole) }));
+    if (actions.onOpenSettings)
+        menu.addMenuItem(new PopupMenu.PopupMenuItem('Settings…', { activate: run(actions.onOpenSettings) }));
+}
+
 // Rebuilds the popup for the given state; safe to call on every open/refresh
-export function buildMenuContent(menu, state) {
+export function buildMenuContent(menu, state, actions) {
     clearMenuContent(menu);
     const header = new St.BoxLayout({ vertical: false, x_expand: true });
     header.add_child(new St.Label({ text: 'OpenCode Go', x_expand: true, style: 'font-weight: bold;' }));
@@ -89,19 +101,20 @@ export function buildMenuContent(menu, state) {
     menu.box.add_child(header);
     menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-    if (state.status === 'error') {
-        addFooter(menu, state);
-        return;
-    }
+    // Error and empty states keep the actions reachable — settings is the fix
     const data = state.data;
-    if (!data) { addFooter(menu, state); return; }
-
-    for (const w of WINDOWS) {
-        const bars = data[w.slot] || [];
-        // Percentage scaled against each bar's maxValue (identity for real data, correct for demo)
-        const pct = bars.length ? Api.calculatePercentage(bars[0].value, bars[0].maxValue) : 0;
-        addUsageRow(menu, w.label, pct, (data.resetSeconds || {})[w.resetKey] || 0);
+    if (!data || state.status === 'error') {
+        addFooter(menu, state);
+    } else {
+        for (const w of WINDOWS) {
+            const bars = data[w.slot] || [];
+            // Percentage scaled against each bar's maxValue (identity for real data, correct for demo)
+            const pct = bars.length ? Api.calculatePercentage(bars[0].value, bars[0].maxValue) : 0;
+            addUsageRow(menu, w.label, pct, (data.resetSeconds || {})[w.resetKey] || 0);
+        }
+        menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+        addFooter(menu, state);
     }
-    menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
-    addFooter(menu, state);
+
+    addActions(menu, actions);
 }
