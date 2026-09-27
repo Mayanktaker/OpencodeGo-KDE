@@ -1,14 +1,23 @@
 // © Mayanktaker Computers & Web Development | https://mayanktaker.com
-// libadwaita preferences: console credentials and refresh interval
+// libadwaita preferences: console credentials, refresh interval, connection test
 
 import Adw from 'gi://Adw';
 import Gio from 'gi://Gio';
+import GLib from 'gi://GLib';
 import Gtk from 'gi://Gtk';
+import * as Api from './api.js';
 import { getSettings } from './settings.js';
 
 // Bounds for the refresh spin row, in minutes
 const REFRESH_MIN = 1;
 const REFRESH_MAX = 60;
+
+// Colours for the connection test result
+const RESULT_OK_COLOR = '#26a269';
+const RESULT_ERROR_COLOR = '#ff5555';
+
+// Decodes GLib's waitpid-encoded spawn status to the child exit code
+const exitCodeOf = status => (status & 0xff00) >> 8;
 
 // Preferences object built by the shell (new prefsModule.default({...metadata, dir, path}))
 // then asked to fill the Adw window it owns
@@ -34,8 +43,28 @@ export default class OpenCodeGoPrefs {
         settings.bind('auth-cookie', cookieRow, 'text', Gio.SettingsBindFlags.DEFAULT);
         credentials.add(cookieRow);
 
-        const behaviour = new Adw.PreferencesGroup({ title: 'Refresh' });
+        // One-shot connection check, mirroring the KDE config's Test button
+        const testRow = new Adw.ActionRow({ title: 'Test Connection' });
+        const testButton = new Gtk.Button({
+            label: 'Test',
+            valign: Gtk.Align.CENTER,
+            tooltip_text: 'Fetch usage once with the details above',
+        });
+        testButton.connect('clicked', () => this._testConnection(settings, testButton, testRow));
+        testRow.add_suffix(testButton);
+        testRow.activatable_widget = testButton;
+        credentials.add(testRow);
+
+        const behaviour = new Adw.PreferencesGroup({ title: 'Panel & Refresh' });
         page.add(behaviour);
+
+        // Panel percentage badge toggle, mirroring the KDE widget's panel badge
+        const badgeRow = new Adw.SwitchRow({
+            title: 'Show percentage in the panel',
+            subtitle: 'Weekly headline next to the icon; orange at 75%, red at 90%',
+        });
+        settings.bind('show-panel-badge', badgeRow, 'active', Gio.SettingsBindFlags.DEFAULT);
+        behaviour.add(badgeRow);
 
         // Refresh interval spin row, 1–60 minutes
         const refreshRow = new Adw.SpinRow({
@@ -50,5 +79,48 @@ export default class OpenCodeGoPrefs {
         behaviour.add(refreshRow);
 
         window.add(page);
+    }
+
+    // Runs a single console request and reports the outcome on the row's subtitle
+    _testConnection(settings, button, row) {
+        const ws = settings.get_string('workspace-id');
+        const cookie = settings.get_string('auth-cookie');
+
+        // Reuse api.js validation so the message matches what the panel would show
+        const problem = Api.checkWorkspaceIdError(ws) || Api.checkCookieError(cookie);
+        if (problem) {
+            this._report(row, problem, true);
+            return;
+        }
+
+        button.sensitive = false;
+        row.subtitle = 'Checking…';
+        const proc = Gio.Subprocess.new(['sh', '-c', Api.buildCurlCommand(ws, cookie, 0)],
+            Gio.SubprocessFlags.STDOUT_PIPE | Gio.SubprocessFlags.STDERR_PIPE);
+        proc.communicate_utf8_async(null, null, (obj, res) => {
+            button.sensitive = true;
+            let stdout = '', stderr = '', exitStatus = 0;
+            try {
+                [, stdout, stderr] = obj.communicate_utf8_finish(res);
+                exitStatus = exitCodeOf(obj.get_if_exited() ? obj.get_status() : 0);
+            } catch (e) {
+                this._report(row, 'Could not reach the console. Check your internet connection.', true);
+                return;
+            }
+            const result = Api.parseCurlOutput(stdout, stderr, exitStatus);
+            if (result.error) {
+                this._report(row, result.error, true);
+                return;
+            }
+            const percent = result.data.usagePercent;
+            this._report(row, `Connected — weekly usage ${percent}%`, false);
+        });
+    }
+
+    // Shows a pass/fail message on the action row's subtitle
+    _report(row, text, failed) {
+        const color = failed ? RESULT_ERROR_COLOR : RESULT_OK_COLOR;
+        // markup_escape_text needs an explicit length; -1 means "to the end"
+        row.subtitle = `<span color="${color}">${GLib.markup_escape_text(text, -1)}</span>`;
     }
 }
