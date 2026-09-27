@@ -74,10 +74,41 @@ bash gnome-extension/install.sh
 ```
 
 - Hover the panel icon to see Rolling (5h)/Weekly/Monthly usage; without credentials it shows demo data.
+- The panel shows the weekly percentage next to the icon — orange at 75%, red at 90%. Switch it off in settings if you prefer icon only.
 - The popup ends with **Open OpenCode Console** and **Settings…** — both stay available even when your sign-in has expired.
 - The panel now shows the O✦ logo on GNOME too, not just on KDE.
-- Open the extension's preferences (`gnome-extensions prefs com.mayanktaker.opencodego-usage`) and paste your Workspace ID + Auth Cookie to switch to live figures.
+- Open the extension's preferences (`gnome-extensions prefs com.mayanktaker.opencodego-usage`) and paste your Workspace ID + Auth Cookie to switch to live figures. **Test** checks your details without waiting for a refresh.
 - On Wayland, the first install needs a logout/login: a running shell never picks up a newly installed extension. The installer queues it so it comes up enabled automatically.
+
+### Installing on Manjaro / Arch
+
+```bash
+# 1. install (from a clone, or from the gnome-extension/ folder of a release bundle)
+bash gnome-extension/install.sh
+
+# 2. log out and back in  — required on Wayland, there is no rescan
+
+# 3. confirm it is running
+gnome-extensions info com.mayanktaker.opencodego-usage | grep -E 'State|Enabled'
+journalctl --user -b | grep -i opencodego        # should be quiet
+
+# 4. add your details
+gnome-extensions prefs com.mayanktaker.opencodego-usage
+```
+
+Step 1 copies the extension into `~/.local/share/gnome-shell/extensions/com.mayanktaker.opencodego-usage`, compiles its gsettings schema, and queues it in dconf so it comes up enabled after the logout.
+
+Getting the two values for step 4: open `https://opencode.ai/console/<your-workspace>/go` in the browser, then DevTools → Application → Cookies → opencode.ai → `__Host-console_session` for the cookie, and the `wrk_…` in the address bar for the workspace id. Paste them in and press **Test**.
+
+Updating later: re-run `bash gnome-extension/install.sh` and log out/in again — a running shell keeps the old code.
+
+To remove it:
+
+```bash
+gnome-extensions disable com.mayanktaker.opencodego-usage   # if the shell knows it
+rm -rf ~/.local/share/gnome-shell/extensions/com.mayanktaker.opencodego-usage
+dconf write /org/gnome/shell/enabled-extensions "['gnome-shell-extensions-appindicator@ubuntu.com']"  # keep your other extensions
+```
 
 ---
 
@@ -185,8 +216,9 @@ OpencodeGo-KDE/
 ## ✨ What's New in v2.5.0
 
 - **Now on GNOME Shell as well as KDE Plasma** — a panel icon that shows your Rolling (5h), Weekly, and Monthly usage on hover, with its own settings window.
-- The GNOME panel icon now uses the same O✦ logo as the KDE widget.
+- The GNOME panel icon now uses the same O✦ logo as the KDE widget, and shows your weekly percentage next to it (orange at 75%, red at 90%) — switch the badge off in settings if you prefer icon only.
 - The GNOME popup has **Open OpenCode Console** and **Settings…** entries, and they still work when your sign-in has expired.
+- GNOME settings include a **Test** button that checks your details straight away.
 - The GNOME panel icon shows up reliably after a fresh install instead of silently not appearing.
 - The GNOME settings window opens its contents properly.
 - During a brief OpenCode outage, GNOME keeps your last known figures instead of replacing them with an error.
