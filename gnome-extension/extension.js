@@ -17,17 +17,35 @@ import * as Popup from './popup.js';
 // Decodes GLib's waitpid-encoded spawn status to the child exit code (gjs lacks the WEXITSTATUS macro)
 const exitCodeOf = status => (status & 0xff00) >> 8;
 
+// Branded O✦ logo shipped in the extension's own icons/ folder
+const BRANDED_ICON_FILE = 'opencodego-symbolic.svg';
+
+// Stock icon used when the branded one is missing
+const FALLBACK_ICON_NAME = 'applications-system-symbolic';
+
+// Console root; the workspace Go page is appended when a workspace id is known
+const CONSOLE_URL_BASE = 'https://opencode.ai/console';
+
+// Builds the panel icon from the extension's own icons/ folder. GNOME Shell never
+// adds an extension's icon directory to the icon theme, and StIconTheme only
+// resolves freedesktop theme trees, so the SVG is loaded straight off disk.
+function createPanelIcon(extensionPath) {
+    const iconPath = GLib.build_filenamev([extensionPath, 'icons', BRANDED_ICON_FILE]);
+    if (!GLib.file_test(iconPath, GLib.FileTest.EXISTS)) {
+        console.warn(`${BRANDED_ICON_FILE} missing from ${extensionPath}/icons — using ${FALLBACK_ICON_NAME}`);
+        return new St.Icon({ icon_name: FALLBACK_ICON_NAME, style_class: 'system-status-icon' });
+    }
+    return new St.Icon({ gicon: new Gio.FileIcon({ file: Gio.File.new_for_path(iconPath) }), style_class: 'system-status-icon' });
+}
+
 // Panel indicator button; hover opens the popup, click toggles it
 const OpenCodeGoIndicator = GObject.registerClass(
 class OpenCodeGoIndicator extends PanelMenu.Button {
     // Wires the icon, hover-to-open behavior, and the initial state
-    _init() {
+    _init(extensionPath, actions) {
         super._init(0.0, 'OpenCode Go Usage', false);
-        this._icon = new St.Icon({
-            icon_name: 'applications-system-symbolic',
-            style_class: 'system-status-icon'
-        });
-        this.add_child(this._icon);
+        this._actions = actions || {};
+        this.add_child(createPanelIcon(extensionPath));
 
         // Fetch state machine shared with popup.js
         this._state = { status: 'demo', data: null, error: null };
@@ -45,7 +63,7 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
     // Rebuilds popup content from state
     _setState(state) {
         this._state = state;
-        Popup.buildMenuContent(this.menu, state);
+        Popup.buildMenuContent(this.menu, state, this._actions);
     }
 
     // Runs one curl request honoring the route-walk and retry rules from api.js
@@ -169,7 +187,10 @@ export default class OpenCodeGoExtension extends Extension {
     // Called on login/enable: build indicator, load settings, first fetch
     enable() {
         this._settings = Settings.getSettings();
-        this._indicator = new OpenCodeGoIndicator();
+        this._indicator = new OpenCodeGoIndicator(this.path, {
+            onOpenConsole: () => this._openConsole(),
+            onOpenSettings: () => this.openPreferences(),
+        });
         Main.panel.addToStatusArea(this.uuid, this._indicator, 0, 'right');
 
         // Settings reader bound onto the indicator so refresh() always sees current values
@@ -194,5 +215,17 @@ export default class OpenCodeGoExtension extends Extension {
         if (this._indicator) { this._indicator.destroy(); this._indicator = null; }
         this._applySettings = null;
         this._settings = null;
+    }
+
+    // Opens this workspace's Go page in the default browser; the plain console
+    // when no workspace is configured yet, so the entry is never a dead link
+    _openConsole() {
+        const ws = this._indicator?._workspaceId?.trim();
+        const url = ws ? `${CONSOLE_URL_BASE}/${ws}/go` : CONSOLE_URL_BASE;
+        try {
+            Gio.AppInfo.launch_default_for_uri(url, null);
+        } catch (e) {
+            Main.notifyError('OpenCode Go Usage', `Could not open ${url}`);
+        }
     }
 }
