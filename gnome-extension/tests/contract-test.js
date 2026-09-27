@@ -23,6 +23,11 @@ const [, metaBytes] = GLib.file_get_contents(`${EXTENSION_DIR}/metadata.json`);
 const meta = JSON.parse(new TextDecoder().decode(metaBytes));
 eq(meta.uuid, 'com.mayanktaker.opencodego-usage', 'metadata uuid unchanged');
 eq(meta['settings-schema'], 'org.gnome.shell.extensions.opencodego-usage', 'metadata declares the schema');
+// Every key the runtime reads must exist in the schema, or enable() throws
+const [, schemaBytes] = GLib.file_get_contents(`${EXTENSION_DIR}/schemas/org.gnome.shell.extensions.opencodego-usage.gschema.xml`);
+const schemaXml = new TextDecoder().decode(schemaBytes);
+for (const key of Settings.WATCHED_KEYS)
+    ok(schemaXml.includes(`name="${key}"`), `schema declares the ${key} key`);
 
 // --- settings.js resolves the extension's own compiled schema ---
 let settings = null;
@@ -39,7 +44,9 @@ if (settings) {
     eq(Settings.getRefreshSeconds({ get_uint: () => 0 }), 60, 'zero minutes clamps to one minute');
     eq(Settings.getWorkspaceId({ get_string: () => 'wrk_x' }), 'wrk_x', 'workspace accessor');
     eq(Settings.getAuthCookie({ get_string: () => 'st_y' }), 'st_y', 'cookie accessor');
-    eq(Settings.WATCHED_KEYS.join(','), 'workspace-id,auth-cookie,refresh-minutes', 'watched keys cover every setting');
+    eq(Settings.getShowPanelBadge({ get_boolean: () => true }), true, 'panel badge accessor reads true');
+    eq(Settings.getShowPanelBadge({ get_boolean: () => false }), false, 'panel badge accessor reads false');
+    eq(Settings.WATCHED_KEYS.join(','), 'workspace-id,auth-cookie,refresh-minutes,show-panel-badge', 'watched keys cover every setting');
     // disconnect must not throw when there is nothing connected
     Settings.connectChanged({ connect: () => 1, disconnect: () => {} }, ['workspace-id'], () => {})();
     ok(true, 'connectChanged returns a working unsubscribe');

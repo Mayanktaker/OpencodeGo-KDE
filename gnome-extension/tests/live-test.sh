@@ -18,11 +18,29 @@ VIRTUAL_MONITOR="${VIRTUAL_MONITOR:-1400x900}"
 
 alive() { [ -f "$RIG_DIR/shell.pid" ] && kill -0 "$(cat "$RIG_DIR/shell.pid")" 2>/dev/null; }
 
-down() {
-    [ -f "$RIG_DIR/shell.pid" ] && kill "$(cat "$RIG_DIR/shell.pid")" 2>/dev/null
-    [ -f "$RIG_DIR/bus.pid" ] && kill "$(cat "$RIG_DIR/bus.pid")" 2>/dev/null
+# Kills the rig shell and any orphan left behind by an interrupted run. An orphan
+# keeps its Gio.Settings alive and will happily overwrite a later scenario's
+# values, which looks exactly like a flaky test.
+kill_shells() {
+    local pid
+    [ -f "$RIG_DIR/shell.pid" ] && pid="$(cat "$RIG_DIR/shell.pid")"
+    if [ -n "${pid:-}" ]; then
+        kill "$pid" 2>/dev/null
+        # give it a moment to unwind before resorting to the sweep
+        for _ in 1 2 3 4 5; do
+            kill -0 "$pid" 2>/dev/null || break
+            sleep 1
+        done
+    fi
+    pkill -f 'gnome-shell --headless --virtual-monitor' 2>/dev/null
     sleep 1
     rm -f "$RIG_DIR/shell.pid" "$RIG_DIR/bus.pid" "$RIG_DIR/bus.addr"
+}
+
+down() {
+    kill_shells
+    [ -f "$RIG_DIR/bus.pid" ] && kill "$(cat "$RIG_DIR/bus.pid")" 2>/dev/null
+    rm -f "$RIG_DIR/bus.pid" "$RIG_DIR/bus.addr"
     echo "rig down"
 }
 

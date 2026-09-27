@@ -50,14 +50,21 @@ use_stub_credentials() {
     set_setting workspace-id "$STUB_WS"
     set_setting auth-cookie "$STUB_COOKIE"
     set_setting refresh-minutes "${1:-5}"
+    set_setting show-panel-badge true
 }
-use_no_credentials() { set_setting workspace-id ""; set_setting auth-cookie ""; }
+use_no_credentials() {
+    set_setting workspace-id ""
+    set_setting auth-cookie ""
+    set_setting show-panel-badge true
+}
 
 stub_mode() { printf '%s\n' "$1" > "$STUB_MODE"; : > "$STUB_HITS"; }
 stub_log() { sort "$STUB_HITS" 2>/dev/null | uniq -c | tr -s ' ' | tr '\n' ';'; }
 
 # probe <tag> -> the JSON object the injected reporter logged for that tag
 probe() { "$RIG" log 6000 | grep "PROBE $1 " | tail -1 | sed -E "s/^.*PROBE $1 //"; }
+# probe_tick <n> -> the JSON object the reporter logged on a specific tick
+probe_tick() { "$RIG" log 6000 | grep "PROBE tick$1 " | tail -1 | sed -E "s/^.*PROBE tick$1 //"; }
 # probe_last_tick -> the newest repeating-tick report, however many ticks have fired
 probe_last_tick() { "$RIG" log 6000 | grep -oE "PROBE tick[0-9]+ .*" | tail -1 | sed -E "s/^PROBE tick[0-9]+ //"; }
 field() { echo "$1" | grep -oE "\"$2\":(\"?[^\",}]*\"?)" | head -1 | sed -E "s/^\"$2\"://; s/^\"//; s/\"$//"; }
@@ -109,6 +116,9 @@ boot_patched() {
 
 trap cleanup EXIT
 printf '══ GNOME extension live tests (headless shell rig)\n'
+# Clear any rig left behind by an interrupted run before touching settings, so a
+# stale shell cannot overwrite this run's gsettings
+"$RIG" down > /dev/null 2>&1
 start_stub
 
 # ---------------------------------------------------------------- demo mode
@@ -128,8 +138,32 @@ has "offers the settings action" "Settings" "$P"
 ROWS=$(field "$P" menuRows)
 [ "${ROWS:-0}" -gt 0 ] && [ "${ROWS:-0}" -lt 20 ] && ok "popup size is sane ($ROWS rows)" || no "popup size is sane" "menuRows=$ROWS"
 has "panel uses the branded O✦ logo" "opencodego-symbolic.svg" "$(field "$P" icon)"
+# The source SVG is 128px; the icon must be clamped to the panel's own size
+ICON_W=$(field "$P" iconSize | cut -d'x' -f1)
+if [ -n "$ICON_W" ] && [ "$ICON_W" -le 32 ]; then
+    ok "128px source SVG is clamped to panel size (${ICON_W}px wide)"
+else
+    no "128px source SVG is clamped to panel size" "width=${ICON_W:-none}"
+fi
+has "panel badge shows the headline percentage" "$(field "$P" percent)%" "$(field "$P" badgeText)"
+CONTRAST=$(field "$P" badgeContrast)
+if awk -v c="${CONTRAST:-0}" 'BEGIN { exit !(c >= 4.5) }'; then
+    ok "panel badge is readable against the panel (contrast ${CONTRAST}:1)"
+else
+    no "panel badge is readable against the panel" "contrast=${CONTRAST:-none}, WCAG AA needs 4.5"
+fi
 ERRS=$("$RIG" errors 20)
 [ -z "$ERRS" ] && ok "journal is clean" || no "journal is clean" "$ERRS"
+
+# The probe flips the badge preference at tick 2 (off) and tick 4 (on), so the
+# expected timeline is deterministic: visible, hidden, hidden, visible, visible.
+# The rig's private bus has no dconf service, so an external `gsettings set` would
+# never reach the shell — writing in-process is what exercises the change signal.
+TICK_SECS=10
+sleep $((TICK_SECS * 5 + 12))
+has "badge visible before the toggle" '"badgeVisible":true' "$(probe_tick 1)"
+has "badge hides when the preference is turned off" '"badgeVisible":false' "$(probe_tick 3)"
+has "badge returns when the preference is turned back on" '"badgeVisible":true' "$(probe_tick 5)"
 
 # ---------------------------------------------------------- transport rules
 # transport_scenario <name> <routes target> <expected status> <message> <expectation>
@@ -184,14 +218,35 @@ F_ROWS=$(field "$FIRST" menuRows); L_ROWS=$(field "$LAST" menuRows)
     || no "popup did not grow across refreshes" "$F_ROWS -> $L_ROWS"
 
 # ------------------------------------------------------------ prefs window
-section "preferences window"
+section "preferences window and Test Connection"
 use_stub_credentials
-boot_patched
+stub_mode good
+boot_patched stub
 DBUS_SESSION_BUS_ADDRESS="$(cat /tmp/opencodego-rig/bus.addr)" gnome-extensions prefs "$UUID" > /dev/null 2>&1
 sleep 4
 PREFS_LOG=$("$RIG" log 300)
 hasnt "prefs window built a page" "did not provide any UI" "$PREFS_LOG"
 hasnt "prefs window raised no error" "Failed to open preferences" "$PREFS_LOG"
+
+# The probe drives the Test Connection button on its second tick (~20s in)
+sleep 30
+CONN=$("$RIG" log 6000 | grep "PROBE conntest" | tail -1 | sed -E 's/^.*PROBE conntest //')
+has "Test Connection reports success" "Connected" "$CONN"
+has "Test Connection quotes the real percentage" "24%" "$CONN"
+has "Test Connection re-enables its button" '"reenabled":true' "$CONN"
+
+# The same button must surface the console's own error text
+stub_mode 401
+"$RIG" down > /dev/null 2>&1
+install_pristine || no "install"
+python3 "$HERE/live-patch.py" routes "$INSTALL_DIR/api.js" 401
+python3 "$HERE/live-patch.py" probe "$INSTALL_DIR/extension.js" "$HERE/live-probe.js"
+"$RIG" up > /dev/null 2>&1
+sleep "$SETTLE"
+DBUS_SESSION_BUS_ADDRESS="$(cat /tmp/opencodego-rig/bus.addr)" gnome-extensions prefs "$UUID" > /dev/null 2>&1
+sleep 30
+CONN=$("$RIG" log 6000 | grep "PROBE conntest" | tail -1 | sed -E 's/^.*PROBE conntest //')
+has "Test Connection surfaces the auth error" "Auth Cookie is invalid" "$CONN"
 
 # ------------------------------------------------------- enable/disable cycle
 section "disable and re-enable"
@@ -210,6 +265,7 @@ has "re-enable reports ACTIVE" "State: ACTIVE" "$("$RIG" shell gnome-extensions 
 # --------------------------------------------------------- real console data
 if [ -n "${LIVE_TEST_WS:-}" ] && [ -n "${LIVE_TEST_COOKIE:-}" ]; then
     section "real console data"
+    section "real console data (ws=${#LIVE_TEST_WS} chars, cookie=${#LIVE_TEST_COOKIE} chars)"
     set_setting workspace-id "$LIVE_TEST_WS"
     set_setting auth-cookie "$LIVE_TEST_COOKIE"
     boot_patched

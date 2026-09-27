@@ -6,9 +6,11 @@
 #   live-patch.py probe  <installed>/extension.js <probe snippet>
 #       Adds a `PROBE` reporter so shell tests can assert on runtime state.
 #
-#   live-patch.py routes <installed>/api.js <good|refuse>
+#   live-patch.py routes <installed>/api.js <stub|refuse>
 #       Points CONSOLE_STATUS_ROUTES at a local stub server, or at a closed port
-#       so the network-failure path can be exercised.
+#       so the network-failure path can be exercised. Any target other than
+#       "refuse" uses the stub URLs; the stub's own behaviour comes from the
+#       mode file the test runner writes.
 import sys
 
 # Stub base URL and a port nothing listens on (curl exits 7 -> network error)
@@ -32,7 +34,16 @@ def patch_probe(path, snippet_path):
             "        this._indicator.refresh();\n"
             "        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 4, () => { probeState.call(this, 'enable'); return GLib.SOURCE_REMOVE; });\n"
             "        let tick = 0;\n"
-            "        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 20, () => { probeState.call(this, 'tick' + (++tick)); return tick < 20 ? GLib.SOURCE_CONTINUE : GLib.SOURCE_REMOVE; });\n"
+            "        GLib.timeout_add_seconds(GLib.PRIORITY_DEFAULT, 10, () => {\n"
+            "            tick++;\n"
+            "            // flip the badge preference in-process so the change-signal path is covered\n"
+            "            if (tick === 2) probeToggleBadge.call(this, false);\n"
+            "            if (tick === 4) probeToggleBadge.call(this, true);\n"
+            "            probeState.call(this, 'tick' + tick);\n"
+            "            // drive the preferences window's Test Connection button\n"
+            "            if (tick === 2) probeTestConnection.call(this);\n"
+            "            return tick < 20 ? GLib.SOURCE_CONTINUE : GLib.SOURCE_REMOVE;\n"
+            "        });\n"
             "    }\n\n    // Called on disable",
         ),
         # report what teardown had to clean up, before and after the destroy
