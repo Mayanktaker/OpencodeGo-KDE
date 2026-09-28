@@ -249,14 +249,34 @@ class OpenCodeGoIndicator extends PanelMenu.Button {
     // Displays a desktop notification when quota crosses the configured alert threshold
     _checkNotification(state) {
         if (!this._enableNotifications || !state.data || state.data.isMock) return;
-        const pct = Math.round(state.data.usagePercent || 0);
+        const data = state.data;
         const threshold = this._notifyThreshold || 80;
-        if (pct >= threshold && (this._lastAlertedPercent || 0) < threshold) {
-            this._lastAlertedPercent = pct;
-            const resetSec = (state.data.resetSeconds && state.data.resetSeconds.weekly) || 0;
-            const resetMsg = resetSec > 0 ? ` Resets in ${Api.formatResetFull(resetSec)}.` : '';
-            Main.notify('OpenCode Go Quota Alert', `Weekly usage has reached ${pct}%.${resetMsg}`);
-        } else if (pct < threshold) {
+
+        const hourlyBar = (data.hourly && data.hourly.length) ? data.hourly[0] : null;
+        const weeklyBar = (data.weekly && data.weekly.length) ? data.weekly[0] : null;
+        const monthlyBar = (data.monthly && data.monthly.length) ? data.monthly[0] : null;
+
+        const hPct = hourlyBar ? Math.round(Api.calculatePercentage(hourlyBar.value, hourlyBar.maxValue)) : 0;
+        const wPct = (data.usagePercent !== undefined && data.usagePercent !== null)
+            ? Math.round(data.usagePercent)
+            : (weeklyBar ? Math.round(Api.calculatePercentage(weeklyBar.value, weeklyBar.maxValue)) : 0);
+        const mPct = monthlyBar ? Math.round(Api.calculatePercentage(monthlyBar.value, monthlyBar.maxValue)) : 0;
+
+        const maxPct = Math.max(hPct, wPct, mPct);
+
+        // Alert when any window crosses threshold, or triggers critical level at >=95%
+        if (maxPct >= threshold && (this._lastAlertedPercent || 0) < threshold) {
+            this._lastAlertedPercent = maxPct;
+            const alerts = [];
+            if (hPct >= threshold) alerts.push(`Rolling: ${hPct}%`);
+            if (wPct >= threshold) alerts.push(`Weekly: ${wPct}%`);
+            if (mPct >= threshold) alerts.push(`Monthly: ${mPct}%`);
+            const detail = alerts.join(', ');
+            Main.notify('OpenCode Go Quota Alert', `High usage detected (${detail}).`);
+        } else if (maxPct >= 95 && (this._lastAlertedPercent || 0) < 95) {
+            this._lastAlertedPercent = 95;
+            Main.notify('OpenCode Go Quota Critical', `Usage capacity has reached ${maxPct}%. Check OpenCode Go console.`);
+        } else if (maxPct < threshold) {
             this._lastAlertedPercent = 0;
         }
     }

@@ -9,9 +9,12 @@
 - Added an "About & Legal Disclaimer" section in Settings with full attribution, open-source license, and direct links to source code.
 - Added global keyboard shortcut support (<Super><Alt>o) to toggle the usage popup menu from anywhere on your desktop.
 - Added visual loading feedback when clicking Refresh in the GNOME popup, showing progress and preventing duplicate clicks.
+- Enhanced usage quota notifications to simultaneously monitor Rolling (5h), Weekly, and Monthly limits, plus critical capacity alerts at 95%.
+- Added automated SHA256 checksum verification for all release zip packages and GitHub release assets.
 
 **Bug fixes**
 - Settings dialog is fully compliant with extensions.gnome.org (EGO) security, transparency, and data handling standards.
+- Excluded precompiled schema binaries from distribution archives to strictly conform to GNOME Extensions validator guidelines.
 
 ## v2.7.0
 

@@ -46,3 +46,9 @@ cp "${BUILD_DIR}/${ZIP_NAME}" "${BUILD_DIR}/${CANONICAL_ZIP}"
 echo "✅ Created package: ${BUILD_DIR}/${ZIP_NAME}"
 echo "✅ Created canonical: ${BUILD_DIR}/${CANONICAL_ZIP}"
 ls -lh "${BUILD_DIR}/${ZIP_NAME}"
+
+# Generate SHA256 checksums
+cd "${BUILD_DIR}"
+sha256sum "${ZIP_NAME}" "${CANONICAL_ZIP}" > "${BUILD_DIR}/SHA256SUMS"
+echo "✅ Generated SHA256 checksums in ${BUILD_DIR}/SHA256SUMS:"
+cat "${BUILD_DIR}/SHA256SUMS"

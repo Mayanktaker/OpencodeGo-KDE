@@ -98,6 +98,12 @@ jobs:
           bash gnome-extension/package.sh
           echo "GNOME_ZIP_FILE=gnome-extension/build/com.mayanktaker.opencodego-usage.shell-extension.zip" >> $GITHUB_ENV
 
+      - name: Generate Checksums
+        run: |
+          sha256sum "${{ env.PLASMOID_FILE }}" "${{ env.ZIP_FILE }}" gnome-extension/build/*.shell-extension.zip > SHA256SUMS
+          echo "SHA256SUMS generated:"
+          cat SHA256SUMS
+
       - name: Upload Release Artifacts to GitHub Release
         uses: softprops/action-gh-release@v2
         with:
@@ -106,5 +112,6 @@ jobs:
             ${{ env.PLASMOID_FILE }}
             ${{ env.ZIP_FILE }}
             gnome-extension/build/*.shell-extension.zip
+            SHA256SUMS
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

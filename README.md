@@ -26,9 +26,10 @@ A unified Linux desktop companion and command-line utility for tracking your **O
   - Full-color glowing brand header in popup card (`opencodego-brand.svg`).
   - Sleek popup with progress bars, reset countdowns, and currency quota metrics ($ spent / $ limit).
   - Instant in-popup **Refresh** button that updates figures live without dismissing the menu.
-  - Libadwaita Preferences dialog with interactive **Test Connection** and step-by-step **Session Cookie Guide**.
+  - Global keyboard shortcut (`<Super><Alt>o`) to toggle the popup instantly from anywhere.
+  - Libadwaita Preferences dialog with interactive **Test Connection**, step-by-step **Session Cookie Guide**, and EGO-compliant **Privacy & Data Security** controls.
   - Flexible top-bar display modes: Weekly Limit (Default), 5-Hour Rolling Limit, Monthly Limit, All Three Limits with icons, or Icon Only.
-  - Quota alert notifications and Compact Mode toggle.
+  - Multi-window quota alert notifications (Rolling, Weekly, Monthly) and Compact Mode toggle.
 - 📊 **Real-Time Usage Tracking**: Fetches live data from the OpenCode Console JSON API `opencode.ai/console/api/go/status` via `curl`. Supports route-walk resilience, transient 5xx retry handling, and graceful stale-figures fallback.
 - ⏱️ **Per-Window Reset Countdowns**: Natural-language `(resets in 3 hours 45 minutes)` countdowns for Rolling (5h), Weekly, and Monthly windows.
 - 📐 **Horizontal Progress Bars**: Smooth rounded progress bars with responsive color accents (sky, cyan, teal) and automatic warning shifts (≥75% orange, ≥90% red).
