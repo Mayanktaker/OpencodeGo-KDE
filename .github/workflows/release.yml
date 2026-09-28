@@ -105,6 +105,6 @@ jobs:
           files: |
             ${{ env.PLASMOID_FILE }}
             ${{ env.ZIP_FILE }}
-            ${{ env.GNOME_ZIP_FILE }}
+            gnome-extension/build/*.shell-extension.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

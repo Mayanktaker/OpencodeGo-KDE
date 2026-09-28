@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
 BUILD_DIR="${SCRIPT_DIR}/build"
 UUID="com.mayanktaker.opencodego-usage"
-VERSION="2.6.0"
+VERSION="2.7.0"
 ZIP_NAME="${UUID}-v${VERSION}.shell-extension.zip"
 CANONICAL_ZIP="${UUID}.shell-extension.zip"
 

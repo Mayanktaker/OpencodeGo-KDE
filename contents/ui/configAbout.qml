@@ -179,7 +179,7 @@ QQC2.ScrollView {
                             font.pixelSize: Kirigami.Units.gridUnit * 0.7
                         }
                         QQC2.Label {
-                            text: "github.com/Mayanktaker/OpencodeGo-KDE"
+                            text: "github.com/Mayanktaker/OpencodeGo-KDE-GNOME"
                             opacity: 0.6
                             font.pixelSize: Kirigami.Units.gridUnit * 0.55
                         }
@@ -190,14 +190,14 @@ QQC2.ScrollView {
                     Layout.fillWidth: true
                     icon.name: "internet-services"
                     text: i18n("View Source on GitHub")
-                    onClicked: Qt.openUrlExternally("https://github.com/Mayanktaker/OpencodeGo-KDE")
+                    onClicked: Qt.openUrlExternally("https://github.com/Mayanktaker/OpencodeGo-KDE-GNOME")
                 }
 
                 QQC2.Button {
                     Layout.fillWidth: true
                     icon.name: "tools-report-bug"
                     text: i18n("Report an Issue")
-                    onClicked: Qt.openUrlExternally("https://github.com/Mayanktaker/OpencodeGo-KDE/issues")
+                    onClicked: Qt.openUrlExternally("https://github.com/Mayanktaker/OpencodeGo-KDE-GNOME/issues")
                 }
             }
         }

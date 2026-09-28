@@ -1,6 +1,17 @@
 <!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
 # Changelog — OpenCode Go Usage Tracker
 
+## v2.7.0
+
+**What's new**
+- Repository officially renamed to **OpencodeGo-KDE-GNOME** to reflect full native support for both KDE Plasma 6 and GNOME Shell (46–50).
+- Live loading feedback on the in-popup "Refresh" button in GNOME Shell: shows "Refreshing…" and temporarily disables clicks while data is in flight.
+- Automated distribution publishing for all GNOME Shell `.shell-extension.zip` bundles in GitHub Releases.
+- Updated documentation and quick-start installation guides for both KDE Plasma and GNOME desktop environments.
+
+**Bug fixes**
+- Updated all upstream GitHub repository URLs, clone instructions, and issue tracker links across the entire project suite.
+
 ## v2.6.0
 
 **What's new**

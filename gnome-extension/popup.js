@@ -211,7 +211,11 @@ function addActions(menu, actions) {
     const run = cb => () => { menu.close(); cb(); };
     if (actions.onRefresh) {
         const refreshItem = new PopupMenu.PopupImageMenuItem('Refresh', 'view-refresh-symbolic');
-        refreshItem.connect('activate', () => actions.onRefresh());
+        refreshItem.connect('activate', () => {
+            refreshItem.label.text = 'Refreshing…';
+            refreshItem.setSensitive(false);
+            actions.onRefresh();
+        });
         menu.addMenuItem(refreshItem);
     }
     if (actions.onOpenConsole) {
