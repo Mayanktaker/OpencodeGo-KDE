@@ -30,10 +30,9 @@ cp "${SCRIPT_DIR}/settings.js" "${BUILD_DIR}/package/"
 cp "${SCRIPT_DIR}/api.js" "${BUILD_DIR}/package/"
 cp "${SCRIPT_DIR}/stylesheet.css" "${BUILD_DIR}/package/"
 
-# Copy schemas
+# Copy schemas (EGO requires XML source only, gschemas.compiled is generated on client)
 mkdir -p "${BUILD_DIR}/package/schemas"
 cp "${SCRIPT_DIR}/schemas/org.gnome.shell.extensions.opencodego-usage.gschema.xml" "${BUILD_DIR}/package/schemas/"
-cp "${SCRIPT_DIR}/schemas/gschemas.compiled" "${BUILD_DIR}/package/schemas/"
 
 # Copy icons
 mkdir -p "${BUILD_DIR}/package/icons"
