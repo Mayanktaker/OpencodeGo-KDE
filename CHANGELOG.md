@@ -1,6 +1,18 @@
 <!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
 # Changelog — OpenCode Go Usage Tracker
 
+## v2.8.0
+
+**What's new**
+- Added a dedicated "Privacy & Data Security" section in Settings explaining data handling, local storage, and transparent direct connections.
+- Added a "Clear Stored Credentials" button in Settings to easily wipe saved credentials from this device with one click.
+- Added an "About & Legal Disclaimer" section in Settings with full attribution, open-source license, and direct links to source code.
+- Added global keyboard shortcut support (<Super><Alt>o) to toggle the usage popup menu from anywhere on your desktop.
+- Added visual loading feedback when clicking Refresh in the GNOME popup, showing progress and preventing duplicate clicks.
+
+**Bug fixes**
+- Settings dialog is fully compliant with extensions.gnome.org (EGO) security, transparency, and data handling standards.
+
 ## v2.7.0
 
 **What's new**

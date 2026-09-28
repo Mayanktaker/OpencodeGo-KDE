@@ -50,5 +50,11 @@
       <summary>Compact popup view</summary>
       <description>Reduces padding and height in the hover popup menu for smaller screens or denser layout</description>
     </key>
+    <!-- Global keyboard shortcut to toggle popup menu -->
+    <key type="as" name="toggle-shortcut">
+      <default><![CDATA[['<Super><Alt>o']]]></default>
+      <summary>Toggle popup shortcut</summary>
+      <description>Keyboard shortcut to toggle the OpenCode Go usage popup</description>
+    </key>
   </schema>
 </schemalist>

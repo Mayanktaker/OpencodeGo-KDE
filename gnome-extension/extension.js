@@ -6,6 +6,8 @@ import GLib from 'gi://GLib';
 import Gio from 'gi://Gio';
 import St from 'gi://St';
 import Clutter from 'gi://Clutter';
+import Meta from 'gi://Meta';
+import Shell from 'gi://Shell';
 import { Extension } from 'resource:///org/gnome/shell/extensions/extension.js';
 import * as Main from 'resource:///org/gnome/shell/ui/main.js';
 import * as PanelMenu from 'resource:///org/gnome/shell/ui/panelMenu.js';
@@ -317,11 +319,36 @@ export default class OpenCodeGoExtension extends Extension {
             this._indicator._setState(this._indicator._state);
             this._indicator.refresh();
         });
+
+        // Register keyboard shortcut to toggle popup menu
+        try {
+            if (Main.wm && Main.wm.addKeybinding) {
+                Main.wm.addKeybinding(
+                    Settings.KEY_TOGGLE_SHORTCUT,
+                    this._settings,
+                    Meta.KeyBindingFlags.IGNORE_AUTOREPEAT,
+                    Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW,
+                    () => {
+                        if (this._indicator && this._indicator.menu) this._indicator.menu.toggle();
+                    }
+                );
+                this._hasKeybinding = true;
+            }
+        } catch (e) {
+            console.warn(`Could not register toggle-shortcut: ${e.message}`);
+        }
+
         this._indicator.refresh();
     }
 
     // Called on disable/logout: tear down everything this extension created
     disable() {
+        if (this._hasKeybinding && Main.wm && Main.wm.removeKeybinding) {
+            try {
+                Main.wm.removeKeybinding(Settings.KEY_TOGGLE_SHORTCUT);
+            } catch (e) {}
+            this._hasKeybinding = false;
+        }
         if (this._unsub) { this._unsub(); this._unsub = null; }
         if (this._indicator) { this._indicator.destroy(); this._indicator = null; }
         this._applySettings = null;

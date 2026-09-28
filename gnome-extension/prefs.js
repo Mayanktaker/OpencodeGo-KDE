@@ -148,6 +148,14 @@ export default class OpenCodeGoPrefs {
         settings.bind('compact-mode', compactRow, 'active', Gio.SettingsBindFlags.DEFAULT);
         behaviour.add(compactRow);
 
+        // Global keyboard shortcut to toggle popup menu
+        const shortcutRow = new Adw.ActionRow({
+            title: 'Toggle Popup Shortcut',
+            subtitle: 'Press <Super><Alt>o from anywhere to open or dismiss the usage popup',
+        });
+        shortcutRow.add_prefix(new Gtk.Image({ icon_name: 'input-keyboard-symbolic' }));
+        behaviour.add(shortcutRow);
+
         // Quota alerts group
         const notifyGroup = new Adw.PreferencesGroup({ title: 'Usage Alerts' });
         page.add(notifyGroup);
@@ -169,6 +177,80 @@ export default class OpenCodeGoPrefs {
         });
         settings.bind('notification-threshold', thresholdRow, 'value', Gio.SettingsBindFlags.DEFAULT);
         notifyGroup.add(thresholdRow);
+
+        // Privacy & Data Security group (EGO review compliant)
+        const privacyGroup = new Adw.PreferencesGroup({
+            title: 'Privacy & Data Security',
+            description: 'Transparent data handling according to GNOME extension security standards',
+        });
+        page.add(privacyGroup);
+
+        const directRow = new Adw.ActionRow({
+            title: 'Direct Network Connection',
+            subtitle: 'Communicates solely with opencode.ai/console/api/go/status. No third-party servers, tracking, or telemetry.',
+        });
+        directRow.add_prefix(new Gtk.Image({ icon_name: 'security-high-symbolic' }));
+        privacyGroup.add(directRow);
+
+        const storageRow = new Adw.ActionRow({
+            title: 'Local Storage Only',
+            subtitle: 'Workspace ID and session tokens remain on this device inside your personal dconf settings.',
+        });
+        storageRow.add_prefix(new Gtk.Image({ icon_name: 'dialog-password-symbolic' }));
+        privacyGroup.add(storageRow);
+
+        const clearRow = new Adw.ActionRow({
+            title: 'Clear Stored Credentials',
+            subtitle: 'Erase saved Workspace ID and Session Cookie from local dconf settings',
+        });
+        clearRow.add_prefix(new Gtk.Image({ icon_name: 'user-trash-symbolic' }));
+        const clearButton = new Gtk.Button({
+            label: 'Clear',
+            valign: Gtk.Align.CENTER,
+            css_classes: ['destructive-action'],
+        });
+        clearButton.connect('clicked', () => {
+            settings.set_string('workspace-id', '');
+            settings.set_string('auth-cookie', '');
+            clearRow.subtitle = '<span color="#2dd4bf">Credentials cleared from local settings</span>';
+        });
+        clearRow.add_suffix(clearButton);
+        clearRow.activatable_widget = clearButton;
+        privacyGroup.add(clearRow);
+
+        // About & Legal Disclaimer group
+        const aboutGroup = new Adw.PreferencesGroup({ title: 'About & Legal Disclaimer' });
+        page.add(aboutGroup);
+
+        const disclaimerRow = new Adw.ActionRow({
+            title: 'Third-Party Disclaimer',
+            subtitle: 'OpenCode Go Usage Tracker is an independent open-source project and is not affiliated with, sponsored by, or endorsed by OpenCode.',
+        });
+        disclaimerRow.add_prefix(new Gtk.Image({ icon_name: 'dialog-information-symbolic' }));
+        aboutGroup.add(disclaimerRow);
+
+        const licenseRow = new Adw.ActionRow({
+            title: 'OpenCode Go Usage Tracker v2.8.0',
+            subtitle: 'Licensed under MIT. © Mayanktaker Computers & Web Development',
+        });
+        licenseRow.add_prefix(new Gtk.Image({ icon_name: 'help-about-symbolic' }));
+        aboutGroup.add(licenseRow);
+
+        const repoRow = new Adw.ActionRow({
+            title: 'Source Code & Issue Tracker',
+            subtitle: 'github.com/Mayanktaker/OpencodeGo-KDE-GNOME',
+        });
+        repoRow.add_prefix(new Gtk.Image({ icon_name: 'web-browser-symbolic' }));
+        const repoButton = new Gtk.Button({
+            label: 'GitHub',
+            valign: Gtk.Align.CENTER,
+        });
+        repoButton.connect('clicked', () => {
+            Gio.AppInfo.launch_default_for_uri('https://github.com/Mayanktaker/OpencodeGo-KDE-GNOME', null);
+        });
+        repoRow.add_suffix(repoButton);
+        repoRow.activatable_widget = repoButton;
+        aboutGroup.add(repoRow);
 
         window.add(page);
     }

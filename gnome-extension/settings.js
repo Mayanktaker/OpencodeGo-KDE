@@ -16,6 +16,7 @@ const KEY_TRAY_MODE = 'tray-display-mode';
 const KEY_NOTIFICATIONS = 'enable-notifications';
 const KEY_THRESHOLD = 'notification-threshold';
 const KEY_COMPACT_MODE = 'compact-mode';
+const KEY_TOGGLE_SHORTCUT = 'toggle-shortcut';
 
 // Seconds per minute used to convert the refresh setting
 const SECONDS_PER_MINUTE = 60;
@@ -60,6 +61,8 @@ export function getEnableNotifications(settings) { return settings.get_boolean(K
 export function getNotificationThreshold(settings) { return settings.get_uint(KEY_THRESHOLD); }
 // Whether compact view is enabled in the popup
 export function getCompactMode(settings) { return settings.get_boolean(KEY_COMPACT_MODE); }
+// Keyboard shortcut array to toggle popup menu
+export function getToggleShortcut(settings) { return settings.get_strv(KEY_TOGGLE_SHORTCUT); }
 
 // Subscribes to key changes; cb receives the changed key name
 export function connectChanged(settings, names, cb) {
@@ -76,6 +79,7 @@ export const WATCHED_KEYS = [
     KEY_TRAY_MODE,
     KEY_NOTIFICATIONS,
     KEY_THRESHOLD,
-    KEY_COMPACT_MODE
+    KEY_COMPACT_MODE,
+    KEY_TOGGLE_SHORTCUT
 ];
-export { KEY_WORKSPACE, KEY_COOKIE, KEY_REFRESH, KEY_PANEL_BADGE, KEY_TRAY_MODE, KEY_NOTIFICATIONS, KEY_THRESHOLD, KEY_COMPACT_MODE };
+export { KEY_WORKSPACE, KEY_COOKIE, KEY_REFRESH, KEY_PANEL_BADGE, KEY_TRAY_MODE, KEY_NOTIFICATIONS, KEY_THRESHOLD, KEY_COMPACT_MODE, KEY_TOGGLE_SHORTCUT };
