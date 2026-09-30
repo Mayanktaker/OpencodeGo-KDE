@@ -4,15 +4,38 @@
 set -euo pipefail
 
 # Extension identity must match metadata.json
-UUID="com.mayanktaker.opencodego-usage"
+UUID="opencodego-usage@mayanktaker.com"
+# Pre-EGO uuid (no `@` namespace) — cleaned up below so installs do not pile up
+LEGACY_UUID="com.mayanktaker.opencodego-usage"
 # Install target inside the user's home
-DEST="$HOME/.local/share/gnome-shell/extensions/$UUID"
+EXT_ROOT="$HOME/.local/share/gnome-shell/extensions"
+DEST="$EXT_ROOT/$UUID"
 # This script's directory (the repo's gnome-extension folder)
 SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Copy extension files except dev-only artifacts and this script
+# Retire the pre-EGO install: unqueue it, then drop the stale folder
+LEGACY_DIR="$EXT_ROOT/$LEGACY_UUID"
+if [ -d "$LEGACY_DIR" ]; then
+    gnome-extensions disable "$LEGACY_UUID" >/dev/null 2>&1 || true
+    LEGACY_LISTED="$(dconf read /org/gnome/shell/enabled-extensions 2>/dev/null || true)"
+    case "$LEGACY_LISTED" in
+        *"$LEGACY_UUID"*)
+            # Match the quoted entry and escape dots so only this uuid is stripped
+            QUOTED_ESC="'${LEGACY_UUID//./\\.}'"
+            WITHOUT_LEGACY="${LEGACY_LISTED//$QUOTED_ESC, }"
+            WITHOUT_LEGACY="${WITHOUT_LEGACY//, $QUOTED_ESC}"
+            WITHOUT_LEGACY="${WITHOUT_LEGACY//$QUOTED_ESC}"
+            dconf write /org/gnome/shell/enabled-extensions "$WITHOUT_LEGACY"
+            ;;
+    esac
+    rm -rf -- "$LEGACY_DIR"
+    echo "Removed legacy install $LEGACY_UUID (replaced by $UUID)."
+fi
+
+# Copy extension files except dev-only artifacts, packaged builds, and this script
+# (--delete-excluded also drops leftovers such as build/ from previous installs)
 mkdir -p "$DEST"
-rsync -a --delete --exclude 'install.sh' --exclude 'tests' --exclude '.git' "$SRC/" "$DEST/"
+rsync -a --delete --delete-excluded --exclude 'install.sh' --exclude 'tests' --exclude 'build' --exclude '.git' "$SRC/" "$DEST/"
 
 # Compile the gsettings schema into the installed copy
 glib-compile-schemas "$DEST/schemas/"
@@ -30,8 +53,9 @@ else
             if [ -z "$CURRENT" ] || [ "$CURRENT" = "@a[]" ]; then
                 dconf write /org/gnome/shell/enabled-extensions "['$UUID']"
             else
-                UPDATED="${CURRENT%\]]}, '$UUID']"
-                dconf write /org/gnome/shell/enabled-extensions "${UPDATED//\'/\'}"
+                # Append to the existing string array: drop the closing `]`, add our entry, re-close
+                UPDATED="${CURRENT%\]}, '$UUID']"
+                dconf write /org/gnome/shell/enabled-extensions "$UPDATED"
             fi
             ;;
     esac

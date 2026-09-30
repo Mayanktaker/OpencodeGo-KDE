@@ -12,7 +12,7 @@
 set -uo pipefail
 
 RIG_DIR="${RIG_DIR:-${TMPDIR:-/tmp}/opencodego-rig}"
-UUID="com.mayanktaker.opencodego-usage"
+UUID="opencodego-usage@mayanktaker.com"
 INSTALL_DIR="${INSTALL_DIR:-$HOME/.local/share/gnome-shell/extensions/$UUID}"
 VIRTUAL_MONITOR="${VIRTUAL_MONITOR:-1400x900}"
 

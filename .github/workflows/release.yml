@@ -96,7 +96,7 @@ jobs:
       - name: Package GNOME Shell Extension Bundle
         run: |
           bash gnome-extension/package.sh
-          echo "GNOME_ZIP_FILE=gnome-extension/build/com.mayanktaker.opencodego-usage.shell-extension.zip" >> $GITHUB_ENV
+          echo "GNOME_ZIP_FILE=gnome-extension/build/opencodego-usage@mayanktaker.com.shell-extension.zip" >> $GITHUB_ENV
 
       - name: Generate Checksums
         run: |

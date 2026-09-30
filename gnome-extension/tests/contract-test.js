@@ -21,7 +21,9 @@ const EXTENSION_DIR = GLib.path_get_dirname(GLib.path_get_dirname(GLib.filename_
 // --- metadata.json must agree with the schema id and the extension uuid ---
 const [, metaBytes] = GLib.file_get_contents(`${EXTENSION_DIR}/metadata.json`);
 const meta = JSON.parse(new TextDecoder().decode(metaBytes));
-eq(meta.uuid, 'com.mayanktaker.opencodego-usage', 'metadata uuid unchanged');
+eq(meta.uuid, 'opencodego-usage@mayanktaker.com', 'metadata uuid uses a name@namespace form');
+// EGO review rule EGO-M-005: session-modes must be omitted when it only declares `user`
+ok(!('session-modes' in meta), 'session-modes is omitted for the default user mode');
 eq(meta['settings-schema'], 'org.gnome.shell.extensions.opencodego-usage', 'metadata declares the schema');
 // Every key the runtime reads must exist in the schema, or enable() throws
 const [, schemaBytes] = GLib.file_get_contents(`${EXTENSION_DIR}/schemas/org.gnome.shell.extensions.opencodego-usage.gschema.xml`);

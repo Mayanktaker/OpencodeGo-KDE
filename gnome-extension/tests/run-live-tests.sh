@@ -14,11 +14,14 @@ set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 EXT_DIR="$(dirname "$HERE")"
 REPO="$(dirname "$EXT_DIR")"
-UUID="com.mayanktaker.opencodego-usage"
+UUID="opencodego-usage@mayanktaker.com"
 SCHEMA="org.gnome.shell.extensions.opencodego-usage"
 INSTALL_DIR="$HOME/.local/share/gnome-shell/extensions/$UUID"
 STUB_MODE="/tmp/opencodego-stub.mode"
 STUB_HITS="/tmp/opencodego-stub.hits"
+# Snapshot of the developer's own extension settings (the rig touches live dconf)
+DCONF_PATH="/org/gnome/shell/extensions/opencodego-usage/"
+SETTINGS_BACKUP="${TMPDIR:-/tmp}/opencodego-gnome-settings.bak"
 RIG="$HERE/live-test.sh"
 # Fake but well-formed credentials for the stub scenarios
 STUB_WS="wrk_01KE20AQRQ9QR7N15TWGJBE2V9"
@@ -77,11 +80,16 @@ use_stub_credentials() {
     set_setting auth-cookie "$STUB_COOKIE"
     set_setting refresh-minutes "${1:-5}"
     set_setting show-panel-badge true
+    # Assertions assume the default badge text and the full popup rows
+    set_setting tray-display-mode weekly
+    set_setting compact-mode false
 }
 use_no_credentials() {
     set_setting workspace-id ""
     set_setting auth-cookie ""
     set_setting show-panel-badge true
+    set_setting tray-display-mode weekly
+    set_setting compact-mode false
 }
 
 stub_mode() { printf '%s\n' "$1" > "$STUB_MODE"; : > "$STUB_HITS"; }
@@ -119,7 +127,10 @@ cleanup() {
     "$RIG" down > /dev/null 2>&1
     [ -n "$STUB_PID" ] && kill "$STUB_PID" 2>/dev/null
     rm -f "$STUB_MODE" "$STUB_HITS"
+    # Clear this run's values, then hand the developer's own settings back
     gsettings --schemadir "$INSTALL_DIR/schemas" reset-recursively "$SCHEMA" > /dev/null 2>&1
+    [ -s "$SETTINGS_BACKUP" ] && dconf load "$DCONF_PATH" < "$SETTINGS_BACKUP" > /dev/null 2>&1
+    rm -f "$SETTINGS_BACKUP"
     install_pristine > /dev/null 2>&1
     printf '\n── %s passed, %s failed\n' "$PASS" "$([ "$FAIL" -eq 0 ] && echo 0 || echo "$FAIL")"
     [ "$FAIL" -eq 0 ]
@@ -145,6 +156,11 @@ printf '══ GNOME extension live tests (headless shell rig)\n'
 # Clear any rig left behind by an interrupted run before touching settings, so a
 # stale shell cannot overwrite this run's gsettings
 "$RIG" down > /dev/null 2>&1
+install_pristine > /dev/null 2>&1
+# The rig shares the desktop's dconf database: snapshot the developer's extension
+# settings up front so cleanup restores them instead of leaving test values behind
+dconf dump "$DCONF_PATH" > "$SETTINGS_BACKUP" 2>/dev/null || : > "$SETTINGS_BACKUP"
+gsettings --schemadir "$INSTALL_DIR/schemas" reset-recursively "$SCHEMA" > /dev/null 2>&1
 start_stub
 
 # ---------------------------------------------------------------- demo mode

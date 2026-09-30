@@ -72,7 +72,7 @@ This automatically:
 
 ## 🐧 GNOME Shell Extension
 
-The same usage tracker also ships as a GNOME Shell panel extension (UUID `com.mayanktaker.opencodego-usage`, GNOME Shell 46–50):
+The same usage tracker also ships as a GNOME Shell panel extension (UUID `opencodego-usage@mayanktaker.com`, GNOME Shell 46–50):
 
 ```bash
 bash gnome-extension/install.sh
@@ -82,7 +82,7 @@ bash gnome-extension/install.sh
 - The panel shows the weekly percentage next to the icon — orange at 75%, red at 90%. Switch it off in settings if you prefer icon only.
 - The popup ends with **Open OpenCode Console** and **Settings…** — both stay available even when your sign-in has expired.
 - The panel now shows the O✦ logo on GNOME too, not just on KDE.
-- Open the extension's preferences (`gnome-extensions prefs com.mayanktaker.opencodego-usage`) and paste your Workspace ID + Auth Cookie to switch to live figures. **Test** checks your details without waiting for a refresh.
+- Open the extension's preferences (`gnome-extensions prefs opencodego-usage@mayanktaker.com`) and paste your Workspace ID + Auth Cookie to switch to live figures. **Test** checks your details without waiting for a refresh.
 - On Wayland, the first install needs a logout/login: a running shell never picks up a newly installed extension. The installer queues it so it comes up enabled automatically.
 
 ### Installing on Manjaro / Arch
@@ -94,14 +94,14 @@ bash gnome-extension/install.sh
 # 2. log out and back in  — required on Wayland, there is no rescan
 
 # 3. confirm it is running
-gnome-extensions info com.mayanktaker.opencodego-usage | grep -E 'State|Enabled'
+gnome-extensions info opencodego-usage@mayanktaker.com | grep -E 'State|Enabled'
 journalctl --user -b | grep -i opencodego        # should be quiet
 
 # 4. add your details
-gnome-extensions prefs com.mayanktaker.opencodego-usage
+gnome-extensions prefs opencodego-usage@mayanktaker.com
 ```
 
-Step 1 copies the extension into `~/.local/share/gnome-shell/extensions/com.mayanktaker.opencodego-usage`, compiles its gsettings schema, and queues it in dconf so it comes up enabled after the logout.
+Step 1 copies the extension into `~/.local/share/gnome-shell/extensions/opencodego-usage@mayanktaker.com`, compiles its gsettings schema, and queues it in dconf so it comes up enabled after the logout.
 
 Getting the two values for step 4: open `https://opencode.ai/console/<your-workspace>/go` in the browser, then DevTools → Application → Cookies → opencode.ai → `__Host-console_session` for the cookie, and the `wrk_…` in the address bar for the workspace id. Paste them in and press **Test**.
 
@@ -110,8 +110,8 @@ Updating later: re-run `bash gnome-extension/install.sh` and log out/in again �
 To remove it:
 
 ```bash
-gnome-extensions disable com.mayanktaker.opencodego-usage   # if the shell knows it
-rm -rf ~/.local/share/gnome-shell/extensions/com.mayanktaker.opencodego-usage
+gnome-extensions disable opencodego-usage@mayanktaker.com   # if the shell knows it
+rm -rf ~/.local/share/gnome-shell/extensions/opencodego-usage@mayanktaker.com
 dconf write /org/gnome/shell/enabled-extensions "['gnome-shell-extensions-appindicator@ubuntu.com']"  # keep your other extensions
 ```
 

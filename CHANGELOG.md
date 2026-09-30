@@ -1,6 +1,16 @@
 <!-- © Mayanktaker Computers & Web Development | https://mayanktaker.com -->
 # Changelog — OpenCode Go Usage Tracker
 
+## v2.8.1
+
+**What's new**
+- The GNOME extension now uses the standard `opencodego-usage@mayanktaker.com` identity required by extensions.gnome.org, so store validation passes cleanly.
+
+**Bug fixes**
+- Removed a redundant settings entry from the GNOME extension's description file that triggered a reviewer warning.
+- The installer now retires the old, pre-rename install folder automatically, so you never end up with two copies of the extension.
+- Updated the About version label to match this release.
+
 ## v2.8.0
 
 **What's new**

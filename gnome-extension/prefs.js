@@ -230,7 +230,7 @@ export default class OpenCodeGoPrefs {
         aboutGroup.add(disclaimerRow);
 
         const licenseRow = new Adw.ActionRow({
-            title: 'OpenCode Go Usage Tracker v2.8.0',
+            title: 'OpenCode Go Usage Tracker v2.8.1',
             subtitle: 'Licensed under MIT. © Mayanktaker Computers & Web Development',
         });
         licenseRow.add_prefix(new Gtk.Image({ icon_name: 'help-about-symbolic' }));
